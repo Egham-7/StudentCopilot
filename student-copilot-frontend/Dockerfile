@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18 as build
+FROM node:18 AS build
 
 # Set working directory
 WORKDIR /app
@@ -14,7 +14,9 @@ RUN npm ci
 COPY . .
 
 ARG CONVEX_DEPLOY_KEY
-
+ARG VITE_CLERK_PUBLISHABLE_KEY
+ARG VITE_CLERK_SIGN_IN_FORCE_REDIRECT_URL
+ARG VITE_CLERK_SIGN_UP_FORCE_REDIRECT_URL
 
 # Build the app and deploy Convex functions
 RUN npx convex deploy --cmd 'vite build'
