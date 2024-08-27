@@ -17,7 +17,7 @@ ARG CONVEX_DEPLOY_KEY
 
 
 # Build the app and deploy Convex functions
-RUN npx convex deploy --cmd 'npm run build'
+RUN npx convex deploy --cmd 'vite build'
 
 # Production stage
 FROM nginx:alpine
