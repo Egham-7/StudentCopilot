@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { IconMenu2, IconX } from "@tabler/icons-react";
-import IndexPage from "../../routes";
+
+
 interface Links {
   label: string;
   href: string;
