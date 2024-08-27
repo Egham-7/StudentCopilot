@@ -13,6 +13,9 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . .
 
+ARG CONVEX_DEPLOY_KEY
+
+
 # Build the app and deploy Convex functions
 RUN npx convex deploy --cmd 'npm run build'
 
