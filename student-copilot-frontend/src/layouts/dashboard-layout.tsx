@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/custom/sidebar";
-import { IconHome, IconSettings, IconUser, IconMenu2 } from '@tabler/icons-react';
+import { IconHome, IconSettings } from '@tabler/icons-react';
 import { UserButton } from "@clerk/clerk-react";
 
 
