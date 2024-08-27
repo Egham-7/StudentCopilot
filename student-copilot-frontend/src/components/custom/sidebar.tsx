@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { IconMenu2, IconX } from "@tabler/icons-react";
-
+import IndexPage from "../../routes";
 interface Links {
   label: string;
   href: string;
@@ -87,7 +87,7 @@ export const DesktopSidebar = ({
   return (
     <motion.div
       className={cn(
-        "h-full px-4 py-4 hidden md:flex md:flex-col bg-secondary text-secondary-foreground  w-[500px] flex-shrink-0",
+        "h-full px-4 py-4 hidden md:flex md:flex-col bg-secondary text-secondary-foreground  w-[400px] flex-shrink-0",
         className
       )}
       animate={{
