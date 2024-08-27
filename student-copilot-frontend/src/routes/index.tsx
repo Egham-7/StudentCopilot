@@ -14,7 +14,7 @@ import { MenuItem } from '../components/custom/mobile-menu'
 import { Menu } from 'lucide-react';
 import MobileMenu from '@/components/custom/mobile-menu';
 import { useState } from 'react'
-import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
+import { SignInButton, SignUpButton } from '@clerk/clerk-react';
 
 export default function IndexPage() {
 
