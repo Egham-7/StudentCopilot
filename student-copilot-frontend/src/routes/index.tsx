@@ -80,10 +80,14 @@ export default function IndexPage() {
         </div>
         <div className='flex gap-2'>
           <SignUpButton>
-            Signup
+            <Button>
+              Signup
+            </Button>
           </SignUpButton>
           <SignInButton>
-            Signin
+            <Button variant="secondary">
+              Signin
+            </Button>
           </SignInButton>
         </div>
         <Button
