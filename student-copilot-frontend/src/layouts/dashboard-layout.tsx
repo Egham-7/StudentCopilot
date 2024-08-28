@@ -37,7 +37,7 @@ export default function DashboardLayout() {
             <SidebarLink
               link={{
                 label: "Home",
-                href: "/",
+                href: "/dashboard",
                 icon: <IconHome size={24} />
               }}
             />
