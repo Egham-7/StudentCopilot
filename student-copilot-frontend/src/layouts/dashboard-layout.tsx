@@ -1,14 +1,27 @@
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/custom/sidebar";
 import { IconHome, IconSettings } from '@tabler/icons-react';
 import { UserButton } from "@clerk/clerk-react";
-
+import { useConvexAuth } from "convex/react";
+import LoadingPage from "../components/custom/loading";
 
 
 export default function DashboardLayout() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isLoading, isAuthenticated } = useConvexAuth();
+
+
+  if (isLoading) {
+    return <LoadingPage />
+  }
+
+  if (!isAuthenticated) {
+
+    return <Navigate to="/" replace />
+  }
+
 
 
 
