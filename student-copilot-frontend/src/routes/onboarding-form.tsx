@@ -83,7 +83,6 @@ type FormField = keyof z.infer<typeof formSchema>;
 
 export default function OnboardingFormPage() {
   const [step, setStep] = useState(1)
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -101,6 +100,7 @@ export default function OnboardingFormPage() {
       setStep(step + 1);
     }
   };
+
   const prevStep = () => setStep(step - 1)
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -124,9 +124,9 @@ export default function OnboardingFormPage() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-sm mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center">Onboarding</CardTitle>
+        <CardTitle className="text-xl sm:text-2xl font-bold text-center">Onboarding</CardTitle>
         <div className="flex justify-between mt-2">
           {[1, 2, 3, 4].map((i) => (
             <div
@@ -141,7 +141,7 @@ export default function OnboardingFormPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {step === 1 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Welcome! Let's get started.</h3>
+                <h3 className="text-base sm:text-lg font-semibold">Welcome! Let's get started.</h3>
                 <FormField
                   control={form.control}
                   name="course"
@@ -160,7 +160,7 @@ export default function OnboardingFormPage() {
             )}
             {step === 2 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">What best describes your level of study?</h3>
+                <h3 className="text-base sm:text-lg font-semibold">What best describes your level of study?</h3>
                 <FormField
                   control={form.control}
                   name="levelOfStudy"
@@ -170,7 +170,7 @@ export default function OnboardingFormPage() {
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="grid grid-cols-2 gap-4"
+                          className="grid grid-cols-2 gap-2 sm:gap-4"
                         >
                           {levelOfStudyOptions.map(({ value, icon: Icon, label }) => (
                             <FormItem key={value}>
@@ -178,8 +178,8 @@ export default function OnboardingFormPage() {
                                 <FormControl>
                                   <RadioGroupItem value={value} className="sr-only" />
                                 </FormControl>
-                                <Icon size={48} />
-                                <span>{label}</span>
+                                <Icon size={36} />
+                                <span className="text-sm sm:text-base">{label}</span>
                               </FormLabel>
                             </FormItem>
                           ))}
@@ -197,7 +197,7 @@ export default function OnboardingFormPage() {
             )}
             {step === 3 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Choose your preferred note-taking style:</h3>
+                <h3 className="text-base sm:text-lg font-semibold">Choose your preferred note-taking style:</h3>
                 <FormField
                   control={form.control}
                   name="noteTakingStyle"
@@ -207,7 +207,7 @@ export default function OnboardingFormPage() {
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                          className="grid grid-cols-1 gap-4 md:gap-2 md:grid-cols-2"
                         >
                           {noteTakingStyles.map((style) => (
                             <FormItem key={style.id}>
@@ -216,14 +216,16 @@ export default function OnboardingFormPage() {
                                   <RadioGroupItem value={style.id} className="sr-only" />
                                 </FormControl>
                                 <Card className="relative overflow-hidden border-2 hover:border-primary transition-all">
-                                  <CardContent className="flex flex-col items-center p-6">
-                                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                                      <style.icon className="w-8 h-8 text-primary" />
+                                  <CardContent className="flex flex-row sm:flex-col items-center max-h-sm p-6 md:p-3 md:max-h-md  ">
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-0 sm:mb-4 mr-4 sm:mr-0">
+                                      <style.icon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                                     </div>
-                                    <h3 className="font-semibold text-lg mb-2">{style.title}</h3>
-                                    <p className="text-muted-foreground text-sm text-center">
-                                      {style.description}
-                                    </p>
+                                    <div className="flex-1">
+                                      <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2">{style.title}</h3>
+                                      <p className="text-muted-foreground text-xs sm:text-sm">
+                                        {style.description}
+                                      </p>
+                                    </div>
                                     <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center opacity-0 transition-opacity [input:checked~&]:opacity-100">
                                       <Check className="w-3 h-3 text-primary-foreground" />
                                     </div>
@@ -246,7 +248,7 @@ export default function OnboardingFormPage() {
             )}
             {step === 4 && (
               <div className='space-y-4'>
-                <h3 className="text-lg font-semibold">What's your primary learning style?</h3>
+                <h3 className="text-base sm:text-lg font-semibold">What's your primary learning style?</h3>
                 <FormField
                   control={form.control}
                   name="learningStyle"
@@ -256,7 +258,7 @@ export default function OnboardingFormPage() {
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value}
-                          className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                          className="grid grid-cols-1 gap-4 md:grid-cols-2 "
                         >
                           {learningStyles.map((style) => (
                             <FormItem key={style.id}>
@@ -265,14 +267,16 @@ export default function OnboardingFormPage() {
                                   <RadioGroupItem value={style.id} className="sr-only" />
                                 </FormControl>
                                 <Card className="relative overflow-hidden border-2 hover:border-primary transition-all">
-                                  <CardContent className="flex flex-col items-center p-6">
-                                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                                      <style.icon className="w-8 h-8 text-primary" />
+                                  <CardContent className="flex flex-row sm:flex-col items-center p-6 max-h-sm md:p-3 md:max-h-md">
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-0 sm:mb-4 mr-4 sm:mr-0">
+                                      <style.icon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                                     </div>
-                                    <h3 className="font-semibold text-lg mb-2">{style.title}</h3>
-                                    <p className="text-muted-foreground text-sm text-center">
-                                      {style.description}
-                                    </p>
+                                    <div className="flex-1">
+                                      <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2">{style.title}</h3>
+                                      <p className="text-muted-foreground text-xs sm:text-sm">
+                                        {style.description}
+                                      </p>
+                                    </div>
                                     <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center opacity-0 transition-opacity [input:checked~&]:opacity-100">
                                       <Check className="w-3 h-3 text-primary-foreground" />
                                     </div>
