@@ -12,6 +12,7 @@ import IndexPage from './routes'
 import SignInPage from './routes/sign-in'
 import SignUpPage from './routes/sign-up'
 import OnboardingFormPage from './routes/onboarding-form'
+import FormLayout from './layouts/form-layout'
 
 const router = createBrowserRouter([
   {
@@ -20,10 +21,18 @@ const router = createBrowserRouter([
       { path: '/', element: <IndexPage /> },
       { path: '/sign-in/*', element: <SignInPage /> },
       { path: '/sign-up/*', element: <SignUpPage /> },
-      { path: '/onboarding/*', element: <OnboardingFormPage /> },
+
 
       {
-        path: '/dashboard',
+        element: <FormLayout />,
+        children: [
+          { path: '/onboarding/*', element: <OnboardingFormPage /> }
+
+        ],
+      },
+
+      {
+        path: '/dashboard/*',
         element: <DashboardLayout />,
         children: [
         ],
