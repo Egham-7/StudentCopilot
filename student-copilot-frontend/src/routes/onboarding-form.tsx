@@ -149,7 +149,7 @@ export default function OnboardingFormPage() {
 
 
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
       console.error("Error storing user:", error);
       toast({
