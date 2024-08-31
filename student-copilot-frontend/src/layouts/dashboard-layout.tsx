@@ -22,14 +22,9 @@ export default function DashboardLayout() {
     return <Navigate to="/" replace />
   }
 
-
-
-
   return (
 
     <div className="flex h-screen">
-
-
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
         <SidebarBody className="flex flex-col justify-between items-start">
 
@@ -61,9 +56,6 @@ export default function DashboardLayout() {
         </SidebarBody>
 
       </Sidebar>
-
-
-
 
       <Outlet />
 

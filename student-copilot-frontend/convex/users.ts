@@ -36,7 +36,7 @@ export const store = mutation({
 
     if (existingUser) {
       // Update existing user
-      const updatedUser = await ctx.db.patch(existingUser._id, {
+      await ctx.db.patch(existingUser._id, {
         ...args,
         name: identity.name,
       });
@@ -57,8 +57,12 @@ export const store = mutation({
 
 
 export const getUser = query({
-  args: {},
+  args: {
+    clerkId: v.string()
+  },
   handler: async (ctx) => {
+
+
 
   }
 })

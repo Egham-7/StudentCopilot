@@ -8,6 +8,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { UserCircle, Briefcase, Palette, Code, Check, List, Network, LayoutPanelTop, PenTool, Eye, Ear, Hand, Brain } from 'lucide-react'
+import { useMutation } from 'convex/react'
+import { api } from "../../convex/_generated/api";
+import { useUser } from "@clerk/clerk-react";
+import { useToast } from "@/components/ui/use-toast"
+import { Navigate, useNavigate } from 'react-router-dom'
 
 const formSchema = z.object({
   course: z.string().min(10, {
@@ -92,6 +97,12 @@ export default function OnboardingFormPage() {
       learningStyle: "analytical"
     },
   })
+  const { toast } = useToast()
+  const { user } = useUser();
+  const navigate = useNavigate();
+
+
+  const storeUser = useMutation(api.users.store);
 
   const nextStep = async () => {
     const fieldsToValidate = getFieldsForStep(step);
@@ -101,11 +112,54 @@ export default function OnboardingFormPage() {
     }
   };
 
+
+
   const prevStep = () => setStep(step - 1)
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  if (!user) {
+
+    return <Navigate to="/" replace />
+  }
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values)
-    // Handle form submission
+    try {
+
+      const databaseUser = {
+        ...values
+      };
+
+      console.log("Database User: ", databaseUser);
+
+      const id = await storeUser(databaseUser);
+
+
+      if (!id) {
+        toast({
+          title: "Failed to get your info!",
+          description: "Please ensure all info is correct and try again.",
+        })
+
+        return
+      }
+
+      console.log("User ID: ", id);
+
+      navigate('/dashboard', { replace: true });
+
+
+
+    } catch (error: any) {
+
+      console.error("Error storing user:", error);
+      toast({
+        title: "An error occurred",
+        description: "Please try again later.",
+      });
+
+
+
+    }
   }
 
   function getFieldsForStep(step: number): FormField[] {
