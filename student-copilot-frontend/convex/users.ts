@@ -12,7 +12,7 @@ export const store = mutation({
       v.literal("kinesthetic"),
       v.literal("analytical")
     ),
-    course: v.optional(v.string()),
+    course: v.string(),
     levelOfStudy: v.union(
       v.literal("Bachelors"),
       v.literal("Associate"),
@@ -23,7 +23,6 @@ export const store = mutation({
   handler: async (ctx, args) => {
 
     const identity = await ctx.auth.getUserIdentity();
-    console.log("Identity: ", identity);
     if (!identity) {
       throw new Error("Called storeUser without authentication present");
     }
@@ -46,7 +45,7 @@ export const store = mutation({
     // If not, create a new user
     const userId = await ctx.db.insert("users", {
       clerkId: identity.subject,
-      name: identity.name,
+      name: identity.name ?? "Unknown",
       ...args,
     });
 
@@ -56,13 +55,29 @@ export const store = mutation({
 })
 
 
-export const getUser = query({
+export const getUserInfo = query({
   args: {
-    clerkId: v.string()
   },
   handler: async (ctx) => {
 
+    const identity = await ctx.auth.getUserIdentity();
 
+    if (!identity) {
+      throw new Error("Called getUser without authentication present.");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", q => q.eq("clerkId", identity.subject))
+      .first()
+
+
+
+    if (!user) {
+      throw new Error("User not found!")
+    }
+
+    return user;
 
   }
 })

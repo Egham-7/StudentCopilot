@@ -4,7 +4,7 @@ import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
-    name: v.optional(v.string()),
+    name: v.string(),
     clerkId: v.string(),
     noteTakingStyle: v.string(),
     learningStyle: v.union(
@@ -13,7 +13,7 @@ export default defineSchema({
       v.literal("kinesthetic"),
       v.literal("analytical")
     ),
-    course: v.optional(v.string()),
+    course: v.string(),
     levelOfStudy: v.union(
       v.literal("Bachelors"),
       v.literal("Associate"),
