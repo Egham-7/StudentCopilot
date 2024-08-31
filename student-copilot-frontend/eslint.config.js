@@ -8,7 +8,8 @@ export default tseslint.config(
   {
     ignores: [
       'dist',
-      'convex/_generated/**'
+      'convex/_generated/**',
+      'src/components/ui/**'
     ]
   },
   {
