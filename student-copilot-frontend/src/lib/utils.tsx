@@ -17,3 +17,4 @@ export const renderTriggerCard = (title: string, description: string) => (
   </Card>
 );
 
+

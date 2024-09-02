@@ -12,19 +12,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { DialogClose } from '@radix-ui/react-dialog';
+import { ModuleFormValues } from './add-module-card';
 
-
-interface ModuleFormValues {
-  name: string;
-  department: string;
-  credits: number;
-  image: FileList | null;
-  semester: string;
-  year: string;
-  description: string;
-  prerequisites: string[];
-  instructors: string[];
-}
 interface ModuleFormProps {
   form: UseFormReturn<ModuleFormValues>;
   onSubmit: (values: ModuleFormValues) => Promise<void>;

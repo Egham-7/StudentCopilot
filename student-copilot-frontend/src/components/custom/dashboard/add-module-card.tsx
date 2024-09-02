@@ -48,12 +48,14 @@ const formSchema = z.object({
   instructors: z.array(z.string()).min(1, { message: "At least one instructor is required." }),
 });
 
+export type ModuleFormValues = z.infer<typeof formSchema>
+
 const AddModuleCard: React.FC = () => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const generateUploadUrl = useMutation(api.uploads.generateUploadUrl);
   const storeModule = useMutation(api.modules.store);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<ModuleFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -67,7 +69,7 @@ const AddModuleCard: React.FC = () => {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: ModuleFormValues) => {
     try {
       let storageId = null;
       if (values.image instanceof FileList) {

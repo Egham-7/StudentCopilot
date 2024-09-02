@@ -27,6 +27,8 @@ import { ModuleForm } from './module-form';
 import { api } from "../../../../convex/_generated/api.js";
 import { Id } from 'convex/_generated/dataModel.js';
 import { Edit } from 'lucide-react';
+import { ModuleFormValues } from './add-module-card.js';
+
 
 const MAX_FILE_SIZE = 5000000; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -58,7 +60,7 @@ const EditModuleCard: React.FC<EditModuleCardProps> = ({ module }) => {
   const generateUploadUrl = useMutation(api.uploads.generateUploadUrl);
   const updateModule = useMutation(api.modules.update);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<ModuleFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       ...module,
@@ -67,7 +69,7 @@ const EditModuleCard: React.FC<EditModuleCardProps> = ({ module }) => {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: ModuleFormValues) => {
     try {
       let storageId = module.image;
 
