@@ -22,4 +22,25 @@ export default defineSchema({
     )
 
   }).index("by_clerkId", ["clerkId"]),
+
+  modules: defineTable({
+    name: v.string(),
+    department: v.string(),
+    credits: v.number(),
+    image: v.optional(v.string()), // Store image URL instead of bytes
+    userId: v.string(),
+    semester: v.union(
+      v.literal("Fall"),
+      v.literal("Spring"),
+      v.literal("Summer")
+    ),
+    year: v.string(),
+    description: v.optional(v.string()),
+    prerequisites: v.optional(v.array(v.string())),
+    instructors: v.array(v.string()),
+
+
+  })
+    .index("by_name", ["name"])
+    .index("by_userId", ["userId"]),
 });

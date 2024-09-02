@@ -3,39 +3,37 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 
-// Import the layouts
 import RootLayout from './layouts/root-layout'
 import DashboardLayout from './layouts/dashboard-layout'
 
-// Import the components
 import IndexPage from './routes'
 import SignInPage from './routes/sign-in'
 import SignUpPage from './routes/sign-up'
 import OnboardingFormPage from './routes/onboarding-form'
 import FormLayout from './layouts/form-layout'
+import DashboardPage from './routes/dashboard'
 
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
       { path: '/', element: <IndexPage /> },
-      { path: '/sign-in/*', element: <SignInPage /> },
-      { path: '/sign-up/*', element: <SignUpPage /> },
-
+      { path: 'sign-in/*', element: <SignInPage /> },
+      { path: 'sign-up/*', element: <SignUpPage /> },
 
       {
-        path: '/onboarding/*',
+        path: 'onboarding',
         element: <FormLayout />,
         children: [
-          { path: '/onboarding/*', element: <OnboardingFormPage /> }
-
+          { path: '*', element: <OnboardingFormPage /> }
         ],
       },
 
       {
-        path: '/dashboard/*',
+        path: 'dashboard',
         element: <DashboardLayout />,
         children: [
+          { path: 'home', element: <DashboardPage /> }
         ],
       },
     ],
@@ -47,3 +45,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <RouterProvider router={router} />
   </React.StrictMode>,
 )
+
