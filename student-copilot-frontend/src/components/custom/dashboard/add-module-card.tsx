@@ -25,7 +25,8 @@ import { Button } from "@/components/ui/button";
 import { useMutation } from 'convex/react';
 import { ModuleForm } from './module-form';
 import { api } from "../../../../convex/_generated/api.js";
-import { renderTriggerCard } from '@/lib/utils';
+import { renderTriggerCard } from '@/lib/ui_utils.js';
+
 
 const MAX_FILE_SIZE = 5000000; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];

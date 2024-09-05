@@ -12,6 +12,8 @@ import SignUpPage from './routes/sign-up'
 import OnboardingFormPage from './routes/onboarding-form'
 import FormLayout from './layouts/form-layout'
 import DashboardPage from './routes/dashboard'
+import ModulePage from './routes/module-page'
+
 
 const router = createBrowserRouter([
   {
@@ -33,7 +35,8 @@ const router = createBrowserRouter([
         path: 'dashboard',
         element: <DashboardLayout />,
         children: [
-          { path: 'home', element: <DashboardPage /> }
+          { path: 'home', element: <DashboardPage /> },
+          { path: 'module/:moduleId', element: <ModulePage /> }
         ],
       },
     ],

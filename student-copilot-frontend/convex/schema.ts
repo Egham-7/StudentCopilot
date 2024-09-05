@@ -41,6 +41,25 @@ export default defineSchema({
 
 
   })
-    .index("by_name", ["name"])
     .index("by_userId", ["userId"]),
+
+  lectures: defineTable({
+
+    title: v.string(),
+    description: v.optional(v.string()),
+    videoUrl: v.string(),
+    moduleId: v.string(),
+    completed: v.boolean(),
+    lectureTranscription: v.array(v.id("_storage")),
+    lectureTranscriptionEmbedding: v.array(v.float64())
+  })
+    .index("by_moduleId", ["moduleId"])
+    .vectorIndex("by_lectureTranscriptionEmbedding", {
+
+      vectorField: "lectureTranscriptionEmbedding",
+      dimensions: 1536,
+      filterFields: ["moduleId"]
+
+    })
+
 });
