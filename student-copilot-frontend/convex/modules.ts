@@ -102,6 +102,41 @@ export const deleteModule = mutation({
 });
 
 
+export const getById = query({
+  args: { id: v.id("modules") },
+
+  handler: async (ctx, args) => {
+
+
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+
+      throw new Error("Tried to fetch module info without authentication present.")
+
+    }
+
+    const moduleUser = await ctx.db.get(args.id);
+
+
+    if (!moduleUser) {
+
+      throw new Error("Module not found.");
+    }
+
+
+    if (moduleUser.userId !== identity.subject) {
+
+      throw new Error("Not authorized to view this module.");
+    }
+
+    return moduleUser;
+
+
+  }
+})
+
+
 
 
 export const queryByUserId = query({

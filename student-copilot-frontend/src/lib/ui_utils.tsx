@@ -1,11 +1,6 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
 import { CardContent, Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
 
 export const renderTriggerCard = (title: string, description: string) => (
   <Card className="cursor-pointer hover:bg-accent transition-colors duration-200 flex items-center justify-center h-full" >
@@ -16,5 +11,6 @@ export const renderTriggerCard = (title: string, description: string) => (
     </CardContent>
   </Card>
 );
+
 
 

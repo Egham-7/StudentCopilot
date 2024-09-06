@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,19 +25,6 @@ const DashboardPage: React.FC = () => {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const { isLoading, error, userInfo } = useUserInfo();
   const modules = useQuery(api.modules.queryByUserId)
-
-
-
-  useEffect(() => {
-
-    console.log("Modules: ", modules);
-
-
-
-  }, [modules])
-
-
-
 
 
 
