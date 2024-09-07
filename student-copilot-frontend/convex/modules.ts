@@ -1,6 +1,7 @@
 import { Id } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 // Store a new module
 export const store = mutation({
@@ -25,9 +26,17 @@ export const store = mutation({
 
     const userId = identity.subject;
 
+
     const moduleId = await ctx.db.insert("modules", {
       ...args,
       userId,
+    });
+
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId,
+      message: `New module "${args.name}" has been created`,
+      type: "new_module",
+      relatedId: moduleId,
     });
 
     return moduleId;
@@ -70,23 +79,27 @@ export const update = mutation({
 
     await ctx.db.patch(id, updateFields);
 
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId: existingModule.userId,
+      message: `Module "${existingModule.name}" has been updated`,
+      type: "module_updated",
+      relatedId: id,
+    });
+
     return id;
   },
 });
 
-// Delete a module
-export const deleteModule = mutation({
-  args: { id: v.id("modules") },
 
+export const deleteModule = mutation({
+  args: { moduleId: v.id("modules") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
-      throw new Error("Called deleteModule without authentication present");
+      throw new Error("Called scheduleModuleDeletion without authentication present");
     }
 
-    const existingModule = await ctx.db.get(args.id);
-
+    const existingModule = await ctx.db.get(args.moduleId);
     if (!existingModule) {
       throw new Error("Module not found");
     }
@@ -95,12 +108,49 @@ export const deleteModule = mutation({
       throw new Error("Not authorized to delete this module");
     }
 
-    await ctx.db.delete(args.id);
+    // Schedule the deletion
+    await ctx.scheduler.runAfter(0, internal.modules.deleteModuleAndRelatedData, { moduleId: args.moduleId });
 
-    return args.id;
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId: existingModule.userId,
+      message: `Module "${existingModule.name}" has been deleted`,
+      type: "module_deleted",
+      relatedId: args.moduleId,
+    });
+
+    return args.moduleId;
   },
 });
 
+export const deleteModuleAndRelatedData = internalMutation({
+  args: { moduleId: v.id("modules") },
+  handler: async (ctx, args) => {
+    // Query all lectures associated with this module
+    const lectures = await ctx.db
+      .query("lectures")
+      .withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId))
+      .collect();
+
+    // Delete lectures and their associated videos
+    for (const lecture of lectures) {
+      // Delete the video from storage
+      if (lecture.videoUrl) {
+        await ctx.storage.delete(lecture.videoUrl);
+      }
+
+      // Delete lecture transcriptions from storage
+      for (const transcriptionId of lecture.lectureTranscription) {
+        await ctx.storage.delete(transcriptionId);
+      }
+
+      // Delete the lecture from the database
+      await ctx.db.delete(lecture._id);
+    }
+
+    // Delete the module
+    await ctx.db.delete(args.moduleId);
+  },
+});
 
 export const getById = query({
   args: { id: v.id("modules") },
@@ -151,7 +201,7 @@ export const queryByUserId = query({
 
     const modules = await ctx.db
       .query("modules")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId as Id<"users">))
       .order("desc")
       .collect();
 

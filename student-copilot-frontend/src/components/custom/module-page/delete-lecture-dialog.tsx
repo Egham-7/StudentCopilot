@@ -26,15 +26,15 @@ import { Id } from 'convex/_generated/dataModel';
 import { Trash2 } from 'lucide-react';
 
 interface DeleteModuleDialogProps {
-  moduleId: Id<"modules">
+  lectureId: Id<"lectures">
 }
 
-const DeleteModuleDialog: React.FC<DeleteModuleDialogProps> = ({ moduleId }) => {
+const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({ lectureId }) => {
   const isMobile = useMediaQuery("(max-width: 640px)");
-  const deleteModule = useMutation(api.modules.deleteModule);
+  const deleteLecture = useMutation(api.lectures.deleteLecture);
 
   const onDelete = async () => {
-    await deleteModule({ moduleId: moduleId });
+    await deleteLecture({ id: lectureId });
   };
 
   const content = (
@@ -42,7 +42,7 @@ const DeleteModuleDialog: React.FC<DeleteModuleDialogProps> = ({ moduleId }) => 
       <DialogHeader className="space-y-2">
         <DialogTitle className="text-2xl font-bold text-foreground">Are you absolutely sure?</DialogTitle>
         <DialogDescription className="text-muted-foreground">
-          This action cannot be undone. This will permanently delete your module
+          This action cannot be undone. This will permanently delete your lecture
           and remove your data from our servers.
         </DialogDescription>
       </DialogHeader>
@@ -104,5 +104,6 @@ const DeleteModuleDialog: React.FC<DeleteModuleDialogProps> = ({ moduleId }) => 
   );
 };
 
-export default DeleteModuleDialog;
+export default DeleteLectureDialog;
+
 

@@ -15,10 +15,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BookOpen, MoreVertical, Search, Users, Plus } from "lucide-react";
+import { BookOpen, MoreVertical, Search, Users, Plus, Trash2 } from "lucide-react";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { useParams } from "react-router-dom";
 import UploadLectureForm from "@/components/custom/module-page/upload-lecture-form";
+import DeleteLectureDialog from "@/components/custom/module-page/delete-lecture-dialog";
 
 type SearchableKeys = 'title' | 'description' | 'transcription';
 
@@ -37,10 +38,18 @@ export default function ModulePage() {
 
   const updateLectureCompletion = useMutation(api.lectures.updateLectureCompletion);
   const searchLecturesByTranscription = useAction(api.lectures.searchLecturesByTranscription);
+  const deleteLecture = useMutation(api.lectures.deleteLecture);
 
   const handleLectureCompletion = async (lectureId: Id<"lectures">, completed: boolean) => {
     await updateLectureCompletion({ id: lectureId, completed });
   };
+
+  const handleDeleteLecture = async (lectureId: Id<"lectures">) => {
+
+    await deleteLecture({ id: lectureId });
+
+
+  }
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
@@ -179,12 +188,19 @@ export default function ModulePage() {
                   <CardHeader className="flex justify-between items-center flex-row">
                     <CardTitle>{lecture.title}</CardTitle>
 
-                    <Button variant="ghost" size="sm">
-                      <BookOpen className="w-4 h-4 mr-2" />
-                      View
-                    </Button>
+
+                    <div className="space-x-4">
+                      <Button variant="ghost" size="sm">
+                        <BookOpen className="w-4 h-4 mr-2" />
+                        View
+
+                      </Button>
+
+                      <DeleteLectureDialog lectureId={lecture._id} />
+                    </div>
 
                   </CardHeader>
+
                   <CardContent>
                     <p className="text-muted-foreground">{lecture.description ?? ""}</p>
                   </CardContent>

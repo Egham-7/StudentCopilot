@@ -112,15 +112,8 @@ const EditModuleCard: React.FC<EditModuleCardProps> = ({ module }) => {
 
   const content = (
     <>
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Edit Module</h2>
-          <p className="text-sm text-muted-foreground">
-            Update the details for this module. Click save when you're done.
-          </p>
-        </div>
-        <ModuleForm form={form} onSubmit={onSubmit} />
-      </div>
+
+      <ModuleForm form={form} onSubmit={onSubmit} />
     </>
   );
 

@@ -47,8 +47,8 @@ export default defineSchema({
 
     title: v.string(),
     description: v.optional(v.string()),
-    videoUrl: v.string(),
-    moduleId: v.string(),
+    videoUrl: v.id("_storage"),
+    moduleId: v.id("modules"),
     completed: v.boolean(),
     lectureTranscription: v.array(v.id("_storage")),
     lectureTranscriptionEmbedding: v.array(v.float64())
@@ -60,6 +60,17 @@ export default defineSchema({
       dimensions: 1536,
       filterFields: ["moduleId"]
 
-    })
+    }),
+
+  notifications: defineTable({
+    userId: v.string(),
+    message: v.string(),
+    type: v.string(),
+    relatedId: v.optional(v.string()),
+    createdAt: v.string(),
+    isRead: v.boolean(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_createdAt", ["createdAt"]),
 
 });

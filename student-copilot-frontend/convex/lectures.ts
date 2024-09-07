@@ -1,7 +1,9 @@
-import { query, mutation, action } from "./_generated/server";
+import { query, mutation, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { generateEmbedding, transcribeAudioChunk } from "./ai";
 import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
+
 
 export const getLecturesByModuleId = query({
   args: { moduleId: v.id("modules") },
@@ -16,6 +18,44 @@ export const getLecturesByModuleId = query({
 export const updateLectureCompletion = mutation({
   args: { id: v.id("lectures"), completed: v.boolean() },
   handler: async (ctx, args) => {
+
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Called getUser without authentication present.");
+    }
+
+    const lecture = await ctx.db
+      .query("lectures")
+      .filter(q => q.eq(q.field("_id"), args.id))
+      .first()
+
+
+    if (lecture == null) {
+      throw new Error("Lecture not allowed to be null.");
+    }
+
+    const moduleId = lecture.moduleId;
+
+    const moduleUser = await ctx.db.query("modules").filter(q => q.eq(q.field("_id"), moduleId)).first()
+
+    if (moduleUser == null) {
+      throw new Error("Module not allowed to be null.");
+    }
+
+
+    if (moduleUser.userId != identity.subject) {
+      throw new Error("You are not authorized to modify this lecture.");
+    }
+
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId: moduleUser.userId,
+      message: `Lecture "${lecture.title}" has been marked as ${args.completed ? 'completed' : 'incomplete'}`,
+      type: "lecture_completion_update",
+      relatedId: args.id,
+    });
+
+
     await ctx.db.patch(args.id, { completed: args.completed });
   },
 });
@@ -28,6 +68,13 @@ export const searchLecturesByTranscription = action({
   },
 
   handler: async (ctx, args) => {
+
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Called getUser without authentication present.");
+    }
+
     // Generate embedding for the query
     const embedding = await generateEmbedding(args.query);
 
@@ -59,7 +106,31 @@ export const store = mutation({
   handler: async (ctx, args) => {
 
 
-    ctx.db.insert("lectures", {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Called getUser without authentication present.");
+    }
+
+
+    const module = await ctx.db
+      .query("modules")
+      .filter(q => q.eq(q.field("_id"), args.moduleId))
+      .first()
+
+
+    if (module == null) {
+      throw new Error("Module not allowed to be null.");
+    }
+
+
+    if (module.userId != identity.subject) {
+      throw new Error("You are not allowed to upload lectures to this module.");
+    }
+
+
+
+    const lectureId = await ctx.db.insert("lectures", {
       title: args.title,
       description: args.description,
       videoUrl: args.videoStorageId,
@@ -70,6 +141,87 @@ export const store = mutation({
 
     })
 
+    // Schedule notification
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId: module.userId,
+      message: `New lecture "${args.title}" has been added to the module`,
+      type: "new_lecture",
+      relatedId: lectureId,
+    });
+
+
+  }
+})
+
+export const deleteLecture = mutation({
+
+  args: {
+    id: v.id("lectures")
+  },
+
+  handler: async (ctx, args) => {
+
+
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Called getUser without authentication present.");
+    }
+
+
+
+    const lecture = await ctx.db.get(args.id);
+
+
+    if (lecture == null) {
+      throw new Error("Lecture is not found.");
+    }
+
+
+    const moduleId = lecture.moduleId;
+
+    const moduleUser = await ctx.db.get(moduleId);
+
+
+    if (moduleUser == null) {
+      throw new Error("Module cannot be null.");
+    }
+
+
+    if (moduleUser.userId != identity.subject) {
+      throw new Error("Not authorized to delete this module.");
+    }
+
+
+    await ctx.scheduler.runAfter(0, internal.lectures.deleteLectureVideo, { videoId: lecture.videoUrl })
+
+
+
+    await ctx.db.delete(lecture._id);
+
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId: moduleUser.userId,
+      message: `Lecture "${lecture.title}" has been deleted`,
+      type: "lecture_deleted",
+      relatedId: args.id,
+    });
+
+
+    return args.id;
+
+  }
+})
+
+export const deleteLectureVideo = internalMutation({
+
+  args: {
+    videoId: v.id("_storage")
+  },
+
+  handler: async (ctx, args) => {
+
+
+    await ctx.storage.delete(args.videoId);
   }
 })
 
@@ -87,7 +239,6 @@ export const extractAudioAndTranscribe = action({
     // Generate embedding for the transcription
     const embedding = await generateEmbedding(transcription);
 
-    const paddedEmbedding = embedding.concat(Array(1536 - embedding.length).fill(0));
 
     // Store the transcription
     const uploadUrl = await ctx.storage.generateUploadUrl();
@@ -104,6 +255,6 @@ export const extractAudioAndTranscribe = action({
     const uploadResult = await transcriptionResult.json();
     const storageId = uploadResult.storageId as Id<"_storage">;
 
-    return { storageId, paddedEmbedding };
+    return { storageId, embedding };
   }
 });

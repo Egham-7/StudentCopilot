@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Filter } from "lucide-react";
 import { Doc } from "../../convex/_generated/dataModel";
 import { useUserInfo } from "@/hooks/users";
@@ -11,6 +11,7 @@ import AddModuleCard from "@/components/custom/dashboard/add-module-card";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api.js"
 import ModuleCard from "@/components/custom/dashboard/module-card.js";
+import { UserNotifications } from "@/components/custom/dashboard/user-notifications.js";
 
 
 const filterConfig = [
@@ -81,6 +82,15 @@ const DashboardPage: React.FC = () => {
           </p>
         </header>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Notifications</CardTitle>
+          </CardHeader>
+          <CardContent className="h-96 overflow-scroll md:h-full">
+            <UserNotifications />
+          </CardContent>
+        </Card>
+
         <Card className="overflow-hidden bg-card text-card-foreground">
           <CardContent className="p-6 sm:p-8">
             <div className="flex flex-col gap-4">
@@ -146,10 +156,6 @@ const DashboardPage: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
-
-
-
 
 
 

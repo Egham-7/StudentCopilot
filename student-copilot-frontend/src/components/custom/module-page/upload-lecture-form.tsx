@@ -13,7 +13,8 @@ import { useAction, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Id } from 'convex/_generated/dataModel';
 import { useToast } from '@/components/ui/use-toast';
-import { MultiStepLoader } from '../multi-step-loader';
+import AnimatedCircularProgressBar from '@/components/magicui/animated-circular-progress-bar';
+
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 20 MB in bytes
 
@@ -46,6 +47,8 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [isOpen, setIsOpen] = useState(false);
+
+  const [uploadProgress, setUploadProgress] = useState(0.0);
   const generateUploadUrl = useMutation(api.uploads.generateUploadUrl);
   const storeLecture = useMutation(api.lectures.store);
 
@@ -59,16 +62,11 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
   });
 
 
-  const loadingStates = [
-    { text: "Extracting audio..." },
-    { text: "Transcribing..." },
-    { text: "Generating embeddings..." },
-    { text: "Uploading video..." },
-    { text: "Storing lecture..." },
-  ];
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
+    setUploadProgress(0);
+
 
     try {
       const file = values.video;
@@ -76,6 +74,8 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
       const totalChunks = Math.ceil(file.size / chunkSize);
 
       let combinedEmbedding = new Array(1536).fill(0);
+      let uploadedChunks = 0;
+
       const allStorageIds: Id<"_storage">[] = [];
 
       for (let i = 0; i < totalChunks; i++) {
@@ -86,13 +86,18 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
         // Convert chunk to ArrayBuffer
         const arrayBuffer = await chunk.arrayBuffer();
 
-        const { storageId, paddedEmbedding } = await extractAudioAndTranscribe({
+        const { storageId, embedding } = await extractAudioAndTranscribe({
           videoChunk: arrayBuffer,
           chunkIndex: i,
         });
 
         allStorageIds.push(storageId);
-        combinedEmbedding = combinedEmbedding.map((val, index) => val + paddedEmbedding[index]);
+        combinedEmbedding = combinedEmbedding.map((val, index) => val + embedding[index]);
+
+        uploadedChunks++;
+        setUploadProgress(Math.round((uploadedChunks / totalChunks) * 100));
+
+
 
 
       }
@@ -197,16 +202,24 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
 
   const content = (
     <>
-      {formContent}
-      <MultiStepLoader
-        loadingStates={loadingStates}
-        loading={isLoading}
-        duration={60000}
-        loop={true}
-      />
-    </>
-  );
+      {!isLoading && formContent}
 
+      {isLoading && (
+        <div className="mt-4 flex flex-col items-center">
+          <AnimatedCircularProgressBar
+            max={100}
+            min={0}
+            value={uploadProgress}
+            gaugePrimaryColor="rgb(79 70 229)"
+            gaugeSecondaryColor="rgba(0, 0, 0, 0.1)"
+          />
+          <p className="mt-2 text-sm text-gray-500">
+            Uploading: {uploadProgress}%
+          </p>
+        </div>
+      )}
+    </>
+  )
   if (isDesktop) {
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

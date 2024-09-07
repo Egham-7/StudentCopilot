@@ -15,7 +15,6 @@ export default function DashboardLayout() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />
   }
 
   return (
@@ -26,7 +25,7 @@ export default function DashboardLayout() {
             <SidebarLink
               link={{
                 label: "Home",
-                href: "/dashboard",
+                href: "/dashboard/home",
                 icon: <IconHome size={24} />
               }}
             />

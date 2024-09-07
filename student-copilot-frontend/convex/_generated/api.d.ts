@@ -16,6 +16,7 @@ import type {
 import type * as ai from "../ai.js";
 import type * as lectures from "../lectures.js";
 import type * as modules from "../modules.js";
+import type * as notifications from "../notifications.js";
 import type * as uploads from "../uploads.js";
 import type * as users from "../users.js";
 
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   lectures: typeof lectures;
   modules: typeof modules;
+  notifications: typeof notifications;
   uploads: typeof uploads;
   users: typeof users;
 }>;
