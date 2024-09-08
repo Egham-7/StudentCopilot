@@ -15,11 +15,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BookOpen, MoreVertical, Search, Users, Plus } from "lucide-react";
+import { BookOpen, MoreVertical, Search, Users, Plus, Check } from "lucide-react";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { useParams } from "react-router-dom";
 import UploadLectureForm from "@/components/custom/module-page/upload-lecture-form";
 import DeleteLectureDialog from "@/components/custom/module-page/delete-lecture-dialog";
+import { FileText } from "lucide-react";
 
 type SearchableKeys = 'title' | 'description' | 'transcription';
 
@@ -30,6 +31,7 @@ export default function ModulePage() {
   const [isVectorSearching, setIsVectorSearching] = useState(false);
   const [filteredLectures, setFilteredLectures] = useState<Id<"lectures">[]>([]);
   const [showAllLectures, setShowAllLectures] = useState(false);
+  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>([]);
 
   const moduleUser = useQuery(api.modules.getById, moduleId ? { id: moduleId as Id<"modules"> } : "skip");
   const lectures = useQuery(api.lectures.getLecturesByModuleId, moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip");
@@ -43,7 +45,20 @@ export default function ModulePage() {
     await updateLectureCompletion({ id: lectureId, completed });
   };
 
+  const handleGenerateNotes = () => {
 
+    console.log("Generating notes");
+  }
+
+  const handleSelectLecture = (lectureId: Id<"lectures">) => {
+    setSelectedLectures((prev) => {
+      if (prev.includes(lectureId)) {
+        return prev.filter(id => id !== lectureId);
+      } else {
+        return [...prev, lectureId];
+      }
+    });
+  };
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
@@ -170,32 +185,60 @@ export default function ModulePage() {
 
       <div>
         <Tabs defaultValue="lectures">
-          <TabsList>
-            <TabsTrigger value="lectures">Lectures</TabsTrigger>
-            <TabsTrigger value="resources">Resources</TabsTrigger>
-            <TabsTrigger value="discussions">Discussions</TabsTrigger>
-          </TabsList>
+
+          <div className="flex flex-col justify-between items-start gap-4 p-2 md:flex-row md:items-center">
+
+            <TabsList>
+              <TabsTrigger value="lectures">Lectures</TabsTrigger>
+              <TabsTrigger value="resources">Resources</TabsTrigger>
+              <TabsTrigger value="discussions">Discussions</TabsTrigger>
+            </TabsList>
+
+
+            {selectedLectures.length > 0 && (
+
+              <div className="flex space-x-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">Actions</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={handleGenerateNotes}>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Generate Notes
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+
+            )}
+          </div>
+
+
           <TabsContent value="lectures" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {visibleLectures.map((lecture) => (
-                <Card key={lecture._id}>
+                <Card
+                  key={lecture._id}
+                  className={`relative ${selectedLectures.includes(lecture._id) ? 'border-primary border-2' : ''}`}
+                >
+                  {selectedLectures.includes(lecture._id) && (
+                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                      <Check className="w-4 h-4" />
+                    </div>
+                  )}
                   <CardHeader className="flex justify-between items-center flex-row">
                     <CardTitle>{lecture.title}</CardTitle>
-
-
                     <div className="space-x-4">
                       <Button variant="ghost" size="sm">
                         <BookOpen className="w-4 h-4 mr-2" />
                         View
-
                       </Button>
-
                       <DeleteLectureDialog lectureId={lecture._id} />
                     </div>
-
                   </CardHeader>
-
-                  <CardContent>
+                  <CardContent onClick={() => handleSelectLecture(lecture._id)} className="hover:cursor-pointer">
                     <p className="text-muted-foreground">{lecture.description ?? ""}</p>
                   </CardContent>
                   <CardFooter className="flex justify-between items-center p-3 gap-2">

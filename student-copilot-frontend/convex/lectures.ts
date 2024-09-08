@@ -1,6 +1,6 @@
 import { query, mutation, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import { generateEmbedding, transcribeAudioChunk } from "./ai";
+import { extractAudioFromVideo, generateEmbedding, transcribeAudioChunk } from "./ai";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 
@@ -226,15 +226,32 @@ export const deleteLectureVideo = internalMutation({
 })
 
 
-export const extractAudioAndTranscribe = action({
+export const extractAudio = action({
+
   args: {
-    videoChunk: v.bytes(),
+    videoChunk: v.bytes()
+  },
+
+  handler: async (ctx, args) => {
+
+    const audioBuffer = await extractAudioFromVideo(args.videoChunk);
+
+
+    return audioBuffer;
+
+  }
+})
+
+
+export const transcribeAudio = action({
+  args: {
+    audioChunk: v.bytes(),
     chunkIndex: v.number(),
   },
   handler: async (ctx, args) => {
 
 
-    const transcription = await transcribeAudioChunk(args.videoChunk);
+    const transcription = await transcribeAudioChunk(args.audioChunk);
 
     // Generate embedding for the transcription
     const embedding = await generateEmbedding(transcription);

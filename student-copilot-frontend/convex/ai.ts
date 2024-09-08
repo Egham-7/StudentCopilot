@@ -46,13 +46,12 @@ export function splitAudioIntoChunks(audioBuffer: ArrayBuffer): ArrayBuffer[] {
 }
 
 
+
 interface ExtractAudioOptions {
   startTime?: string;
   duration?: string;
   outputFormat?: 'mp3' | 'wav' | 'aac' | 'ogg' | 'flac' | 'wma' | 'ac3' | 'amr';
 }
-
-
 
 export async function extractAudioFromVideo(
   videoBuffer: ArrayBuffer,
@@ -66,25 +65,33 @@ export async function extractAudioFromVideo(
     throw new Error('APY_TOKEN environment variable is not set');
   }
 
+  if (videoBuffer.byteLength === 0) {
+    throw new Error('Video buffer is empty');
+  }
+
+  const formData = new FormData();
+  formData.append('video', new Blob([videoBuffer]), 'video.mp4');
+
+  if (options.startTime) formData.append('start_time', options.startTime);
+  if (options.duration) formData.append('duration', options.duration);
+  if (options.outputFormat) formData.append('output_format', options.outputFormat);
+
   const params = new URLSearchParams();
   params.append('output', outputFileName);
-  if (options.startTime) params.append('start_time', options.startTime);
-  if (options.duration) params.append('duration', options.duration);
-  if (options.outputFormat) params.append('output_format', options.outputFormat);
 
   const response = await fetch(`${apiUrl}?${params.toString()}`, {
     method: 'POST',
     headers: {
       'apy-token': token,
-      'Content-Type': 'application/octet-stream',
     },
-    body: videoBuffer
+    body: formData
   });
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(`HTTP error! status: ${await response.text()}`);
+
+
   }
 
   return response.arrayBuffer();
 }
-

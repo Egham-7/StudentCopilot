@@ -16,22 +16,29 @@ import { useToast } from '@/components/ui/use-toast';
 import AnimatedCircularProgressBar from '@/components/magicui/animated-circular-progress-bar';
 
 
-const MAX_FILE_SIZE = 200 * 1024 * 1024; // 20 MB in bytes
+const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB in bytes
 
-const ACCEPTED_VIDEO_TYPES = [
+
+
+const ACCEPTED_FILE_TYPES = [
   "audio/mpeg", // MP3 files
-  "audio/mp3"
+  "audio/mp3",
+  "audio/wav",
+  "audio/ogg",
+  "video/mp4",
+  "video/webm",
+  "video/ogg"
 ];
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   moduleId: z.string().min(1, 'Module ID is required'),
-  video: z.instanceof(File)
+  file: z.instanceof(File)
     .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is 200MB.`)
     .refine(
-      (file) => ACCEPTED_VIDEO_TYPES.includes(file.type),
-      "Only video files are accepted."
+      (file) => ACCEPTED_FILE_TYPES.includes(file.type),
+      "Only audio and video files are accepted."
     ),
 });
 
@@ -41,7 +48,8 @@ interface UploadLectureFormProps {
 
 const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const extractAudioAndTranscribe = useAction(api.lectures.extractAudioAndTranscribe);
+  const transcribeAudio = useAction(api.lectures.transcribeAudio);
+  const extractAudio = useAction(api.lectures.extractAudio);
 
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +77,7 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
 
 
     try {
-      const file = values.video;
+      const file = values.file;
       const chunkSize = 2 * 1024 * 1024; // 2MB chunks
       const totalChunks = Math.ceil(file.size / chunkSize);
 
@@ -82,12 +90,22 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
         const start = i * chunkSize;
         const end = Math.min(start + chunkSize, file.size);
         const chunk = file.slice(start, end);
+        let arrayBuffer = await chunk.arrayBuffer();
 
-        // Convert chunk to ArrayBuffer
-        const arrayBuffer = await chunk.arrayBuffer();
 
-        const { storageId, embedding } = await extractAudioAndTranscribe({
-          videoChunk: arrayBuffer,
+        if (file.type.startsWith("video/")) {
+
+          console.log("Got a video");
+
+          arrayBuffer = await extractAudio({
+            videoChunk: arrayBuffer
+          });
+
+        }
+
+
+        const { storageId, embedding } = await transcribeAudio({
+          audioChunk: arrayBuffer,
           chunkIndex: i,
         });
 
@@ -180,7 +198,7 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
         />
         <FormField
           control={form.control}
-          name="video"
+          name="file"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Video File</FormLabel>
