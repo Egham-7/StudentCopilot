@@ -13,6 +13,7 @@ import OnboardingFormPage from './routes/onboarding-form'
 import FormLayout from './layouts/form-layout'
 import DashboardPage from './routes/dashboard'
 import ModulePage from './routes/module-page'
+import PricingPage from './routes/upgrade-plan-page'
 
 
 const router = createBrowserRouter([
@@ -36,7 +37,8 @@ const router = createBrowserRouter([
         element: <DashboardLayout />,
         children: [
           { path: 'home', element: <DashboardPage /> },
-          { path: 'module/:moduleId', element: <ModulePage /> }
+          { path: 'module/:moduleId', element: <ModulePage /> },
+          { path: 'upgrade-plan', element: <PricingPage /> }
         ],
       },
     ],
