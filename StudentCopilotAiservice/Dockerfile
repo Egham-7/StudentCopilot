@@ -32,5 +32,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY --chown=appuser:appuser ./code /app/code
 
 # Set the default command to run the FastAPI application
-CMD ["uvicorn", "code.MainController:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD uvicorn code.MainController:app --host 0.0.0.0 --port $PORT
 
