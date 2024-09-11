@@ -1,5 +1,6 @@
 import os
 import tempfile
+import uvicorn
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 
@@ -115,3 +116,7 @@ async def extract_audio_from_video(
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
