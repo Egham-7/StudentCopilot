@@ -145,7 +145,7 @@ export default function OnboardingFormPage() {
 
       console.log("User ID: ", id);
 
-      navigate('/dashboard', { replace: true });
+      navigate('/dashboard/home', { replace: true });
 
 
 
