@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BookOpen, MoreVertical, Search, Users, Plus, Check } from "lucide-react";
+import { BookOpen, MoreVertical, Search, Users, Check } from "lucide-react";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { useParams } from "react-router-dom";
 import UploadLectureForm from "@/components/custom/module-page/upload-lecture-form";
@@ -30,7 +30,6 @@ export default function ModulePage() {
   const [searchBy, setSearchBy] = useState<SearchableKeys>('title');
   const [isVectorSearching, setIsVectorSearching] = useState(false);
   const [filteredLectures, setFilteredLectures] = useState<Id<"lectures">[]>([]);
-  const [showAllLectures, setShowAllLectures] = useState(false);
   const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>([]);
 
   const moduleUser = useQuery(api.modules.getById, moduleId ? { id: moduleId as Id<"modules"> } : "skip");
@@ -97,7 +96,7 @@ export default function ModulePage() {
     ? lectures?.filter(lecture => filteredLectures.includes(lecture._id)) || []
     : lectures || [];
 
-  const visibleLectures = showAllLectures ? displayLectures : displayLectures.slice(0, 3);
+  const visibleLectures = displayLectures.slice(0, 6);
 
   return (
     <div className="container mx-auto p-3 md:p-6 space-y-8">
@@ -257,14 +256,6 @@ export default function ModulePage() {
                   </CardFooter>
                 </Card>
               ))}
-              {!showAllLectures && displayLectures.length > 3 && (
-                <Card className="flex items-center justify-center p-6 cursor-pointer" onClick={() => setShowAllLectures(true)}>
-                  <CardContent className="text-center">
-                    <Plus className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="font-semibold">View More Lectures</p>
-                  </CardContent>
-                </Card>
-              )}
               <Card className="flex items-center justify-center p-6">
                 <UploadLectureForm moduleId={moduleId as Id<"modules">} />
               </Card>
@@ -274,10 +265,9 @@ export default function ModulePage() {
           <TabsContent value="discussions">Discussions content here</TabsContent>
         </Tabs>
         <div className="flex justify-between items-center mt-4">
-          <Button variant="link" className="px-0" onClick={() => setShowAllLectures(!showAllLectures)}>
-            {showAllLectures ? "Show Less" : "View All Lectures"}
+          <Button variant="link" className="px-0" onClick={() => console.log("Navigate to lectures page.")}>
+            View more lectures
           </Button>
-          <div className="text-sm text-muted-foreground">Showing {visibleLectures.length} of {displayLectures.length} lectures</div>
         </div>
       </div>
     </div>
