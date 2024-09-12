@@ -59,7 +59,7 @@ export const extractAudio = action({
     videoChunk: v.bytes()
   },
 
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
 
     const audioBuffer = await extractAudioFromVideo(args.videoChunk);
 
