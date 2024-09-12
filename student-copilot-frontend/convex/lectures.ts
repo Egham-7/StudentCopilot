@@ -1,7 +1,6 @@
 import { query, mutation, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { generateEmbedding, transcribeAudioChunk } from "./ai";
-import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 
 
@@ -137,7 +136,8 @@ export const store = mutation({
       lectureTranscription: args.lectureTranscription,
       lectureTranscriptionEmbedding: args.lectureTranscriptionEmbedding,
       moduleId: args.moduleId,
-      completed: args.completed
+      completed: args.completed,
+      userId: identity.subject
 
     })
 
@@ -226,35 +226,32 @@ export const deleteLectureVideo = internalMutation({
 })
 
 
-export const extractAudioAndTranscribe = action({
+
+
+export const transcribeAudio = action({
   args: {
-    videoChunk: v.bytes(),
+    audioChunk: v.bytes(),
     chunkIndex: v.number(),
   },
+
   handler: async (ctx, args) => {
+    try {
+      // Transcribe the audio chunk
+      const transcription = await transcribeAudioChunk(args.audioChunk);
 
+      // Generate embedding for the transcription
+      const embedding = await generateEmbedding(transcription);
 
-    const transcription = await transcribeAudioChunk(args.videoChunk);
+      // Store the transcription as a Blob
+      const transcriptionBlob = new Blob([transcription], { type: 'text/plain' });
+      const storageId = await ctx.storage.store(transcriptionBlob);
 
-    // Generate embedding for the transcription
-    const embedding = await generateEmbedding(transcription);
-
-
-    // Store the transcription
-    const uploadUrl = await ctx.storage.generateUploadUrl();
-    const transcriptionResult = await fetch(uploadUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcription })
-    });
-
-    if (!transcriptionResult.ok) {
-      throw new Error('Failed to upload transcription');
+      // Return the results
+      return { storageId, embedding, chunkIndex: args.chunkIndex };
+    } catch (error) {
+      console.error("Error in transcribeAudio:", error);
+      throw new Error(`Failed to process audio chunk ${args.chunkIndex}: ${error}`);
     }
-
-    const uploadResult = await transcriptionResult.json();
-    const storageId = uploadResult.storageId as Id<"_storage">;
-
-    return { storageId, embedding };
-  }
+  },
 });
+

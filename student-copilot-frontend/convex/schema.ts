@@ -46,6 +46,7 @@ export default defineSchema({
   lectures: defineTable({
 
     title: v.string(),
+    userId: v.string(),
     description: v.optional(v.string()),
     videoUrl: v.id("_storage"),
     moduleId: v.id("modules"),
@@ -72,5 +73,11 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_createdAt", ["createdAt"]),
+
+
+  notes: defineTable({
+    lectureIds: v.array(v.id("lectures")),
+    textChunks: v.array(v.id("_storage"))
+  })
 
 });

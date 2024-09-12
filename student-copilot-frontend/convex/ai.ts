@@ -46,45 +46,66 @@ export function splitAudioIntoChunks(audioBuffer: ArrayBuffer): ArrayBuffer[] {
 }
 
 
-interface ExtractAudioOptions {
-  startTime?: string;
-  duration?: string;
-  outputFormat?: 'mp3' | 'wav' | 'aac' | 'ogg' | 'flac' | 'wma' | 'ac3' | 'amr';
+
+
+
+
+
+type ChatModel = 'gpt-4' | 'gpt-4-0314' | 'gpt-4-0613' | 'gpt-4-32k' | 'gpt-4-32k-0314' | 'gpt-4-32k-0613' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-16k' | 'gpt-3.5-turbo-0301' | 'gpt-3.5-turbo-0613' | 'gpt-3.5-turbo-16k-0613';
+
+interface ChatCompletionOptions {
+  model?: ChatModel;
+  temperature?: number;
+  max_tokens?: number;
+  top_p?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
+  stop?: string | string[];
+  stream?: boolean;
 }
 
+export async function callChatCompletionsAPI(
+  messages: OpenAI.Chat.ChatCompletionMessageParam[],
+  options: ChatCompletionOptions = {}
+): Promise<string> {
+  try {
+    const defaultOptions: ChatCompletionOptions = {
+      model: "gpt-3.5-turbo",
+      temperature: 0.7,
+      max_tokens: 150,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+      stream: false,
+    };
 
+    const mergedOptions = { ...defaultOptions, ...options, messages };
 
-export async function extractAudioFromVideo(
-  videoBuffer: ArrayBuffer,
-  outputFileName: string = 'test-sample',
-  options: ExtractAudioOptions = {}
-): Promise<ArrayBuffer> {
-  const apiUrl = 'https://api.apyhub.com/extract/video/audio/file';
-  const token = process.env.APY_TOKEN;
+    if (mergedOptions.stream) {
+      const stream = await openai.chat.completions.create({
+        ...mergedOptions,
+        stream: true,
+      } as OpenAI.Chat.ChatCompletionCreateParamsStreaming);
 
-  if (!token) {
-    throw new Error('APY_TOKEN environment variable is not set');
+      let fullContent = '';
+      for await (const chunk of stream) {
+        fullContent += chunk.choices[0]?.delta?.content || '';
+      }
+      return fullContent;
+    } else {
+      const response = await openai.chat.completions.create({
+        ...mergedOptions,
+        stream: false,
+      } as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming);
+
+      if (response.choices && response.choices.length > 0 && response.choices[0].message) {
+        return response.choices[0].message.content || '';
+      } else {
+        throw new Error('No response content received from the API');
+      }
+    }
+  } catch (error) {
+    console.error("Error calling Chat Completions API:", error);
+    throw error;
   }
-
-  const params = new URLSearchParams();
-  params.append('output', outputFileName);
-  if (options.startTime) params.append('start_time', options.startTime);
-  if (options.duration) params.append('duration', options.duration);
-  if (options.outputFormat) params.append('output_format', options.outputFormat);
-
-  const response = await fetch(`${apiUrl}?${params.toString()}`, {
-    method: 'POST',
-    headers: {
-      'apy-token': token,
-      'Content-Type': 'application/octet-stream',
-    },
-    body: videoBuffer
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  return response.arrayBuffer();
 }
-

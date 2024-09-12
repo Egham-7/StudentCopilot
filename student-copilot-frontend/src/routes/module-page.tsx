@@ -15,11 +15,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BookOpen, MoreVertical, Search, Users } from "lucide-react";
+import { BookOpen, MoreVertical, Search, Users, Check, Loader2 } from "lucide-react";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { useParams } from "react-router-dom";
 import UploadLectureForm from "@/components/custom/module-page/upload-lecture-form";
 import DeleteLectureDialog from "@/components/custom/module-page/delete-lecture-dialog";
+import { FileText } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 type SearchableKeys = 'title' | 'description' | 'transcription';
 
@@ -29,20 +31,56 @@ export default function ModulePage() {
   const [searchBy, setSearchBy] = useState<SearchableKeys>('title');
   const [isVectorSearching, setIsVectorSearching] = useState(false);
   const [filteredLectures, setFilteredLectures] = useState<Id<"lectures">[]>([]);
+  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>([]);
+  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+
 
   const moduleUser = useQuery(api.modules.getById, moduleId ? { id: moduleId as Id<"modules"> } : "skip");
   const lectures = useQuery(api.lectures.getLecturesByModuleId, moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip");
+
+  const updateLectureCompletion = useMutation(api.lectures.updateLectureCompletion);
+  const generateNotes = useMutation(api.notes.storeClient);
+
+
+  const searchLecturesByTranscription = useAction(api.lectures.searchLecturesByTranscription);
+
   const completedLectures = lectures?.filter(lecture => lecture.completed) || [];
   const progressPercentage = lectures ? (completedLectures.length / lectures.length) * 100 : 0;
 
-  const updateLectureCompletion = useMutation(api.lectures.updateLectureCompletion);
-  const searchLecturesByTranscription = useAction(api.lectures.searchLecturesByTranscription);
 
   const handleLectureCompletion = async (lectureId: Id<"lectures">, completed: boolean) => {
     await updateLectureCompletion({ id: lectureId, completed });
   };
 
+  const handleGenerateNotes = async () => {
+    setIsGeneratingNotes(true);
+    try {
+      await generateNotes({
+        lectureIds: selectedLectures
+      });
 
+      toast({
+        title: "Generated notes successfully.",
+        description: "We are just generating your notes! We will let you know when its done."
+      })
+    } catch (error) {
+      console.error("Failed to generate notes:", error);
+      // You might want to show an error message to the user
+    } finally {
+      setIsGeneratingNotes(false);
+    }
+  }
+
+
+  const handleSelectLecture = (lectureId: Id<"lectures">) => {
+    setSelectedLectures((prev) => {
+      if (prev.includes(lectureId)) {
+        return prev.filter(id => id !== lectureId);
+      } else {
+        return [...prev, lectureId];
+      }
+    });
+  };
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
@@ -169,32 +207,69 @@ export default function ModulePage() {
 
       <div>
         <Tabs defaultValue="lectures">
-          <TabsList>
-            <TabsTrigger value="lectures">Lectures</TabsTrigger>
-            <TabsTrigger value="resources">Resources</TabsTrigger>
-            <TabsTrigger value="discussions">Discussions</TabsTrigger>
-          </TabsList>
+
+          <div className="flex flex-col justify-between items-start gap-4 p-2 md:flex-row md:items-center">
+
+            <TabsList>
+              <TabsTrigger value="lectures">Lectures</TabsTrigger>
+              <TabsTrigger value="resources">Resources</TabsTrigger>
+              <TabsTrigger value="discussions">Discussions</TabsTrigger>
+            </TabsList>
+
+
+            {selectedLectures.length > 0 && (
+
+              <div className="flex space-x-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">Actions</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={handleGenerateNotes}>
+                      {isGeneratingNotes ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4 mr-2" />
+                          Generate Notes
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+
+            )}
+          </div>
+
+
           <TabsContent value="lectures" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {visibleLectures.map((lecture) => (
-                <Card key={lecture._id}>
+                <Card
+                  key={lecture._id}
+                  className={`relative ${selectedLectures.includes(lecture._id) ? 'border-primary border-2' : ''}`}
+                >
+                  {selectedLectures.includes(lecture._id) && (
+                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                      <Check className="w-4 h-4" />
+                    </div>
+                  )}
                   <CardHeader className="flex justify-between items-center flex-row">
                     <CardTitle>{lecture.title}</CardTitle>
-
-
                     <div className="space-x-4">
                       <Button variant="ghost" size="sm">
                         <BookOpen className="w-4 h-4 mr-2" />
                         View
-
                       </Button>
-
                       <DeleteLectureDialog lectureId={lecture._id} />
                     </div>
-
                   </CardHeader>
-
-                  <CardContent>
+                  <CardContent onClick={() => handleSelectLecture(lecture._id)} className="hover:cursor-pointer">
                     <p className="text-muted-foreground">{lecture.description ?? ""}</p>
                   </CardContent>
                   <CardFooter className="flex justify-between items-center p-3 gap-2">

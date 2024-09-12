@@ -15,23 +15,29 @@ import { Id } from 'convex/_generated/dataModel';
 import { useToast } from '@/components/ui/use-toast';
 import AnimatedCircularProgressBar from '@/components/magicui/animated-circular-progress-bar';
 
+const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB in bytes
 
-const MAX_FILE_SIZE = 200 * 1024 * 1024; // 20 MB in bytes
 
-const ACCEPTED_VIDEO_TYPES = [
+
+const ACCEPTED_FILE_TYPES = [
   "audio/mpeg", // MP3 files
-  "audio/mp3"
+  "audio/mp3",
+  "audio/wav",
+  "audio/ogg",
+  "video/mp4",
+  "video/webm",
+  "video/ogg"
 ];
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   moduleId: z.string().min(1, 'Module ID is required'),
-  video: z.instanceof(File)
+  file: z.instanceof(File)
     .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is 200MB.`)
     .refine(
-      (file) => ACCEPTED_VIDEO_TYPES.includes(file.type),
-      "Only video files are accepted."
+      (file) => ACCEPTED_FILE_TYPES.includes(file.type),
+      "Only audio and video files are accepted."
     ),
 });
 
@@ -41,7 +47,8 @@ interface UploadLectureFormProps {
 
 const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const extractAudioAndTranscribe = useAction(api.lectures.extractAudioAndTranscribe);
+  const transcribeAudio = useAction(api.lectures.transcribeAudio);
+  const extractAudio = useAction(api.uploads.extractAudio);
 
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -67,46 +74,46 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
     setIsLoading(true);
     setUploadProgress(0);
 
-
     try {
-      const file = values.video;
-      const chunkSize = 2 * 1024 * 1024; // 2MB chunks
-      const totalChunks = Math.ceil(file.size / chunkSize);
+      const file = values.file;
+      let audioBuffer: ArrayBuffer;
 
+      // If it's a video file, extract the audio first
+      if (file.type.startsWith("video/")) {
+        console.log("Processing video file");
+        const videoArrayBuffer = await file.arrayBuffer();
+        audioBuffer = await extractAudio({ videoChunk: videoArrayBuffer });
+      } else {
+        // If it's already an audio file, just read it
+        audioBuffer = await file.arrayBuffer();
+      }
+
+      const chunkSize = 2 * 1024 * 1024; // 2MB chunks
+      const totalChunks = Math.ceil(audioBuffer.byteLength / chunkSize);
       let combinedEmbedding = new Array(1536).fill(0);
       let uploadedChunks = 0;
-
       const allStorageIds: Id<"_storage">[] = [];
 
       for (let i = 0; i < totalChunks; i++) {
         const start = i * chunkSize;
-        const end = Math.min(start + chunkSize, file.size);
-        const chunk = file.slice(start, end);
+        const end = Math.min(start + chunkSize, audioBuffer.byteLength);
+        const chunk = audioBuffer.slice(start, end);
 
-        // Convert chunk to ArrayBuffer
-        const arrayBuffer = await chunk.arrayBuffer();
-
-        const { storageId, embedding } = await extractAudioAndTranscribe({
-          videoChunk: arrayBuffer,
+        const { storageId, embedding } = await transcribeAudio({
+          audioChunk: chunk,
           chunkIndex: i,
         });
 
         allStorageIds.push(storageId);
         combinedEmbedding = combinedEmbedding.map((val, index) => val + embedding[index]);
-
         uploadedChunks++;
-        setUploadProgress(Math.round((uploadedChunks / totalChunks) * 100));
-
-
-
-
+        setUploadProgress(Math.min(100, Math.floor((uploadedChunks / totalChunks) * 100)));
       }
 
       const magnitude = Math.sqrt(combinedEmbedding.reduce((sum, val) => sum + val * val, 0));
       const normalizedEmbedding = combinedEmbedding.map(val => val / magnitude);
 
-
-      // Upload the full video file
+      // Upload the full original file
       const uploadUrl = await generateUploadUrl();
       const uploadResult = await fetch(uploadUrl, {
         method: 'POST',
@@ -180,7 +187,7 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
         />
         <FormField
           control={form.control}
-          name="video"
+          name="file"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Video File</FormLabel>
