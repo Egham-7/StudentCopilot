@@ -28,7 +28,7 @@ const router = createBrowserRouter([
         path: 'onboarding',
         element: <FormLayout />,
         children: [
-          { path: '*', element: <OnboardingFormPage /> }
+          { path: 'form', element: <OnboardingFormPage /> }
         ],
       },
 

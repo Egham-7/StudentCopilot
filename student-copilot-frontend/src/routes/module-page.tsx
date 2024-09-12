@@ -15,12 +15,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BookOpen, MoreVertical, Search, Users, Check } from "lucide-react";
+import { BookOpen, MoreVertical, Search, Users, Check, Loader2 } from "lucide-react";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { useParams } from "react-router-dom";
 import UploadLectureForm from "@/components/custom/module-page/upload-lecture-form";
 import DeleteLectureDialog from "@/components/custom/module-page/delete-lecture-dialog";
 import { FileText } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 type SearchableKeys = 'title' | 'description' | 'transcription';
 
@@ -31,23 +32,45 @@ export default function ModulePage() {
   const [isVectorSearching, setIsVectorSearching] = useState(false);
   const [filteredLectures, setFilteredLectures] = useState<Id<"lectures">[]>([]);
   const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>([]);
+  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+
 
   const moduleUser = useQuery(api.modules.getById, moduleId ? { id: moduleId as Id<"modules"> } : "skip");
   const lectures = useQuery(api.lectures.getLecturesByModuleId, moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip");
+
+  const updateLectureCompletion = useMutation(api.lectures.updateLectureCompletion);
+  const generateNotes = useMutation(api.notes.storeClient);
+
+
+  const searchLecturesByTranscription = useAction(api.lectures.searchLecturesByTranscription);
+
   const completedLectures = lectures?.filter(lecture => lecture.completed) || [];
   const progressPercentage = lectures ? (completedLectures.length / lectures.length) * 100 : 0;
 
-  const updateLectureCompletion = useMutation(api.lectures.updateLectureCompletion);
-  const searchLecturesByTranscription = useAction(api.lectures.searchLecturesByTranscription);
 
   const handleLectureCompletion = async (lectureId: Id<"lectures">, completed: boolean) => {
     await updateLectureCompletion({ id: lectureId, completed });
   };
 
-  const handleGenerateNotes = () => {
+  const handleGenerateNotes = async () => {
+    setIsGeneratingNotes(true);
+    try {
+      await generateNotes({
+        lectureIds: selectedLectures
+      });
 
-    console.log("Generating notes");
+      toast({
+        title: "Generated notes successfully.",
+        description: "We are just generating your notes! We will let you know when its done."
+      })
+    } catch (error) {
+      console.error("Failed to generate notes:", error);
+      // You might want to show an error message to the user
+    } finally {
+      setIsGeneratingNotes(false);
+    }
   }
+
 
   const handleSelectLecture = (lectureId: Id<"lectures">) => {
     setSelectedLectures((prev) => {
@@ -203,8 +226,17 @@ export default function ModulePage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem onClick={handleGenerateNotes}>
-                      <FileText className="w-4 h-4 mr-2" />
-                      Generate Notes
+                      {isGeneratingNotes ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4 mr-2" />
+                          Generate Notes
+                        </>
+                      )}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

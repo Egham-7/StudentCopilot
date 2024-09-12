@@ -15,7 +15,6 @@ import { Id } from 'convex/_generated/dataModel';
 import { useToast } from '@/components/ui/use-toast';
 import AnimatedCircularProgressBar from '@/components/magicui/animated-circular-progress-bar';
 
-
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB in bytes
 
 
@@ -49,7 +48,7 @@ interface UploadLectureFormProps {
 const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const transcribeAudio = useAction(api.lectures.transcribeAudio);
-  const extractAudio = useAction(api.lectures.extractAudio);
+  const extractAudio = useAction(api.uploads.extractAudio);
 
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -75,56 +74,46 @@ const UploadLectureForm: React.FC<UploadLectureFormProps> = ({ moduleId }) => {
     setIsLoading(true);
     setUploadProgress(0);
 
-
     try {
       const file = values.file;
-      const chunkSize = 2 * 1024 * 1024; // 2MB chunks
-      const totalChunks = Math.ceil(file.size / chunkSize);
+      let audioBuffer: ArrayBuffer;
 
+      // If it's a video file, extract the audio first
+      if (file.type.startsWith("video/")) {
+        console.log("Processing video file");
+        const videoArrayBuffer = await file.arrayBuffer();
+        audioBuffer = await extractAudio({ videoChunk: videoArrayBuffer });
+      } else {
+        // If it's already an audio file, just read it
+        audioBuffer = await file.arrayBuffer();
+      }
+
+      const chunkSize = 2 * 1024 * 1024; // 2MB chunks
+      const totalChunks = Math.ceil(audioBuffer.byteLength / chunkSize);
       let combinedEmbedding = new Array(1536).fill(0);
       let uploadedChunks = 0;
-
       const allStorageIds: Id<"_storage">[] = [];
 
       for (let i = 0; i < totalChunks; i++) {
         const start = i * chunkSize;
-        const end = Math.min(start + chunkSize, file.size);
-        const chunk = file.slice(start, end);
-        let arrayBuffer = await chunk.arrayBuffer();
-
-
-        if (file.type.startsWith("video/")) {
-
-          console.log("Got a video");
-
-          arrayBuffer = await extractAudio({
-            videoChunk: arrayBuffer
-          });
-
-        }
-
+        const end = Math.min(start + chunkSize, audioBuffer.byteLength);
+        const chunk = audioBuffer.slice(start, end);
 
         const { storageId, embedding } = await transcribeAudio({
-          audioChunk: arrayBuffer,
+          audioChunk: chunk,
           chunkIndex: i,
         });
 
         allStorageIds.push(storageId);
         combinedEmbedding = combinedEmbedding.map((val, index) => val + embedding[index]);
-
         uploadedChunks++;
-        setUploadProgress(Math.round((uploadedChunks / totalChunks) * 100));
-
-
-
-
+        setUploadProgress(Math.min(100, Math.floor((uploadedChunks / totalChunks) * 100)));
       }
 
       const magnitude = Math.sqrt(combinedEmbedding.reduce((sum, val) => sum + val * val, 0));
       const normalizedEmbedding = combinedEmbedding.map(val => val / magnitude);
 
-
-      // Upload the full video file
+      // Upload the full original file
       const uploadUrl = await generateUploadUrl();
       const uploadResult = await fetch(uploadUrl, {
         method: 'POST',
