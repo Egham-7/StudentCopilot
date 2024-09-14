@@ -1,8 +1,8 @@
+
 import { query, mutation, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { generateEmbedding, transcribeAudioChunk } from "./ai";
 import { internal } from "./_generated/api";
-
 
 export const getLecturesByModuleId = query({
   args: { moduleId: v.id("modules") },
@@ -93,7 +93,7 @@ export const store = mutation({
   args:
 
   {
-    videoStorageId: v.id("_storage"),
+    contentStorageId: v.id("_storage"),
     lectureTranscription: v.array(v.id("_storage")),
     lectureTranscriptionEmbedding: v.array(v.float64()),
     title: v.string(),
@@ -132,7 +132,7 @@ export const store = mutation({
     const lectureId = await ctx.db.insert("lectures", {
       title: args.title,
       description: args.description,
-      videoUrl: args.videoStorageId,
+      contentUrl: args.contentStorageId,
       lectureTranscription: args.lectureTranscription,
       lectureTranscriptionEmbedding: args.lectureTranscriptionEmbedding,
       moduleId: args.moduleId,
@@ -193,7 +193,7 @@ export const deleteLecture = mutation({
     }
 
 
-    await ctx.scheduler.runAfter(0, internal.lectures.deleteLectureVideo, { videoId: lecture.videoUrl })
+    await ctx.scheduler.runAfter(0, internal.lectures.deleteLectureVideo, { videoId: lecture.contentUrl })
 
 
 
@@ -254,4 +254,5 @@ export const transcribeAudio = action({
     }
   },
 });
+
 

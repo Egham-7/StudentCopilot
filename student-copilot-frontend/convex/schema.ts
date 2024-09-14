@@ -48,7 +48,7 @@ export default defineSchema({
     title: v.string(),
     userId: v.string(),
     description: v.optional(v.string()),
-    videoUrl: v.id("_storage"),
+    contentUrl: v.id("_storage"),
     moduleId: v.id("modules"),
     completed: v.boolean(),
     lectureTranscription: v.array(v.id("_storage")),

@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { BookOpen, MoreVertical, Search, Users, Check, Loader2 } from "lucide-react";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { useParams } from "react-router-dom";
-import UploadLectureForm from "@/components/custom/module-page/upload-lecture-form";
+import UploadLectureDialog from "@/components/custom/module-page/upload-lecture-dialog";
 import DeleteLectureDialog from "@/components/custom/module-page/delete-lecture-dialog";
 import { FileText } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
@@ -289,7 +289,7 @@ export default function ModulePage() {
                 </Card>
               ))}
               <Card className="flex items-center justify-center p-6">
-                <UploadLectureForm moduleId={moduleId as Id<"modules">} />
+                <UploadLectureDialog moduleId={moduleId as Id<"modules">} />
               </Card>
             </div>
           </TabsContent>

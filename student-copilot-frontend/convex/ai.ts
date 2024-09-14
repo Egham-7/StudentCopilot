@@ -1,4 +1,6 @@
 import OpenAI from 'openai';
+import { action } from './_generated/server';
+import { v } from 'convex/values';
 
 
 
@@ -45,9 +47,17 @@ export function splitAudioIntoChunks(audioBuffer: ArrayBuffer): ArrayBuffer[] {
   return chunks;
 }
 
+export const generateTextEmbeddingClient = action({
+  args: {
+    text: v.string()
+  },
 
+  handler: async (_ctx, args) => {
 
+    return await generateEmbedding(args.text);
 
+  }
+})
 
 
 

@@ -134,8 +134,8 @@ export const deleteModuleAndRelatedData = internalMutation({
     // Delete lectures and their associated videos
     for (const lecture of lectures) {
       // Delete the video from storage
-      if (lecture.videoUrl) {
-        await ctx.storage.delete(lecture.videoUrl);
+      if (lecture.contentUrl) {
+        await ctx.storage.delete(lecture.contentUrl);
       }
 
       // Delete lecture transcriptions from storage
