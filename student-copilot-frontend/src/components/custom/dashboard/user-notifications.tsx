@@ -1,4 +1,3 @@
-import React, { useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Doc } from "convex/_generated/dataModel";
@@ -27,9 +26,7 @@ export const UserNotifications: React.FC = () => {
     limit: 20
   }) || [];
 
-  useEffect(() => {
-    console.log("Notifs: ", userNotifications);
-  }, [userNotifications]);
+
 
   return (
     <StaticList className="w-full max-w-md lg:max-w-none space-y-4">

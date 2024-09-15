@@ -76,8 +76,15 @@ export default defineSchema({
 
 
   notes: defineTable({
+    moduleId: v.id("modules"),
     lectureIds: v.array(v.id("lectures")),
-    textChunks: v.array(v.id("_storage"))
-  })
+    textChunks: v.array(v.id("_storage")),
+    noteEmbedding: v.array(v.float64()),
+  }).index("by_moduleId", ["moduleId"])
+    .vectorIndex("by_noteEmbedding", {
+      vectorField: "noteEmbedding",
+      dimensions: 1536,
+      filterFields: ["moduleId"]
+    })
 
 });

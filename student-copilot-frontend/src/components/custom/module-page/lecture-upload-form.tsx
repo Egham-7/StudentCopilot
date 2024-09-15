@@ -17,6 +17,11 @@ import { chunk } from 'lodash-es';
 
 import * as z from 'zod';
 
+interface UploadProgressSetter {
+  (progress: number): void;
+}
+
+
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB in bytes
 
 const ACCEPTED_FILE_TYPES = [
@@ -75,150 +80,151 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
 
   }
 
+  async function uploadFile(file: File, contentType: string): Promise<Id<"_storage">> {
+    const uploadUrl = await generateUploadUrl();
+    const uploadResult = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': contentType },
+      body: file
+    });
+
+    if (!uploadResult.ok) {
+      throw new Error(`Failed to upload ${contentType}`);
+    }
+
+    const { storageId } = await uploadResult.json();
+    return storageId;
+  }
+
+  async function processPdfChunk(chunkText: string, index: number, setUploadProgress: UploadProgressSetter, totalChunks: number): Promise<{ storageId: Id<"_storage">; embedding: number[] }> {
+    const uploadChunkUrl = await generateUploadUrl();
+    const uploadChunkResult = await fetch(uploadChunkUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: chunkText
+    });
+
+    if (!uploadChunkResult.ok) {
+      throw new Error(`Failed to upload text chunk ${index}.`);
+    }
+
+    const { storageId } = await uploadChunkResult.json();
+    const chunkEmbedding = await getEmbedding({ text: chunkText });
+
+    setUploadProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 100)));
+
+    return { storageId, embedding: chunkEmbedding };
+  }
+
+
+  async function handlePdfUpload(file: File, values: z.infer<typeof formSchema>, moduleId: string, setUploadProgress: UploadProgressSetter): Promise<void> {
+    const storageId = await uploadFile(file, file.type);
+    const rawText = await parsePdf(file);
+
+    const chunkSize = 500;
+    const textChunks = chunk(rawText.split(' '), chunkSize).map(chunk => chunk.join(' '));
+
+    const results = await Promise.all(textChunks.map((chunkText, index) =>
+      processPdfChunk(chunkText, index, setUploadProgress, textChunks.length)
+    ));
+
+    const textChunkStorageIds: Id<"_storage">[] = results.map(result => result.storageId);
+    const allEmbeddings: number[][] = results.map(result => result.embedding);
+
+    // Concatenate embeddings to dimension 1536
+    const concatenatedEmbedding: number[] = [];
+    for (let i = 0; i < 1536; i++) {
+      const sum = allEmbeddings.reduce((acc, embedding) => acc + (embedding[i] || 0), 0);
+      concatenatedEmbedding.push(sum / allEmbeddings.length);
+    }
+
+    // Normalize the concatenated embedding
+    const magnitude = Math.sqrt(concatenatedEmbedding.reduce((sum, val) => sum + val * val, 0));
+    const normalizedEmbedding = concatenatedEmbedding.map(val => val / magnitude);
+
+    await storeLecture({
+      title: values.title,
+      description: values.description,
+      completed: false,
+      lectureTranscriptionEmbedding: normalizedEmbedding,
+      lectureTranscription: textChunkStorageIds,
+      contentStorageId: storageId,
+      moduleId: moduleId as Id<"modules">
+    });
+  }
+  async function handleAudioVideoUpload(file: File, values: z.infer<typeof formSchema>, moduleId: string, setUploadProgress: UploadProgressSetter): Promise<void> {
+    let audioBuffer: ArrayBuffer;
+
+    if (file.type.startsWith("video/")) {
+      console.log("Processing video file");
+      const videoArrayBuffer = await file.arrayBuffer();
+      audioBuffer = await extractAudio({ videoChunk: videoArrayBuffer });
+    } else {
+      audioBuffer = await file.arrayBuffer();
+    }
+
+    const chunkSize = 5 * 1024 * 1024; // 5MB chunks
+    const totalChunks = Math.ceil(audioBuffer.byteLength / chunkSize);
+
+    let combinedEmbedding = new Array(1536).fill(0);
+    const allStorageIds: Id<"_storage">[] = [];
+
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * chunkSize;
+      const end = Math.min(start + chunkSize, audioBuffer.byteLength);
+      const chunk = audioBuffer.slice(start, end);
+
+      const { storageId, embedding } = await transcribeAudio({
+        audioChunk: chunk,
+        chunkIndex: i,
+      });
+
+      allStorageIds.push(storageId);
+      combinedEmbedding = combinedEmbedding.map((val, index) => val + embedding[index]);
+      setUploadProgress(Math.min(100, Math.floor(((i + 1) / totalChunks) * 100)));
+    }
+
+    const magnitude = Math.sqrt(combinedEmbedding.reduce((sum, val) => sum + val * val, 0));
+    const normalizedEmbedding = combinedEmbedding.map(val => val / magnitude);
+
+    const storageId = await uploadFile(file, file.type);
+
+    await storeLecture({
+      title: values.title,
+      description: values.description,
+      completed: false,
+      lectureTranscriptionEmbedding: normalizedEmbedding,
+      lectureTranscription: allStorageIds,
+      contentStorageId: storageId,
+      moduleId: moduleId as Id<"modules">
+    });
+  }
+
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
-    setUploadProgress(0);
-
     try {
+
       const file = values.file;
 
       if (fileType === 'pdf') {
-        // Handle PDF upload
-        const uploadUrl = await generateUploadUrl();
-        const uploadResult = await fetch(uploadUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': file.type },
-          body: file
-        });
-
-        if (!uploadResult.ok) {
-          throw new Error('Failed to upload PDF');
-        }
-
-        const { storageId } = await uploadResult.json();
-
-
-        const rawText = await parsePdf(file);
-
-        // Chunk the raw text
-        const chunkSize = 500;
-        const textChunks = chunk(rawText.split(' '), chunkSize).map(chunk => chunk.join(' '));
-
-        let concatenatedEmbedding: number[] = [];
-        const textChunkStorageIds: Id<"_storage">[] = [];
-
-        // Process chunks: upload and get embeddings
-        for (const chunkText of textChunks) {
-          // Upload chunk
-          const uploadChunkUrl = await generateUploadUrl();
-          const uploadChunkResult = await fetch(uploadChunkUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: chunkText
-          });
-
-          if (!uploadChunkResult.ok) {
-            throw new Error("Failed to upload text chunk.");
-          }
-
-          const { storageId } = await uploadChunkResult.json();
-          textChunkStorageIds.push(storageId);
-
-          // Get embedding for chunk
-          const chunkEmbedding = await getEmbedding({
-            text: chunkText
-          });
-          concatenatedEmbedding = concatenatedEmbedding.concat(chunkEmbedding);
-
-          setUploadProgress(Math.min(100, Math.floor((textChunkStorageIds.length / textChunks.length) * 100)));
-
-        }
-
-
-
-
-
-        await storeLecture({
-          title: values.title,
-          description: values.description,
-          completed: false,
-          lectureTranscriptionEmbedding: concatenatedEmbedding,
-          lectureTranscription: textChunkStorageIds,
-          contentStorageId: storageId,
-          moduleId: moduleId
-        });
-
-        setUploadProgress(100);
+        await handlePdfUpload(file, values, moduleId, setUploadProgress);
       } else {
-        // Handle audio/video upload
-        let audioBuffer: ArrayBuffer;
-
-        if (file.type.startsWith("video/")) {
-          console.log("Processing video file");
-          const videoArrayBuffer = await file.arrayBuffer();
-          audioBuffer = await extractAudio({ videoChunk: videoArrayBuffer });
-        } else {
-          audioBuffer = await file.arrayBuffer();
-        }
-
-        const chunkSize = 5 * 1024 * 1024; // 5MB chunks
-        const totalChunks = Math.ceil(audioBuffer.byteLength / chunkSize);
-        let combinedEmbedding = new Array(1536).fill(0);
-        let uploadedChunks = 0;
-        const allStorageIds: Id<"_storage">[] = [];
-
-        for (let i = 0; i < totalChunks; i++) {
-          const start = i * chunkSize;
-          const end = Math.min(start + chunkSize, audioBuffer.byteLength);
-          const chunk = audioBuffer.slice(start, end);
-
-          const { storageId, embedding } = await transcribeAudio({
-            audioChunk: chunk,
-            chunkIndex: i,
-          });
-
-          allStorageIds.push(storageId);
-          combinedEmbedding = combinedEmbedding.map((val, index) => val + embedding[index]);
-          uploadedChunks++;
-          setUploadProgress(Math.min(100, Math.floor((uploadedChunks / totalChunks) * 100)));
-        }
-
-        const magnitude = Math.sqrt(combinedEmbedding.reduce((sum, val) => sum + val * val, 0));
-        const normalizedEmbedding = combinedEmbedding.map(val => val / magnitude);
-
-        // Upload the full original file
-        const uploadUrl = await generateUploadUrl();
-        const uploadResult = await fetch(uploadUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': file.type },
-          body: file
-        });
-
-        if (!uploadResult.ok) {
-          throw new Error('Failed to upload file');
-        }
-
-        const { storageId } = await uploadResult.json();
-
-        await storeLecture({
-          title: values.title,
-          description: values.description,
-          completed: false,
-          lectureTranscriptionEmbedding: normalizedEmbedding,
-          lectureTranscription: allStorageIds,
-          contentStorageId: storageId,
-          moduleId: moduleId
-        });
+        await handleAudioVideoUpload(file, values, moduleId, setUploadProgress);
       }
+
+      setUploadProgress(100);
 
       toast({
         title: "Lecture uploaded successfully.",
         description: "Your lecture has been added to the module.",
       });
+
       onComplete();
       form.reset();
     } catch (error) {
       console.error('Upload failed:', error);
+
       toast({
         title: "Upload failed.",
         description: "Hang tight and try again later!",
@@ -228,6 +234,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       setIsLoading(false);
     }
   };
+
 
   return (
     <>
