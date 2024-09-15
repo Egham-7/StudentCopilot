@@ -13,7 +13,7 @@ interface UploadLectureDialogProps {
 const UploadLectureDialog: React.FC<UploadLectureDialogProps> = ({ moduleId }) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const [isOpen, setIsOpen] = useState(false);
-  const [fileType, setFileType] = useState<'pdf' | 'media' | null>(null);
+  const [fileType, setFileType] = useState<'pdf' | 'audio' | null>(null);
 
   const content = (
     fileType === null

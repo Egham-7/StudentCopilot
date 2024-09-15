@@ -4,7 +4,7 @@ import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/di
 import { FileText, FileAudio } from 'lucide-react';
 
 interface FileTypeSelectionProps {
-  onSelect: (type: 'pdf' | 'media') => void;
+  onSelect: (type: 'pdf' | 'audio') => void;
 }
 
 const FileTypeSelection: React.FC<FileTypeSelectionProps> = ({ onSelect }) => {
@@ -28,10 +28,10 @@ const FileTypeSelection: React.FC<FileTypeSelectionProps> = ({ onSelect }) => {
         <Button
           variant="outline"
           className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
-          onClick={() => onSelect('media')}
+          onClick={() => onSelect('audio')}
         >
           <FileAudio className="w-8 h-8" />
-          <span>Audio/Video</span>
+          <span>Audio</span>
         </Button>
       </div>
     </>

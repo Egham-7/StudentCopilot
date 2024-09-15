@@ -29,9 +29,6 @@ const ACCEPTED_FILE_TYPES = [
   "audio/mp3",
   "audio/wav",
   "audio/ogg",
-  "video/mp4",
-  "video/webm",
-  "video/ogg",
   "application/pdf"
 ];
 
@@ -48,7 +45,7 @@ export const formSchema = z.object({
 });
 interface LectureUploadFormProps {
   moduleId: Id<"modules">;
-  fileType: 'pdf' | 'media';
+  fileType: 'pdf' | 'audio';
   onBack: () => void;
   onComplete: () => void;
 }
@@ -58,7 +55,6 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0.0);
   const transcribeAudio = useAction(api.lectures.transcribeAudio);
-  const extractAudio = useAction(api.uploads.extractAudio);
   const generateUploadUrl = useMutation(api.uploads.generateUploadUrl);
   const storeLecture = useMutation(api.lectures.store);
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
@@ -153,15 +149,9 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
     });
   }
   async function handleAudioVideoUpload(file: File, values: z.infer<typeof formSchema>, moduleId: string, setUploadProgress: UploadProgressSetter): Promise<void> {
-    let audioBuffer: ArrayBuffer;
 
-    if (file.type.startsWith("video/")) {
-      console.log("Processing video file");
-      const videoArrayBuffer = await file.arrayBuffer();
-      audioBuffer = await extractAudio({ videoChunk: videoArrayBuffer });
-    } else {
-      audioBuffer = await file.arrayBuffer();
-    }
+
+    const audioBuffer = await file.arrayBuffer();
 
     const chunkSize = 5 * 1024 * 1024; // 5MB chunks
     const totalChunks = Math.ceil(audioBuffer.byteLength / chunkSize);
