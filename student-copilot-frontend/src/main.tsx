@@ -14,6 +14,7 @@ import FormLayout from './layouts/form-layout'
 import DashboardPage from './routes/dashboard'
 import ModulePage from './routes/module-page'
 import PricingPage from './routes/upgrade-plan-page'
+import NotePage from './routes/note-page'
 
 
 const router = createBrowserRouter([
@@ -38,7 +39,8 @@ const router = createBrowserRouter([
         children: [
           { path: 'home', element: <DashboardPage /> },
           { path: 'module/:moduleId', element: <ModulePage /> },
-          { path: 'upgrade-plan', element: <PricingPage /> }
+          { path: 'upgrade-plan', element: <PricingPage /> },
+          { path: 'notes/:noteId', element: <NotePage /> }
         ],
       },
     ],
