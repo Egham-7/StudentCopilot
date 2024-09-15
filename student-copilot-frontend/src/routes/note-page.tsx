@@ -12,6 +12,17 @@ import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Components } from "react-markdown";
+import 'katex/dist/katex.min.css';
+import rehypeKatex from 'rehype-katex';
+import remarkMath from 'remark-math';
+import { InlineMath, BlockMath } from 'react-katex';
+
+
+interface ExtendedComponents extends Components {
+  math: React.ComponentType<{ value: string }>;
+  inlineMath: React.ComponentType<{ value: string }>;
+}
+
 
 interface Note {
   _id: Id<"notes">;
@@ -80,7 +91,7 @@ export default function NotePage() {
     return <div>Note not found</div>;
   }
 
-  const components: Components = {
+  const components: ExtendedComponents = {
     code({ className, children, ...props }: { className?: string, children?: React.ReactNode }) {
       const match = /language-(\w+)/.exec(className || '');
       return match ? (
@@ -102,7 +113,9 @@ export default function NotePage() {
           {children}
         </code>
       );
-    }
+    },
+    math: ({ value }) => <BlockMath math={value} />,
+    inlineMath: ({ value }) => <InlineMath math={value} />
   };
 
 
@@ -130,9 +143,14 @@ export default function NotePage() {
           />
         ) : (
           <div className="prose max-w-none h-screen dark:prose-invert">
-            <ReactMarkdown components={components}>
+            <ReactMarkdown
+              components={components as Components}
+              remarkPlugins={[remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+            >
               {currentNote.content}
             </ReactMarkdown>
+
           </div>
         )}
       </div>

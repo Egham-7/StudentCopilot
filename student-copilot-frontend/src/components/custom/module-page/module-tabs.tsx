@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -11,6 +11,9 @@ import SearchBar from "./search-bar";
 import LecturesTab from "./lectures-tab";
 import NotesTab from "./notes-tab";
 
+import { SearchResults } from "@/lib/ui_utils";
+
+
 type ModuleTabsProps = {
   moduleId: Id<"modules">;
   lectures: Doc<"lectures">[];
@@ -19,9 +22,11 @@ type ModuleTabsProps = {
   setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
 };
 
+
 export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures, setSelectedLectures }: ModuleTabsProps) {
   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
   const [activeTab, setActiveTab] = useState("lectures");
+
 
   const [filteredLectures, setFilteredLectures] = useState(lectures);
   const [filteredNotes, setFilteredNotes] = useState(notes);
@@ -32,7 +37,8 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
     setIsGeneratingNotes(true);
     try {
       await generateNotes({
-        lectureIds: selectedLectures
+        lectureIds: selectedLectures,
+        moduleId
       });
       toast({
         title: "Generated notes successfully.",
@@ -50,6 +56,17 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
       setSelectedLectures([]);
     }
   };
+
+  const handleSearchResults = useCallback((type: 'lectures' | 'notes', results: SearchResults) => {
+    if (type === 'lectures') {
+      setFilteredLectures(lectures.filter(lecture => results.lectures.includes(lecture._id)));
+    } else if (type === 'notes') {
+      setFilteredNotes(notes?.filter(note => results.notes.includes(note._id)));
+    }
+  }, [lectures, notes]);
+
+
+
 
   return (
     <Tabs defaultValue="lectures" onValueChange={setActiveTab} className="space-y-4">
@@ -87,7 +104,7 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
       </div>
 
       <TabsContent value="lectures">
-        <SearchBar type="lectures" moduleId={moduleId} onSearchResults={() => setFilteredLectures} />
+        <SearchBar type="lectures" moduleId={moduleId} onSearchResults={(results) => handleSearchResults('lectures', results)} />
 
         <LecturesTab
           moduleId={moduleId}

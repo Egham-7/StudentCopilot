@@ -8,11 +8,41 @@ import { callChatCompletionsAPI, generateEmbedding } from "./ai";
 export const storeClient = mutation({
   args: {
     lectureIds: v.array(v.id("lectures")),
+    moduleId: v.id("modules")
   },
   handler: async (ctx, args) => {
     // Schedule the fetch and process action
+
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Not authorized to use this endpoint.");
+    }
+
+    const user = await ctx.db.query("users").withIndex("by_clerkId").first();
+
+    if (user == null) {
+      throw new Error("User not found.");
+    }
+
+    const moduleUser = await ctx.db.get(args.moduleId);
+
+    if (moduleUser == null) {
+      throw new Error("Module not found.");
+    }
+
+
+    if (moduleUser.userId != identity.subject) {
+      throw new Error("Not allowed to create notes for this module.");
+    }
+
+
     await ctx.scheduler.runAfter(0, internal.notes.fetchAndProcessTranscriptions, {
-      lectureIds: args.lectureIds
+      lectureIds: args.lectureIds,
+      noteTakingStyle: user.noteTakingStyle,
+      learningStyle: user.learningStyle,
+      course: user.course,
+      levelOfStudy: user.levelOfStudy
     });
 
     return { success: true, message: "Lecture transcription processing scheduled." };
@@ -22,6 +52,22 @@ export const storeClient = mutation({
 export const fetchAndProcessTranscriptions = internalAction({
   args: {
     lectureIds: v.array(v.id("lectures")),
+    noteTakingStyle: v.string(),
+    learningStyle: v.union(
+      v.literal("auditory"),
+      v.literal("visual"),
+      v.literal("kinesthetic"),
+      v.literal("analytical")
+    ),
+    course: v.string(),
+    levelOfStudy: v.union(
+      v.literal("Bachelors"),
+      v.literal("Associate"),
+      v.literal("Masters"),
+      v.literal("PhD")
+    )
+
+
   },
   handler: async (ctx, args) => {
     const transcriptionChunks: string[] = [];
@@ -47,7 +93,11 @@ export const fetchAndProcessTranscriptions = internalAction({
     // Schedule the note generation task
     await ctx.scheduler.runAfter(0, internal.notes.generateNotes, {
       transcriptionChunks,
-      lectureIds: args.lectureIds
+      lectureIds: args.lectureIds,
+      noteTakingStyle: args.noteTakingStyle,
+      learningStyle: args.learningStyle,
+      course: args.course,
+      levelOfStudy: args.levelOfStudy
     });
   },
 });
@@ -62,14 +112,29 @@ export const getLecture = internalQuery({
 export const generateNotes = internalAction({
   args: {
     transcriptionChunks: v.array(v.string()),
-    lectureIds: v.array(v.id("lectures"))
+    lectureIds: v.array(v.id("lectures")),
+    noteTakingStyle: v.string(),
+    learningStyle: v.union(
+      v.literal("auditory"),
+      v.literal("visual"),
+      v.literal("kinesthetic"),
+      v.literal("analytical")
+    ),
+    course: v.string(),
+    levelOfStudy: v.union(
+      v.literal("Bachelors"),
+      v.literal("Associate"),
+      v.literal("Masters"),
+      v.literal("PhD")
+    )
   },
   handler: async (ctx, args) => {
-    const { transcriptionChunks } = args;
+    const { transcriptionChunks, noteTakingStyle, learningStyle, course, levelOfStudy } = args;
+
 
     // Process chunks in parallel
     const chunkPromises = transcriptionChunks.map(async (chunk) => {
-      const noteChunk = await processChunk(chunk);
+      const noteChunk = await processChunk(chunk, { noteTakingStyle, learningStyle, course, levelOfStudy });
       const noteChunkBlob = new Blob([noteChunk], { type: 'text/plain' });
       const storageId = await ctx.storage.store(noteChunkBlob);
 
@@ -126,46 +191,83 @@ export const storeNotes = internalMutation({
 
     const moduleId = firstLecture?.moduleId;
 
-    await ctx.db.insert("notes", {
+
+    const moduleUser = await ctx.db.get(moduleId);
+
+    if (moduleUser == null) {
+      throw new Error("Module cannot be null.");
+    }
+
+    const noteId = await ctx.db.insert("notes", {
       textChunks: args.noteChunkIds,
       lectureIds: args.lectureIds,
       moduleId: moduleId,
       noteEmbedding: args.embedding
     });
+
+    // Create a notification for the user
+    await ctx.db.insert("notifications", {
+      userId: moduleUser.userId,
+      message: `Notes have been generated for ${moduleUser.name}`,
+      type: "note_generation",
+      relatedId: noteId,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    });
+
+
+
   }
 });
 
-async function processChunk(chunk: string): Promise<string> {
+async function processChunk(chunk: string, userInfo: {
+  noteTakingStyle: string;
+  learningStyle: "auditory" | "visual" | "kinesthetic" | "analytical";
+  levelOfStudy: "Bachelors" | "Associate" | "Masters" | "PhD";
+  course: string;
+}): Promise<string> {
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     {
       role: "system",
-      content: `You are an expert note-taker and summarizer with a keen ability to distill complex information into clear, concise, and well-structured notes. Your task is to:
+      content: `You are an expert note-taker and summarizer with a keen ability to distill complex information into clear, concise, and well-structured notes. Tailor your notes to the following user preferences:
+
+Note-taking style: ${userInfo.noteTakingStyle}
+Learning style: ${userInfo.learningStyle}
+Level of study: ${userInfo.levelOfStudy}
+Course: ${userInfo.course}
+
+Your task is to:
 
 1. Analyze the given lecture chunk thoroughly.
-2. Create a comprehensive summary in Markdown format.
+2. Create a comprehensive summary in Markdown format, adapting to the user's note-taking and learning style.
 3. Use appropriate Markdown syntax for headings, subheadings, lists, and emphasis.
 4. Highlight key concepts, definitions, and important points.
 5. Organize the information logically and hierarchically.
 6. Include any relevant examples or case studies mentioned.
 7. If applicable, add bullet points for easy readability.
-8. Ensure the notes are concise yet informative.
-9. Use code blocks for any technical content or formulas.
-10. End with a brief "Key Takeaways" section if appropriate.
+8. Ensure the notes are concise yet informative, appropriate for the user's level of study.
+9. Use code blocks for any multiline code content.
+10. Use markdown math syntax that is compatible with Katex for math formulas and equations.
+11. End with a brief "Key Takeaways" section if appropriate.
+12. For visual learners, include suggestions for diagrams or visual aids where applicable.
+13. For auditory learners, emphasize key phrases or mnemonics that could be easily remembered.
+14. For kinesthetic learners, suggest practical applications or hands-on activities related to the content.
+15. For analytical learners, include logical breakdowns and connections between concepts.
 
-Produce notes that would be valuable for review and quick reference.`
+Produce notes that would be valuable for review and quick reference, tailored to the user's specific needs and the course content. If the lecture chunk appears to be cut off mid-sentence or mid-thought, please use your best judgment to infer the intended meaning and complete the idea logically. Do not leave any sentences or thoughts unfinished in your summary.`
     },
     {
       role: "user",
-      content: `Please summarize the following lecture chunk into well-structured Markdown notes:
+      content: `Please summarize the following lecture chunk into well-structured Markdown notes, tailored to the user's preferences. If the chunk is cut off, please infer the intended meaning and complete the summary accordingly:
 
 ${chunk}`
     }
   ];
 
   const response = await callChatCompletionsAPI(messages);
+
   return response;
 }
-
 
 export const getNotesForModule = query({
   args: {
@@ -184,8 +286,26 @@ export const getNotesForModule = query({
 
 
 export const getNote = internalQuery({
-  args: { noteId: v.id("notes") },
+  args: { noteId: v.id("notes"), userId: v.string() },
   handler: async (ctx, args) => {
+
+
+
+    const note = await ctx.db.get(args.noteId);
+
+    if (!note) {
+      throw new Error("Note not found.");
+    }
+
+    const moduleUser = await ctx.db.get(note.moduleId);
+
+    if (moduleUser == null) {
+      throw new Error("Module not allowed to be null.");
+    }
+
+    if (args.userId != moduleUser.userId) {
+      throw new Error("Not authorized to get this note.");
+    }
     return await ctx.db.get(args.noteId);
   },
 });
@@ -193,10 +313,18 @@ export const getNote = internalQuery({
 export const getNoteById = action({
   args: { noteId: v.id("notes") },
   handler: async (ctx, args): Promise<Doc<"notes" & { content: string }>> => {
-    const note = await ctx.runQuery(internal.notes.getNote, { noteId: args.noteId });
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Not authorized to use this action.");
+    }
+
+    const note = await ctx.runQuery(internal.notes.getNote, { noteId: args.noteId, userId: identity.subject });
     if (!note) {
       throw new Error(`Note with ID ${args.noteId} not found.`);
     }
+
+
 
     // Fetch content for each text chunk
     const textContent = await Promise.all(
@@ -241,4 +369,46 @@ export const searchNotesByContent = action({
   }
 });
 
+export const deleteNote = mutation({
+  args: {
+    noteId: v.id("notes"),
+  },
+  handler: async (ctx, args) => {
 
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Authentication not present.");
+    }
+
+
+    const note = await ctx.db.get(args.noteId);
+
+    if (!note) {
+      throw new Error(`Note with ID ${args.noteId} not found.`);
+    }
+
+    const moduleUser = await ctx.db.get(note.moduleId);
+
+    if (!moduleUser) {
+      throw new Error("Module cannot be null.");
+    }
+
+    if (moduleUser.userId != identity.subject) {
+      throw new Error("Not authorized to delete this note.");
+    }
+
+
+
+
+    // Delete the note's text chunks from storage
+    for (const chunkId of note.textChunks) {
+      await ctx.storage.delete(chunkId);
+    }
+
+    // Delete the note from the database
+    await ctx.db.delete(args.noteId);
+
+    return { success: true, message: "Note deleted successfully." };
+  },
+});

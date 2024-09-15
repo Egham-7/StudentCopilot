@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Search } from "lucide-react";
 import { Id } from "convex/_generated/dataModel";
 import { useQuery } from "convex/react";
+import { SearchResults } from "@/lib/ui_utils";
 
 
 type SearchableKeys = 'title' | 'description' | 'transcription' | 'content';
@@ -14,7 +15,7 @@ type SearchableKeys = 'title' | 'description' | 'transcription' | 'content';
 type SearchBarProps = {
   type: 'lectures' | 'notes';
   moduleId: Id<"modules">;
-  onSearchResults: (results: Id<"lectures">[] | Id<"notes">[]) => void;
+  onSearchResults: (results: SearchResults) => void;
 };
 
 export default function SearchBar({ type, moduleId, onSearchResults }: SearchBarProps) {
@@ -32,17 +33,24 @@ export default function SearchBar({ type, moduleId, onSearchResults }: SearchBar
 
     setIsSearching(true);
     try {
-      let results: Id<"lectures">[] | Id<"notes">[] = [];
+      const results: SearchResults = { lectures: [], notes: [] };
       if (type === 'lectures') {
         if (searchBy === 'transcription') {
           const searchResults = await searchLecturesByTranscription({
             moduleId,
             query: searchTerm
           });
-          results = searchResults.map(result => result._id);
+
+          console.log("Search Results: ", searchResults);
+          results.lectures = searchResults
+            .sort((a, b) => b._score - a._score) // Sort by _score in descending order
+            .map(result => result._id as Id<"lectures">);
+
+
+
         } else {
           // Client-side search for title and description
-          results = lectures
+          results.lectures = lectures
             ?.filter(lecture => {
               const searchField = lecture[searchBy as 'title' | 'description'] || '';
               return searchField.toLowerCase().includes(searchTerm.toLowerCase());
@@ -61,7 +69,9 @@ export default function SearchBar({ type, moduleId, onSearchResults }: SearchBar
             query: searchTerm
           })
 
-          results = searchResults.map(result => result._id);
+          results.notes = searchResults
+            .sort((a, b) => b._score - a._score) // Sort by _score in descending order
+            .map(result => result._id as Id<"notes">);
         } else {
 
           // Need more attrs
