@@ -20,6 +20,7 @@ import type * as notes from "../notes.js";
 import type * as notifications from "../notifications.js";
 import type * as uploads from "../uploads.js";
 import type * as users from "../users.js";
+import type * as utils from "../utils.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   uploads: typeof uploads;
   users: typeof users;
+  utils: typeof utils;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

@@ -4,6 +4,8 @@ import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
 import OpenAI from "openai";
 import { callChatCompletionsAPI, generateEmbedding } from "./ai";
+import { exponentialBackoff } from "./utils"
+
 
 export const storeClient = mutation({
   args: {
@@ -133,16 +135,21 @@ export const generateNotes = internalAction({
 
 
     // Process chunks in parallel
+
+
     const chunkPromises = transcriptionChunks.map(async (chunk) => {
-      const noteChunk = await processChunk(chunk, { noteTakingStyle, learningStyle, course, levelOfStudy });
-      const noteChunkBlob = new Blob([noteChunk], { type: 'text/plain' });
-      const storageId = await ctx.storage.store(noteChunkBlob);
+      return exponentialBackoff(async () => {
+        const noteChunk = await processChunk(chunk, { noteTakingStyle, learningStyle, course, levelOfStudy });
+        const noteChunkBlob = new Blob([noteChunk], { type: 'text/plain' });
+        const storageId = await ctx.storage.store(noteChunkBlob);
 
-      // Generate embedding for the chunk
-      const embedding = await generateEmbedding(noteChunk);
+        // Generate embedding for the chunk
+        const embedding = await generateEmbedding(noteChunk);
 
-      return { storageId, embedding };
+        return { storageId, embedding };
+      });
     });
+
 
     const processedChunks = await Promise.all(chunkPromises);
 
@@ -226,10 +233,13 @@ async function processChunk(chunk: string, userInfo: {
   levelOfStudy: "Bachelors" | "Associate" | "Masters" | "PhD";
   course: string;
 }): Promise<string> {
-  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-    {
-      role: "system",
-      content: `You are an expert note-taker and summarizer with a keen ability to distill complex information into clear, concise, and well-structured notes. Tailor your notes to the following user preferences:
+
+  return exponentialBackoff(async () => {
+
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+      {
+        role: "system",
+        content: `You are an expert note-taker and summarizer with a keen ability to distill complex information into clear, concise, and well-structured notes. Tailor your notes to the following user preferences:
 
 Note-taking style: ${userInfo.noteTakingStyle}
 Learning style: ${userInfo.learningStyle}
@@ -255,18 +265,22 @@ Your task is to:
 15. For analytical learners, include logical breakdowns and connections between concepts.
 
 Produce notes that would be valuable for review and quick reference, tailored to the user's specific needs and the course content. If the lecture chunk appears to be cut off mid-sentence or mid-thought, please use your best judgment to infer the intended meaning and complete the idea logically. Do not leave any sentences or thoughts unfinished in your summary.`
-    },
-    {
-      role: "user",
-      content: `Please summarize the following lecture chunk into well-structured Markdown notes, tailored to the user's preferences. If the chunk is cut off, please infer the intended meaning and complete the summary accordingly:
+      },
+      {
+        role: "user",
+        content: `Please summarize the following lecture chunk into well-structured Markdown notes, tailored to the user's preferences. If the chunk is cut off, please infer the intended meaning and complete the summary accordingly:
 
 ${chunk}`
-    }
-  ];
+      }
+    ];
 
-  const response = await callChatCompletionsAPI(messages);
+    const response = await callChatCompletionsAPI(messages);
 
-  return response;
+    return response;
+
+
+
+  })
 }
 
 export const getNotesForModule = query({
