@@ -1,8 +1,9 @@
 export default {
   providers: [
     {
-      domain: "https://musical-kitten-68.clerk.accounts.dev",
-      applicationID: "convex",
+      domain: process.env.CLERK_ISSUER_URL ?? "https://your-dev-clerk-url.clerk.accounts.dev",
+      applicationID: process.env.CLERK_APPLICATION_ID ?? "convex",
     },
-  ]
+  ],
 };
+
