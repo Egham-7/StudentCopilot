@@ -26,10 +26,17 @@ export default function SearchBar({ type, moduleId, onSearchResults }: SearchBar
   const searchLecturesByTranscription = useAction(api.lectures.searchLecturesByTranscription);
   const searchNotesByContent = useAction(api.notes.searchNotesByContent);
   const lectures = useQuery(api.lectures.getLecturesByModuleId, { moduleId });
+  const notes = useQuery(api.notes.getNotesForModule, { moduleId });
 
 
   const handleSearch = async () => {
-    if (!searchTerm.trim()) return;
+    if (!searchTerm.trim()) {
+
+      const allLectures = lectures || [];
+      const allNotes = notes || [];
+      onSearchResults({ lectures: allLectures.map(l => l._id), notes: allNotes.map(n => n._id) });
+      return;
+    }
 
     setIsSearching(true);
     try {
@@ -42,14 +49,21 @@ export default function SearchBar({ type, moduleId, onSearchResults }: SearchBar
           });
 
           console.log("Search Results: ", searchResults);
-          results.lectures = searchResults
-            .sort((a, b) => b._score - a._score) // Sort by _score in descending order
-            .map(result => result._id as Id<"lectures">);
+
+
+          if (searchResults.length > 0) {
+            const maxScoreResult = searchResults.reduce((max, current) =>
+              current._score > max._score ? current : max
+            );
+            results.lectures = [maxScoreResult._id as Id<"lectures">];
+          } else {
+            results.lectures = [];
+          }
 
 
 
         } else {
-          // Client-side search for title and description
+
           results.lectures = lectures
             ?.filter(lecture => {
               const searchField = lecture[searchBy as 'title' | 'description'] || '';
@@ -69,9 +83,12 @@ export default function SearchBar({ type, moduleId, onSearchResults }: SearchBar
             query: searchTerm
           })
 
-          results.notes = searchResults
-            .sort((a, b) => b._score - a._score) // Sort by _score in descending order
-            .map(result => result._id as Id<"notes">);
+          if (searchResults.length > 0) {
+            const maxScoreResult = searchResults.reduce((max, current) =>
+              current._score > max._score ? current : max);
+
+            results.notes = [maxScoreResult._id as Id<"notes">]
+          }
         } else {
 
           // Need more attrs
