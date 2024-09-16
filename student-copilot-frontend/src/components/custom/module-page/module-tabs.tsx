@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -30,6 +30,15 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
 
   const [filteredLectures, setFilteredLectures] = useState(lectures);
   const [filteredNotes, setFilteredNotes] = useState(notes);
+
+  useEffect(() => {
+    setFilteredLectures(lectures);
+  }, [lectures]);
+
+  useEffect(() => {
+    setFilteredNotes(notes);
+  }, [notes]);
+
 
   const generateNotes = useMutation(api.notes.storeClient);
 
