@@ -229,7 +229,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Upload {fileType === 'pdf' ? 'PDF' : 'Audio/Video'}</DialogTitle>
+        <DialogTitle>Upload {fileType === 'pdf' ? 'PDF' : 'Audio'}</DialogTitle>
       </DialogHeader>
       {!isLoading ? (
         <Form {...form}>
