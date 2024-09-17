@@ -174,15 +174,17 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({ form, onSubmit, classNam
           )}
         />
 
+        <div className="mt-4">
+          <DialogClose asChild>
+            <Button type='submit'>
+              {form.formState.isSubmitting ? 'Adding Module...' : 'Add Module'}
+            </Button>
+          </DialogClose>
+        </div>
+
+
       </form>
 
-      <div className="mt-4">
-        <DialogClose asChild>
-          <Button>
-            {form.formState.isSubmitting ? 'Adding Module...' : 'Add Module'}
-          </Button>
-        </DialogClose>
-      </div>
     </div>
   </Form>
 );

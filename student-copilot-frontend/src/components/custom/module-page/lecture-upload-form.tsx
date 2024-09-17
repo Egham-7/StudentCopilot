@@ -145,10 +145,11 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       lectureTranscriptionEmbedding: normalizedEmbedding,
       lectureTranscription: textChunkStorageIds,
       contentStorageId: storageId,
-      moduleId: moduleId as Id<"modules">
+      moduleId: moduleId as Id<"modules">,
+      fileType: "pdf"
     });
   }
-  async function handleAudioVideoUpload(file: File, values: z.infer<typeof formSchema>, moduleId: string, setUploadProgress: UploadProgressSetter): Promise<void> {
+  async function handleAudioUpload(file: File, values: z.infer<typeof formSchema>, moduleId: string, setUploadProgress: UploadProgressSetter): Promise<void> {
 
 
     const audioBuffer = await file.arrayBuffer();
@@ -186,7 +187,8 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       lectureTranscriptionEmbedding: normalizedEmbedding,
       lectureTranscription: allStorageIds,
       contentStorageId: storageId,
-      moduleId: moduleId as Id<"modules">
+      moduleId: moduleId as Id<"modules">,
+      fileType: "audio"
     });
   }
 
@@ -200,7 +202,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       if (fileType === 'pdf') {
         await handlePdfUpload(file, values, moduleId, setUploadProgress);
       } else {
-        await handleAudioVideoUpload(file, values, moduleId, setUploadProgress);
+        await handleAudioUpload(file, values, moduleId, setUploadProgress);
       }
 
       setUploadProgress(100);

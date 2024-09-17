@@ -1,16 +1,19 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { BookOpen, Check } from "lucide-react";
-import { Id, Doc } from "convex/_generated/dataModel";
+import { Check } from "lucide-react";
+import { Id } from "convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import UploadLectureDialog from "./upload-lecture-dialog";
 import DeleteLectureDialog from "./delete-lecture-dialog";
+import LecturePlayer from "./lecture-player";
+import { useEffect } from "react";
+import { LecturesData } from "@/lib/ui_utils";
 
 type LecturesTabProps = {
   moduleId: Id<"modules">;
-  lectures: Doc<"lectures">[] | undefined;
+  lectures: LecturesData[];
   selectedLectures: Id<"lectures">[];
   setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
 };
@@ -35,6 +38,11 @@ export default function LecturesTab({ moduleId, lectures, selectedLectures, setS
 
   const visibleLectures = lectures?.slice(0, 6);
 
+  useEffect(() => {
+
+    console.log("visibleLectures: ", visibleLectures);
+  })
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -50,11 +58,9 @@ export default function LecturesTab({ moduleId, lectures, selectedLectures, setS
             )}
             <CardHeader className="flex justify-between items-center flex-row">
               <CardTitle>{lecture.title}</CardTitle>
-              <div className="space-x-4">
-                <Button variant="ghost" size="sm">
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  View
-                </Button>
+              <div className="space-x-4 w-full flex items-end justify-center">
+
+                <LecturePlayer fileType={lecture.fileType} fileUrl={lecture.contentUrl} title={lecture.title} />
                 <DeleteLectureDialog lectureId={lecture._id} />
               </div>
             </CardHeader>
