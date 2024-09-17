@@ -17,3 +17,17 @@ export type SearchResults = {
   notes: Id<"notes">[];
 }
 
+export type LecturesData = {
+  contentUrl: string | null;
+  _id: Id<"lectures">;
+  _creationTime: number;
+  description?: string;
+  title: string;
+  userId: string;
+  moduleId: Id<"modules">;
+  completed: boolean;
+  lectureTranscription: Id<"_storage">[];
+  lectureTranscriptionEmbedding: number[];
+  fileType: "audio" | "video" | "pdf";
+}
+

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
 import { DialogTitle, DialogTrigger } from '@radix-ui/react-dialog'
 
 interface LecturePlayerProps {
-  fileUrl: string
+  fileUrl: string | null
   fileType: 'audio' | 'video' | 'pdf'
   title: string
 }
@@ -23,6 +23,11 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
   const [duration, setDuration] = useState(0)
   const audioRef = useRef<HTMLAudioElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+
+  if (!fileUrl) {
+    return <div>No content found.</div>
+  }
+
 
   const getMediaRef = useCallback(() => {
     return fileType === 'audio' ? audioRef.current : videoRef.current;
@@ -107,6 +112,7 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
   }
 
   const Icon = iconMap[fileType] || File
+
 
   return (
     <Dialog>

@@ -2,17 +2,18 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Check } from "lucide-react";
-import { Id, Doc } from "convex/_generated/dataModel";
+import { Id } from "convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import UploadLectureDialog from "./upload-lecture-dialog";
 import DeleteLectureDialog from "./delete-lecture-dialog";
 import LecturePlayer from "./lecture-player";
 import { useEffect } from "react";
+import { LecturesData } from "@/lib/ui_utils";
 
 type LecturesTabProps = {
   moduleId: Id<"modules">;
-  lectures: Doc<"lectures">[] | undefined;
+  lectures: LecturesData[];
   selectedLectures: Id<"lectures">[];
   setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
 };
@@ -58,6 +59,7 @@ export default function LecturesTab({ moduleId, lectures, selectedLectures, setS
             <CardHeader className="flex justify-between items-center flex-row">
               <CardTitle>{lecture.title}</CardTitle>
               <div className="space-x-4 w-full flex items-end justify-center">
+
                 <LecturePlayer fileType={lecture.fileType} fileUrl={lecture.contentUrl} title={lecture.title} />
                 <DeleteLectureDialog lectureId={lecture._id} />
               </div>

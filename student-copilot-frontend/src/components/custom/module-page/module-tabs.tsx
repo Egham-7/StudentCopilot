@@ -10,13 +10,12 @@ import { toast } from "@/components/ui/use-toast";
 import SearchBar from "./search-bar";
 import LecturesTab from "./lectures-tab";
 import NotesTab from "./notes-tab";
-
-import { SearchResults } from "@/lib/ui_utils";
+import { SearchResults, LecturesData } from "@/lib/ui_utils";
 
 
 type ModuleTabsProps = {
   moduleId: Id<"modules">;
-  lectures: Doc<"lectures">[];
+  lectures: LecturesData[];
   notes: Doc<"notes">[] | undefined;
   selectedLectures: Id<"lectures">[];
   setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
