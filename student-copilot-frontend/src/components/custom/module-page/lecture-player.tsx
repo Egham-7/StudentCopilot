@@ -24,11 +24,6 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
   const audioRef = useRef<HTMLAudioElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  if (!fileUrl) {
-    return <div>No content found.</div>
-  }
-
-
   const getMediaRef = useCallback(() => {
     return fileType === 'audio' ? audioRef.current : videoRef.current;
   }, [fileType]);
@@ -73,7 +68,6 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
       media.addEventListener('timeupdate', handleTimeUpdate)
       media.addEventListener('loadedmetadata', handleLoadedMetadata)
 
-      // Add these lines to update state when the media is loaded
       if (media.readyState >= 2) {
         setDuration(media.duration)
         setCurrentTime(media.currentTime)
@@ -95,13 +89,13 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
   const renderMediaPlayer = () => {
     switch (fileType) {
       case 'audio':
-        return <audio ref={audioRef} src={fileUrl} className="w-full" />
+        return <audio ref={audioRef} src={fileUrl || undefined} className="w-full" />
       case 'video':
-        return <video ref={videoRef} src={fileUrl} className="w-full rounded-lg" />
+        return <video ref={videoRef} src={fileUrl || undefined} className="w-full rounded-lg" />
       case 'pdf':
         return (
           <iframe
-            src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+            src={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl || '')}&embedded=true`}
             className="w-full h-[500px] rounded-lg"
             title={`PDF viewer for ${title}`}
           />
@@ -113,6 +107,9 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
 
   const Icon = iconMap[fileType] || File
 
+  if (!fileUrl) {
+    return <div>No content found.</div>
+  }
 
   return (
     <Dialog>
