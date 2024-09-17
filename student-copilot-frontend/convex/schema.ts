@@ -27,7 +27,7 @@ export default defineSchema({
     name: v.string(),
     department: v.string(),
     credits: v.number(),
-    image: v.optional(v.string()), // Store image URL instead of bytes
+    image: v.optional(v.string()),
     userId: v.string(),
     semester: v.union(
       v.literal("Fall"),
@@ -52,7 +52,12 @@ export default defineSchema({
     moduleId: v.id("modules"),
     completed: v.boolean(),
     lectureTranscription: v.array(v.id("_storage")),
-    lectureTranscriptionEmbedding: v.array(v.float64())
+    lectureTranscriptionEmbedding: v.array(v.float64()),
+    fileType: v.union(
+      v.literal("pdf"),
+      v.literal("audio"),
+      v.literal("video")
+    )
   })
     .index("by_moduleId", ["moduleId"])
     .vectorIndex("by_lectureTranscriptionEmbedding", {

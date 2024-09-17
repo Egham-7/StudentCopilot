@@ -41,7 +41,7 @@ const formSchema = z.object({
     .refine(
       (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
       ".jpg, .jpeg, .png and .webp files are accepted."
-    ),
+    ).optional(),
   semester: z.enum(["Fall", "Spring", "Summer"]),
   year: z.string().regex(/^\d{4}$/, { message: "Year must be a 4-digit number." }),
   description: z.string().optional(),

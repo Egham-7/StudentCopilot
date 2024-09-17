@@ -1,16 +1,29 @@
-
 import { query, mutation, action, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { generateEmbedding, transcribeAudioChunk } from "./ai";
 import { internal } from "./_generated/api";
 
+
 export const getLecturesByModuleId = query({
   args: { moduleId: v.id("modules") },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const lectures = await ctx.db
       .query("lectures")
       .withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId))
       .collect();
+
+    if (!lectures) {
+      return null;
+    }
+
+    const lecturesWithUrl = await Promise.all(lectures.map(async (lecture) => {
+      return {
+        ...lecture,
+        contentUrl: await ctx.storage.getUrl(lecture.contentUrl)
+      };
+    }));
+
+    return lecturesWithUrl;
   },
 });
 
@@ -99,7 +112,12 @@ export const store = mutation({
     title: v.string(),
     description: v.optional(v.string()),
     moduleId: v.id("modules"),
-    completed: v.boolean()
+    completed: v.boolean(),
+    fileType: v.union(
+      v.literal("pdf"),
+      v.literal("audio"),
+      v.literal("video")
+    )
   },
 
   handler: async (ctx, args) => {
@@ -137,7 +155,8 @@ export const store = mutation({
       lectureTranscriptionEmbedding: args.lectureTranscriptionEmbedding,
       moduleId: args.moduleId,
       completed: args.completed,
-      userId: identity.subject
+      userId: identity.subject,
+      fileType: args.fileType
 
     })
 
