@@ -104,6 +104,13 @@ export default function OnboardingFormPage() {
 
   const storeUser = useMutation(api.users.store);
 
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && step < 4) {
+      event.preventDefault();
+      nextStep();
+    }
+  };
+
   const nextStep = async () => {
     const fieldsToValidate = getFieldsForStep(step);
     const isValid = await form.trigger(fieldsToValidate);
@@ -192,7 +199,7 @@ export default function OnboardingFormPage() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" onKeyDown={handleKeyDown}>
             {step === 1 && (
               <div className="space-y-4">
                 <h3 className="text-base sm:text-lg font-semibold">Welcome! Let's get started.</h3>
