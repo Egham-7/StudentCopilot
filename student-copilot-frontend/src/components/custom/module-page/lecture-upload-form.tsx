@@ -232,7 +232,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       file,
       50 * 1024 * 1024, // 50MB chunks
       async (chunk, index, setProgress, totalChunks) => {
-        const storageId = await uploadFile(new File([chunk], `chunk_${index}`), chunk.type);
+        const storageId = await uploadFile(new File([chunk], `chunk_${index}`), file.type);
         setProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 50))); // First 50% for upload
         return storageId;
       },
