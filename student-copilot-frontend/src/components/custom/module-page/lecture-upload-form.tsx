@@ -369,7 +369,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
                   <FormControl>
                     <Input
                       type="file"
-                      accept={fileType === 'pdf' ? ".pdf" : "audio/*,video/*"}
+                      accept={fileType === 'pdf' ? ".pdf" : fileType == "audio" ? "audio/*" : "video/mp4"}
                       onChange={(e) => field.onChange(e.target.files?.[0])}
                     />
                   </FormControl>
