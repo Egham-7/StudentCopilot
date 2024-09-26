@@ -251,7 +251,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
           audioChunk: chunk,
           chunkIndex: index,
         });
-        setProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 75)));
+        setProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 100)));
         return { storageId, embedding };
       },
       setUploadProgress
