@@ -7,37 +7,43 @@ export const generateUploadUrl = mutation(async (ctx) => {
 });
 
 
-interface ExtractAudioOptions {
-  startTime?: string;
-  duration?: string;
-  outputFormat?: 'mp3' | 'wav' | 'aac' | 'ogg' | 'flac' | 'wma' | 'ac3' | 'amr';
+export interface ExtractAudioOptions {
+  startTime?: number;
+  duration?: number;
+  outputFormat?: string;
 }
-
 export async function extractAudioFromVideo(
-  videoBuffer: ArrayBuffer,
-  outputFileName: string = 'test-sample',
+  videoChunkIds: string[],
+  outputFormat: string = 'mp3',
   options: ExtractAudioOptions = {}
 ): Promise<ArrayBuffer> {
   const apiUrl = 'https://victorious-happiness-production.up.railway.app/extract-audio/';
-
-  if (videoBuffer.byteLength === 0) {
-    throw new Error('Video buffer is empty');
+  if (videoChunkIds.length === 0) {
+    throw new Error('Video chunk list is empty');
   }
 
-  const formData = new FormData();
-  formData.append('video', new Blob([videoBuffer], { type: 'video/mp4' }), 'video.mp4');
+  // Convert videoChunkIds array to a comma-separated string
+  const videoChunkIdsString = videoChunkIds.join(',');
 
-  if (options.startTime) formData.append('start_time', options.startTime);
-  if (options.duration) formData.append('duration', options.duration);
-  if (options.outputFormat) formData.append('output_format', options.outputFormat);
+  // Construct query parameters
+  const queryParams = new URLSearchParams();
+  queryParams.append('video_chunk_ids', videoChunkIdsString);
+  queryParams.append('output_format', outputFormat);
 
-  const params = new URLSearchParams();
-  params.append('output', outputFileName);
+  // Add optional parameters if they exist
+  if (options.startTime !== undefined) {
+    queryParams.append('start_time', options.startTime.toString());
+  }
+  if (options.duration !== undefined) {
+    queryParams.append('duration', options.duration.toString());
+  }
 
   try {
-    const response = await fetch(`${apiUrl}?${params.toString()}`, {
-      method: 'POST',
-      body: formData
+    const response = await fetch(`${apiUrl}?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'audio/*',
+      },
     });
 
     if (!response.ok) {
@@ -54,18 +60,21 @@ export async function extractAudioFromVideo(
 }
 
 export const extractAudio = action({
-
   args: {
-    videoChunk: v.bytes()
+    videoChunkIds: v.array(v.string()),
+    outputFormat: v.optional(v.string()),
+    options: v.optional(v.object({
+      startTime: v.optional(v.number()),
+      duration: v.optional(v.number()),
+    }))
   },
-
   handler: async (_ctx, args) => {
-
-    const audioBuffer = await extractAudioFromVideo(args.videoChunk);
-
-
+    const audioBuffer = await extractAudioFromVideo(
+      args.videoChunkIds,
+      args.outputFormat,
+      args.options
+    );
     return audioBuffer;
-
   }
-})
+});
 

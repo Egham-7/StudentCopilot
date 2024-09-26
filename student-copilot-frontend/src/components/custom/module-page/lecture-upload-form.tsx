@@ -24,6 +24,8 @@ interface UploadProgressSetter {
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB in bytes
 
+const PDF_CHUNK_SIZE = 500 // 500 words
+
 const ACCEPTED_FILE_TYPES = [
   "audio/mpeg",
   "audio/mp3",
@@ -45,7 +47,7 @@ export const formSchema = z.object({
 });
 interface LectureUploadFormProps {
   moduleId: Id<"modules">;
-  fileType: 'pdf' | 'audio';
+  fileType: 'pdf' | 'audio' | 'video';
   onBack: () => void;
   onComplete: () => void;
 }
@@ -58,6 +60,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
   const generateUploadUrl = useMutation(api.uploads.generateUploadUrl);
   const storeLecture = useMutation(api.lectures.store);
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
+  const extractAudio = useAction(api.uploads.extractAudio);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -92,6 +95,37 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
     return storageId;
   }
 
+  async function chunkAndProcess<T, R>(
+    data: T,
+    chunkSize: number,
+    processChunk: (chunk: T, index: number, setProgress: UploadProgressSetter, totalChunks: number) => Promise<R>,
+    setUploadProgress: UploadProgressSetter
+  ): Promise<R[]> {
+    let chunks: T[];
+    if (data instanceof ArrayBuffer) {
+      chunks = [];
+      for (let i = 0; i < data.byteLength; i += chunkSize) {
+        chunks.push(data.slice(i, i + chunkSize) as T);
+      }
+    } else if (typeof data === 'string') {
+      chunks = chunk(data.split(' '), chunkSize).map(chunk => chunk.join(' ') as T);
+    } else if (data instanceof File) {
+      chunks = [];
+      for (let i = 0; i < data.size; i += chunkSize) {
+        chunks.push(data.slice(i, i + chunkSize) as T);
+      }
+    } else {
+      throw new Error('Unsupported data type for chunking');
+    }
+
+    const totalChunks = chunks.length;
+    const results = await Promise.all(chunks.map((chunk, index) =>
+      processChunk(chunk, index, setUploadProgress, totalChunks)
+    ));
+
+    return results;
+  }
+
   async function processPdfChunk(chunkText: string, index: number, setUploadProgress: UploadProgressSetter, totalChunks: number): Promise<{ storageId: Id<"_storage">; embedding: number[] }> {
     const uploadChunkUrl = await generateUploadUrl();
     const uploadChunkResult = await fetch(uploadChunkUrl, {
@@ -112,29 +146,26 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
     return { storageId, embedding: chunkEmbedding };
   }
 
-
   async function handlePdfUpload(file: File, values: z.infer<typeof formSchema>, moduleId: string, setUploadProgress: UploadProgressSetter): Promise<void> {
     const storageId = await uploadFile(file, file.type);
     const rawText = await parsePdf(file);
 
-    const chunkSize = 500;
-    const textChunks = chunk(rawText.split(' '), chunkSize).map(chunk => chunk.join(' '));
-
-    const results = await Promise.all(textChunks.map((chunkText, index) =>
-      processPdfChunk(chunkText, index, setUploadProgress, textChunks.length)
-    ));
+    const results = await chunkAndProcess(
+      rawText,
+      PDF_CHUNK_SIZE,
+      processPdfChunk,
+      setUploadProgress
+    );
 
     const textChunkStorageIds: Id<"_storage">[] = results.map(result => result.storageId);
     const allEmbeddings: number[][] = results.map(result => result.embedding);
 
-    // Concatenate embeddings to dimension 1536
     const concatenatedEmbedding: number[] = [];
     for (let i = 0; i < 1536; i++) {
       const sum = allEmbeddings.reduce((acc, embedding) => acc + (embedding[i] || 0), 0);
       concatenatedEmbedding.push(sum / allEmbeddings.length);
     }
 
-    // Normalize the concatenated embedding
     const magnitude = Math.sqrt(concatenatedEmbedding.reduce((sum, val) => sum + val * val, 0));
     const normalizedEmbedding = concatenatedEmbedding.map(val => val / magnitude);
 
@@ -149,31 +180,29 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       fileType: "pdf"
     });
   }
+
   async function handleAudioUpload(file: File, values: z.infer<typeof formSchema>, moduleId: string, setUploadProgress: UploadProgressSetter): Promise<void> {
-
-
     const audioBuffer = await file.arrayBuffer();
 
-    const chunkSize = 5 * 1024 * 1024; // 5MB chunks
-    const totalChunks = Math.ceil(audioBuffer.byteLength / chunkSize);
+    const results = await chunkAndProcess(
+      audioBuffer,
+      5 * 1024 * 1024, // 5MB chunks
+      async (chunk, index, setProgress, totalChunks) => {
+        const { storageId, embedding } = await transcribeAudio({
+          audioChunk: chunk,
+          chunkIndex: index,
+        });
+        setProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 100)));
+        return { storageId, embedding };
+      },
+      setUploadProgress
+    );
 
-    let combinedEmbedding = new Array(1536).fill(0);
-    const allStorageIds: Id<"_storage">[] = [];
-
-    for (let i = 0; i < totalChunks; i++) {
-      const start = i * chunkSize;
-      const end = Math.min(start + chunkSize, audioBuffer.byteLength);
-      const chunk = audioBuffer.slice(start, end);
-
-      const { storageId, embedding } = await transcribeAudio({
-        audioChunk: chunk,
-        chunkIndex: i,
-      });
-
-      allStorageIds.push(storageId);
-      combinedEmbedding = combinedEmbedding.map((val, index) => val + embedding[index]);
-      setUploadProgress(Math.min(100, Math.floor(((i + 1) / totalChunks) * 100)));
-    }
+    const allStorageIds: Id<"_storage">[] = results.map(r => r.storageId);
+    const combinedEmbedding = results.reduce((acc, { embedding }) =>
+      acc.map((val, i) => val + embedding[i]),
+      new Array(1536).fill(0)
+    );
 
     const magnitude = Math.sqrt(combinedEmbedding.reduce((sum, val) => sum + val * val, 0));
     const normalizedEmbedding = combinedEmbedding.map(val => val / magnitude);
@@ -193,6 +222,70 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
   }
 
 
+
+  const handleVideoUpload = async (file: File, values: z.infer<typeof formSchema>, moduleId: string, setUploadProgress: UploadProgressSetter) => {
+
+
+
+    const videoChunkIds = await chunkAndProcess(
+      file,
+      50 * 1024 * 1024, // 50MB chunks
+      async (chunk, index, setProgress, totalChunks) => {
+        const storageId = await uploadFile(new File([chunk], `chunk_${index}`), chunk.type);
+        setProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 50))); // First 50% for upload
+        return storageId;
+      },
+      setUploadProgress
+    );
+
+
+    const audioBuffer = await extractAudio({ videoChunkIds: videoChunkIds })
+
+
+    const results = await chunkAndProcess(
+      audioBuffer,
+      5 * 1024 * 1024, // 5MB chunks
+      async (chunk, index, setProgress, totalChunks) => {
+        const { storageId, embedding } = await transcribeAudio({
+          audioChunk: chunk,
+          chunkIndex: index,
+        });
+        setProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 75)));
+        return { storageId, embedding };
+      },
+      setUploadProgress
+    );
+
+
+    const allStorageIds: Id<"_storage">[] = results.map(r => r.storageId);
+    const combinedEmbedding = results.reduce((acc, { embedding }) =>
+      acc.map((val, i) => val + embedding[i]),
+      new Array(1536).fill(0)
+    );
+
+    const magnitude = Math.sqrt(combinedEmbedding.reduce((sum, val) => sum + val * val, 0));
+    const normalizedEmbedding = combinedEmbedding.map(val => val / magnitude);
+
+
+    const storageId = await uploadFile(file, file.type);
+
+
+    await storeLecture({
+      title: values.title,
+      description: values.description,
+      completed: false,
+      lectureTranscriptionEmbedding: normalizedEmbedding,
+      lectureTranscription: allStorageIds,
+      contentStorageId: storageId,
+      moduleId: moduleId as Id<"modules">,
+      fileType: "audio"
+    });
+
+    setUploadProgress(100);
+
+  }
+
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
@@ -201,8 +294,12 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
 
       if (fileType === 'pdf') {
         await handlePdfUpload(file, values, moduleId, setUploadProgress);
-      } else {
+      } else if (fileType === 'audio') {
         await handleAudioUpload(file, values, moduleId, setUploadProgress);
+      } else {
+        // Video
+        await handleVideoUpload(file, values, moduleId, setUploadProgress);
+
       }
 
       setUploadProgress(100);
@@ -231,7 +328,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Upload {fileType === 'pdf' ? 'PDF' : 'Audio'}</DialogTitle>
+        <DialogTitle>Upload {fileType === 'pdf' ? 'PDF' : fileType === 'audio' ? 'Audio' : 'Video'}</DialogTitle>
       </DialogHeader>
       {!isLoading ? (
         <Form {...form}>
