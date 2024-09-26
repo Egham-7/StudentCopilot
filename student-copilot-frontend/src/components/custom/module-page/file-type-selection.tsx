@@ -40,7 +40,7 @@ const FileTypeSelection: React.FC<FileTypeSelectionProps> = ({ onSelect }) => {
           onClick={() => onSelect('video')}
         >
           <FileVideo className="w-8 h-8" />
-          <span>Audio</span>
+          <span>Video</span>
         </Button>
 
       </div>

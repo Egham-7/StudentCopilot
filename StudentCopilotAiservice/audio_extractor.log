@@ -1,0 +1,59 @@
+2024-09-26 16:49:30,223 - services.audio_extractor - INFO - Starting audio extraction for 1 chunks
+2024-09-26 16:49:30,224 - services.audio_extractor - INFO - Fetching 1 chunks
+2024-09-26 16:49:30,224 - services.audio_extractor - DEBUG - Fetching chunk with ID: kg2d13rjh5nsrabfkwk4fj854h71h7cm
+2024-09-26 16:49:31,226 - services.audio_extractor - DEBUG - Chunk kg2d13rjh5nsrabfkwk4fj854h71h7cm fetched, size: 2694951 bytes
+2024-09-26 16:49:31,229 - services.audio_extractor - INFO - All chunks fetched successfully
+2024-09-26 16:49:31,229 - services.audio_extractor - INFO - Processing 1 chunks
+2024-09-26 16:49:31,229 - services.audio_extractor - DEBUG - Processing chunk of size: 2694951 bytes
+2024-09-26 16:49:31,420 - services.audio_extractor - DEBUG - Audio clip created from temp file: /var/folders/mq/76nv_b4x5td3_3944cqw88hc0000gn/T/tmptoeem1ow.mp4
+2024-09-26 16:49:31,421 - services.audio_extractor - DEBUG - Temporary file deleted: /var/folders/mq/76nv_b4x5td3_3944cqw88hc0000gn/T/tmptoeem1ow.mp4
+2024-09-26 16:49:31,421 - services.audio_extractor - INFO - Processed 1 audio clips
+2024-09-26 16:49:31,421 - services.audio_extractor - INFO - Audio clips concatenated
+2024-09-26 16:49:31,421 - services.audio_extractor - INFO - Writing audio to buffer in mp3
+
+ format
+2024-09-26 16:49:31,421 - services.audio_extractor - DEBUG - Temporary audio path: /var/folders/mq/76nv_b4x5td3_3944cqw88hc0000gn/T/tmp_nj8yof1.mp3
+2024-09-26 16:49:31,597 - services.audio_extractor - DEBUG - Audio written to file: varfoldersmq76nv_b4x5td3_3944cqw88hc0000gnTtmp_nj8yof1.mp3
+2024-09-26 16:49:31,598 - services.audio_extractor - INFO - Audio data read, size: 5161542 bytes
+2024-09-26 16:49:31,599 - services.audio_extractor - DEBUG - Temporary audio file deleted: varfoldersmq76nv_b4x5td3_3944cqw88hc0000gnTtmp_nj8yof1.mp3
+2024-09-26 16:49:31,599 - services.audio_extractor - INFO - Audio written to buffer in mp3
+
+ format
+2024-09-26 16:50:51,151 - services.audio_extractor - INFO - Starting audio extraction for 1 chunks
+2024-09-26 16:50:51,152 - services.audio_extractor - INFO - Fetching 1 chunks
+2024-09-26 16:50:51,153 - services.audio_extractor - DEBUG - Fetching chunk with ID: kg2d13rjh5nsrabfkwk4fj854h71h7cm
+2024-09-26 16:50:52,371 - services.audio_extractor - DEBUG - Chunk kg2d13rjh5nsrabfkwk4fj854h71h7cm fetched, size: 2694951 bytes
+2024-09-26 16:50:52,372 - services.audio_extractor - INFO - All chunks fetched successfully
+2024-09-26 16:50:52,373 - services.audio_extractor - INFO - Processing 1 chunks
+2024-09-26 16:50:52,373 - services.audio_extractor - DEBUG - Processing chunk of size: 2694951 bytes
+2024-09-26 16:50:52,558 - services.audio_extractor - DEBUG - Audio clip created from temp file: /var/folders/mq/76nv_b4x5td3_3944cqw88hc0000gn/T/tmplkm58uro.mp4
+2024-09-26 16:50:52,559 - services.audio_extractor - DEBUG - Temporary file deleted: /var/folders/mq/76nv_b4x5td3_3944cqw88hc0000gn/T/tmplkm58uro.mp4
+2024-09-26 16:50:52,559 - services.audio_extractor - INFO - Processed 1 audio clips
+2024-09-26 16:50:52,559 - services.audio_extractor - INFO - Audio clips concatenated
+2024-09-26 16:50:52,559 - services.audio_extractor - INFO - Writing audio to buffer in mp3
+
+ format
+2024-09-26 16:50:52,559 - services.audio_extractor - DEBUG - Temporary audio path: /var/folders/mq/76nv_b4x5td3_3944cqw88hc0000gn/T/tmp6nzm5wbd.mp3
+2024-09-26 16:50:52,738 - services.audio_extractor - DEBUG - Audio written to file: varfoldersmq76nv_b4x5td3_3944cqw88hc0000gnTtmp6nzm5wbd.mp3
+2024-09-26 16:50:52,739 - services.audio_extractor - INFO - Audio data read, size: 5161542 bytes
+2024-09-26 16:50:52,739 - services.audio_extractor - DEBUG - Temporary audio file deleted: varfoldersmq76nv_b4x5td3_3944cqw88hc0000gnTtmp6nzm5wbd.mp3
+2024-09-26 16:50:52,739 - services.audio_extractor - INFO - Audio written to buffer in mp3
+
+ format
+2024-09-26 16:51:43,507 - services.audio_extractor - INFO - Starting audio extraction for 1 chunks
+2024-09-26 16:51:43,507 - services.audio_extractor - INFO - Fetching 1 chunks
+2024-09-26 16:51:43,507 - services.audio_extractor - DEBUG - Fetching chunk with ID: kg2d13rjh5nsrabfkwk4fj854h71h7cm
+2024-09-26 16:51:44,695 - services.audio_extractor - DEBUG - Chunk kg2d13rjh5nsrabfkwk4fj854h71h7cm fetched, size: 2694951 bytes
+2024-09-26 16:51:44,696 - services.audio_extractor - INFO - All chunks fetched successfully
+2024-09-26 16:51:44,696 - services.audio_extractor - INFO - Processing 1 chunks
+2024-09-26 16:51:44,697 - services.audio_extractor - DEBUG - Processing chunk of size: 2694951 bytes
+2024-09-26 16:51:44,900 - services.audio_extractor - DEBUG - Audio clip created from temp file: /var/folders/mq/76nv_b4x5td3_3944cqw88hc0000gn/T/tmpaeo8oi2m.mp4
+2024-09-26 16:51:44,900 - services.audio_extractor - DEBUG - Temporary file deleted: /var/folders/mq/76nv_b4x5td3_3944cqw88hc0000gn/T/tmpaeo8oi2m.mp4
+2024-09-26 16:51:44,900 - services.audio_extractor - INFO - Processed 1 audio clips
+2024-09-26 16:51:44,900 - services.audio_extractor - INFO - Audio clips concatenated
+2024-09-26 16:51:44,900 - services.audio_extractor - INFO - Writing audio to buffer in mp3 format
+2024-09-26 16:51:44,901 - services.audio_extractor - DEBUG - Temporary audio path: /var/folders/mq/76nv_b4x5td3_3944cqw88hc0000gn/T/tmpvkselzzv.mp3
+2024-09-26 16:51:45,397 - services.audio_extractor - DEBUG - Audio written to file: varfoldersmq76nv_b4x5td3_3944cqw88hc0000gnTtmpvkselzzv.mp3
+2024-09-26 16:51:45,397 - services.audio_extractor - INFO - Audio data read, size: 469202 bytes
+2024-09-26 16:51:45,397 - services.audio_extractor - DEBUG - Temporary audio file deleted: varfoldersmq76nv_b4x5td3_3944cqw88hc0000gnTtmpvkselzzv.mp3
+2024-09-26 16:51:45,397 - services.audio_extractor - INFO - Audio written to buffer in mp3 format
