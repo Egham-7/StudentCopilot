@@ -11,7 +11,12 @@ load_dotenv(".env.local")
 load_dotenv()
 
 
-convex_client = ConvexClient(os.getenv("CONVEX_URL"))
+convex_url = os.getenv("CONVEX_URL")
+if not convex_url:
+    raise ValueError("CONVEX_URL is not set in the environment variables")
+
+
+convex_client = ConvexClient(convex_url)
 audio_extractor = AudioExtractor(convex_client)
 
 app = FastAPI()
