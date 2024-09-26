@@ -1,7 +1,0 @@
-
-
-class AudioExtractor:
-
-    def __init__(self, convex_url: str) -> None:
-
-        self.convex_url = convex_url
