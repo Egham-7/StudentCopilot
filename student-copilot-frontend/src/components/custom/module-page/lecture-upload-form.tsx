@@ -31,7 +31,8 @@ const ACCEPTED_FILE_TYPES = [
   "audio/mp3",
   "audio/wav",
   "audio/ogg",
-  "application/pdf"
+  "application/pdf",
+  "video/mp4"
 ];
 
 export const formSchema = z.object({
