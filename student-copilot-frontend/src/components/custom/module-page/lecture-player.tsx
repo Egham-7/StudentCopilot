@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import  { useState, useRef, useEffect, useCallback } from 'react'
 import { File, FileAudio, FileVideo, FileSpreadsheet, Play, Pause, BookOpen } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -45,14 +45,14 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
     if (media) {
       setCurrentTime(media.currentTime)
     }
-  }, [getMediaRef])
+  }, [getMediaRef, setCurrentTime])
 
   const handleLoadedMetadata = useCallback(() => {
     const media = getMediaRef()
     if (media) {
       setDuration(media.duration)
     }
-  }, [getMediaRef])
+  }, [getMediaRef, setDuration])
 
   const handleSeek = useCallback((value: number[]) => {
     const media = getMediaRef()
@@ -60,14 +60,14 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
       media.currentTime = value[0]
       setCurrentTime(value[0])
     }
-  }, [getMediaRef])
+  }, [getMediaRef, setCurrentTime])
 
   useEffect(() => {
     const media = getMediaRef()
     if (media) {
       media.addEventListener('timeupdate', handleTimeUpdate)
       media.addEventListener('loadedmetadata', handleLoadedMetadata)
-
+      
       if (media.readyState >= 2) {
         setDuration(media.duration)
         setCurrentTime(media.currentTime)
@@ -78,7 +78,7 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
         media.removeEventListener('loadedmetadata', handleLoadedMetadata)
       }
     }
-  }, [handleTimeUpdate, handleLoadedMetadata, getMediaRef])
+  }, [handleTimeUpdate, handleLoadedMetadata, getMediaRef, setDuration, setCurrentTime])
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60)
@@ -136,7 +136,7 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
             <Slider
               value={[currentTime]}
               max={duration}
-              step={1}
+              step={0.1}
               onValueChange={handleSeek}
               className="w-full"
               aria-label="Seek"
