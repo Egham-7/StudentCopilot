@@ -279,7 +279,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       lectureTranscription: allStorageIds,
       contentStorageId: storageId,
       moduleId: moduleId as Id<"modules">,
-      fileType: "audio"
+      fileType: "video"
     });
 
     setUploadProgress(100);
