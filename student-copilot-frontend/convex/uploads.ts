@@ -1,3 +1,5 @@
+'use node';
+
 import { mutation } from "./_generated/server";
 import { action } from "./_generated/server";
 import { v } from "convex/values";
