@@ -1,33 +1,35 @@
-from typing import List
-import asyncio
 import aiohttp
 from convex import ConvexClient
 from moviepy.editor import AudioFileClip
 import tempfile
 import os
-import re
+import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 class AudioExtractor:
     def __init__(self, convex_client: ConvexClient) -> None:
         self.convex_client = convex_client
         self.session = None
-        self.executor = ThreadPoolExecutor(max_workers=4)  # Adjust based on your needs
+        self.executor = None
 
-    async def __aenter__(self):
+    async def initialize(self):
         self.session = aiohttp.ClientSession()
-        return self
+        self.executor = ThreadPoolExecutor(max_workers=4)
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def cleanup(self):
         if self.session:
             await self.session.close()
-        self.executor.shutdown()
+        if self.executor:
+            self.executor.shutdown()
 
     async def extract_audio(self, video_id: str, output_format: str = "mp3") -> bytes:
-        video_data = await self.fetch_video(video_id)
-        audio_clip = await self.process_video(video_data)
-        audio_data = await self.write_audio_to_buffer(audio_clip, output_format)
-        return audio_data
+        try:
+            video_data = await self.fetch_video(video_id)
+            audio_clip = await self.process_video(video_data)
+            audio_data = await self.write_audio_to_buffer(audio_clip, output_format)
+            return audio_data
+        except Exception as e:
+            raise Exception(f"Error extracting audio: {str(e)}")
 
     async def fetch_video(self, video_id: str) -> bytes:
         video_url = self.convex_client.query("storage:getStorageUrl", {"storageId": video_id})
@@ -42,7 +44,6 @@ class AudioExtractor:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_video:
             temp_video.write(video)
             temp_video_path = temp_video.name
-
         try:
             return AudioFileClip(temp_video_path)
         finally:
@@ -55,20 +56,14 @@ class AudioExtractor:
     def _write_audio_to_buffer_sync(self, audio: AudioFileClip, output_format: str) -> bytes:
         with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{output_format}') as temp_audio:
             temp_audio_path = temp_audio.name
-
         try:
             if output_format.lower() == 'mp3':
                 audio.write_audiofile(temp_audio_path, codec='libmp3lame', ffmpeg_params=["-f", "mp3"])
             else:
                 audio.write_audiofile(temp_audio_path, codec='pcm_s16le', ffmpeg_params=["-f", "wav"])
-
             with open(temp_audio_path, "rb") as audio_file:
                 return audio_file.read()
         finally:
             os.unlink(temp_audio_path)
             audio.close()
-
-    @staticmethod
-    def sanitize_filename(filename):
-        return re.sub(r'[\x00-\x1f<>:"/\\|?*]', '', filename)
 
