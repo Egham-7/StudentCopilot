@@ -13,21 +13,19 @@ export interface ExtractAudioOptions {
   outputFormat?: string;
 }
 export async function extractAudioFromVideo(
-  videoChunkIds: string[],
+  videoId: string,
   outputFormat: string = 'mp3',
   options: ExtractAudioOptions = {}
 ): Promise<ArrayBuffer> {
   const apiUrl = 'https://victorious-happiness-production.up.railway.app/extract-audio/';
-  if (videoChunkIds.length === 0) {
-    throw new Error('Video chunk list is empty');
+  if (videoId.length === 0) {
+    throw new Error('Video id cannot be empty.');
   }
 
-  // Convert videoChunkIds array to a comma-separated string
-  const videoChunkIdsString = videoChunkIds.join(',');
 
   // Construct query parameters
   const queryParams = new URLSearchParams();
-  queryParams.append('video_chunk_ids', videoChunkIdsString);
+  queryParams.append('video_id', videoId);
   queryParams.append('output_format', outputFormat);
 
   // Add optional parameters if they exist
@@ -61,7 +59,7 @@ export async function extractAudioFromVideo(
 
 export const extractAudio = action({
   args: {
-    videoChunkIds: v.array(v.string()),
+    videoId: v.string(),
     outputFormat: v.optional(v.string()),
     options: v.optional(v.object({
       startTime: v.optional(v.number()),
@@ -70,7 +68,7 @@ export const extractAudio = action({
   },
   handler: async (_ctx, args) => {
     const audioBuffer = await extractAudioFromVideo(
-      args.videoChunkIds,
+      args.videoId,
       args.outputFormat,
       args.options
     );

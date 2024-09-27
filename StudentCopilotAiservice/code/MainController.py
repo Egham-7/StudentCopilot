@@ -42,16 +42,14 @@ def read_root():
 
 @app.get("/extract-audio/")
 async def extract_audio_from_video(
-    video_chunk_ids: str = Query(...),
+    video_id: str = Query(...),
     output_format: str = "mp3",
 ):
-    # Convert the comma-separated string to a list
-    video_chunk_ids_list = video_chunk_ids.split(',')
-
+    
     output_format = output_format.strip()
 
     audio_bytes = await audio_extractor.extract_audio(
-        video_chunk_ids_list, output_format)
+        video_id, output_format)
 
     return Response(audio_bytes, media_type=f"audio/{output_format}")
 
