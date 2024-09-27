@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import  { useState, useRef, useEffect, useCallback } from 'react'
 import { File, FileAudio, FileVideo, FileSpreadsheet, Play, Pause, BookOpen } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
