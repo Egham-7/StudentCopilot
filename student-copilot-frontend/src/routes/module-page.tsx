@@ -22,6 +22,7 @@ import UploadLectureForm from "@/components/custom/module-page/upload-lecture-fo
 import DeleteLectureDialog from "@/components/custom/module-page/delete-lecture-dialog";
 import { FileText } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { useNavigate } from 'react-router-dom';
 
 type SearchableKeys = 'title' | 'description' | 'transcription';
 
@@ -50,6 +51,13 @@ export default function ModulePage() {
 
   const handleLectureCompletion = async (lectureId: Id<"lectures">, completed: boolean) => {
     await updateLectureCompletion({ id: lectureId, completed });
+  };
+
+  const navigate = useNavigate();
+  
+  const handleClickViewMoreLectures = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    navigate(`/dashboard/more-lectures`);
   };
 
   const handleGenerateNotes = async () => {
@@ -297,9 +305,11 @@ export default function ModulePage() {
           <TabsContent value="discussions">Discussions content here</TabsContent>
         </Tabs>
         <div className="flex justify-between items-center mt-4">
-          <Button variant="link" className="px-0" onClick={() => console.log("Navigate to lectures page.")}>
+
+          <Button variant="link" className="px-0" onClick={handleClickViewMoreLectures}>
             View more lectures
           </Button>
+          
         </div>
       </div>
     </div>

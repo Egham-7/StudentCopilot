@@ -14,6 +14,7 @@ import FormLayout from './layouts/form-layout'
 import DashboardPage from './routes/dashboard'
 import ModulePage from './routes/module-page'
 import PricingPage from './routes/upgrade-plan-page'
+import MoreLecturesPage from './routes/more-lectures';
 
 
 const router = createBrowserRouter([
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
         children: [
           { path: 'home', element: <DashboardPage /> },
           { path: 'module/:moduleId', element: <ModulePage /> },
+          { path: 'more-lectures', element: <MoreLecturesPage /> },
           { path: 'upgrade-plan', element: <PricingPage /> }
         ],
       },
