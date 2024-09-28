@@ -1,0 +1,570 @@
+Epigenetics: The link between nature and nurture
+Stephanie A. Tammen a,b
+, Simonetta Friso c,1
+, Sang-Woon Choi a,b,⇑
+a Jean Mayer USDA Human Nutrition Research Center on Aging – Tufts University, Boston, MA, USA
+b Friedman School of Nutrition Science and Policy – Tufts University, Boston, MA, USA
+cUniversity of Verona, School of Medicine, Verona, Italy
+article info
+Article history:
+Available online 10 August 2012
+Keywords:
+Epigenetics
+DNA methylation
+Histone modification
+Chromatin remodeling
+microRNA
+Nutrition
+Environment
+abstract
+While the eukaryotic genome is the same throughout all somatic cells in an organism, there
+are specific structures and functions that discern one type of cell from another. These differences are due to the cell’s unique gene expression patterns that are determined during
+cellular differentiation. Interestingly, these cell-specific gene expression patterns can be
+affected by an organism’s environment throughout its lifetime leading to phenotypical
+changes that have the potential of altering risk of some diseases. Both cell-specific gene
+expression signatures and environment mediated changes in expression patterns can be
+explained by a complex network of modifications to the DNA, histone proteins and degree
+of DNA packaging called epigenetic marks. Several areas of research have formed to study
+these epigenetic modifications, including DNA methylation, histone modifications, chromatin remodeling and microRNA (miRNA). The original definition of epigenetics incorporates inheritable but reversible phenomena that affect gene expression without altering
+base pairs. Even though not all of the above listed epigenetic traits have demonstrated heritability, they can all alter gene transcription without modification to the underlying
+genetic sequence. Because these epigenetic patterns can also be affected by an organism’s
+environment, they serve as an important bridge between life experiences and phenotypes.
+Epigenetic patterns may change throughout one’s lifespan, by an early life experience,
+environmental exposure or nutritional status. Epigenetic signatures influenced by the environment may determine our appearance, behavior, stress response, disease susceptibility,
+and even longevity. The interaction between types of epigenetic modifications in response
+to environmental factors and how environmental cues affect epigenetic patterns will further elucidate how gene transcription can be affectively altered.
+ 2012 Elsevier Ltd. All rights reserved.
+Contents
+1. Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 754
+2. DNA methylation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 754
+2.1. Functions of DNA methylation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 754
+2.2. DNA methylation through the lifespan . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 755
+2.3. Maintenance and de novo DNA methylation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 755
+2.4. Localization of DNA methylation by the DNA sequence . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 756
+0098-2997/$ - see front matter  2012 Elsevier Ltd. All rights reserved.
+http://dx.doi.org/10.1016/j.mam.2012.07.018
+⇑ Corresponding author at: Jean Mayer USDA Human Nutrition Research Center on Aging – Tufts University, 711 Washington Street, Boston, MA 02111,
+USA. Tel.: +1 617 556 3007; fax: +1 617 556 3234.
+E-mail addresses: stephanie.tammen@tufts.edu (S.A. Tammen), simonetta.friso@univr.it (S. Friso), sang.choi@tufts.edu (S.-W. Choi). 1 Address: University of Verona, School of Medicine, Policlinic ‘‘G.B. Rossi’’, P.le L.A. Scuro 10, 37134 Verona, Italy.
+Molecular Aspects of Medicine 34 (2013) 753–764
+Contents lists available at SciVerse ScienceDirect
+Molecular Aspects of Medicine
+journal homepage: www.elsevier.com/locate/mam
+3. DNA hydroxymethylation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 756
+3.1. Hydroxymethylation as an intermediate in demethylation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 756
+3.2. Functions of the TET enzymes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 757
+3.3. Hydroxymethylation as a transcriptional regulator . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 757
+4. Histone modifications . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 757
+4.1. Compacting the DNA. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 757
+4.2. Common modifications to histone tails . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 757
+5. Chromatin remodeling . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 758
+5.1. Mechanisms for chromatin remodeling . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 758
+5.2. ATP-dependent chromatin remodeling . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 758
+5.3. Polycomb proteins and their function . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 758
+5.4. Interaction of ncRNAs and PRC. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 759
+6. MicroRNAs . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 759
+6.1. Mechanism of action. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 759
+6.2. Influencing miRNA . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 759
+7. Environmental influences and epigenetics . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 759
+7.1. Nutritional epigenetics . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 759
+7.2. Maternal diet . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 760
+7.3. Early life experiences . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 760
+7.4. Epigenetics and aging . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 761
+8. Conclusion and future perspectives . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 761
+Acknowledgments . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 761
+References . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 761
+1. Introduction
+Epigenetics is the field of study surrounding stable alterations to the DNA and histone proteins that alter gene expression
+(Jaenisch and Bird, 2003). Epigenetic modifications are responsible for tightly regulated tissue and cell-type specific gene
+expression patterns. Aberrations in these expression patterns can give rise to certain diseases, most notably some types
+of cancer (Esteller, 2008). Interestingly, certain environmental factors can influence the expression of genes within a cell
+without mutations to the genome, but instead through modifying epigenetic marks. These environmental changes to the epigenome are so robust that even monozygotic twins can be identified by analyzing their unique epigenetic patterns (Fraga
+et al., 2005). Changes in epigenetic patterns can result in an alteration of gene expression, which in itself can have many
+downstream effects including changes in disease risk, stress response and metabolism (Lillycrop et al., 2005; Liu et al.,
+1997; McGowan et al., 2009). Epigenetics is the broad term used to describe a variety of reversible modifications to the genome that are meiotically and mitotically heritable, although the requirement for a modification to heritable has been
+contested.
+Epigenetic programming may begin while the fetus is developing in the uterus. Maternal environmental exposures during
+gestation are one important area of epigenetic research, but the gametes of the offspring might also be affected by those
+environmental factors while in the uterus, leading some to believe that our grandmother’s environment might be affecting
+our own gene transcription through epigenetic mechanisms (Cropley et al., 2006). Furthermore, it is suggested that preconceptional paternal exposure to environmental factors can determine the offspring’s phenotype epigenetically (Puri et al.,
+2010). Several changes to the genome fall into the category of epigenetics, including DNA methylation, histone modifications, chromatin remodeling and miRNA, although it is still debated if miRNA can be categorized as an epigenetic phenomenon. In this review we included miRNA, because of the ability miRNA has in affecting epigenetic phenomena, as well as the
+ability of epigenetic phenomena to change expression of miRNA. Taken together, these epigenetic mechanisms can provide
+the link between environmental factors and phenotypical changes during the whole lifetime of an organism (Fig. 1).
+2. DNA methylation
+2.1. Functions of DNA methylation
+DNA methylation is perhaps the most well studied epigenetic mark. Methylation of the 50 position of a cytosine within the
+genome occurs by the enzymatic family of DNA methyltransferases (DNMTs), thereby forming 5-methylcytosine (5-mC). SAdenosylmethionine (SAM), a modified amino acid produced in the one-carbon metabolism pathway, donates the methyl
+group in this reaction (Niculescu and Zeisel, 2002). 5-Methylcytosine, often times called the ‘‘fifth-base’’, is present in an estimated 4–6% of the cytosine bases within a human genome, depending on cell type (Lister and Ecker, 2009; Lister et al., 2009).
+Most of DNA methylation occurs within CpG dinucleotides, although methylation outside of the CpG context has been reported in human DNA in recent years (Lister et al., 2009; Yan et al., 2011). The human genome contains about 30 million
+CpG dinucleotides that exist in a methylated or unmethylated state (Cocozza et al., 2011). Dense repeats of CpG nucleotides
+754 S.A. Tammen et al. / Molecular Aspects of Medicine 34 (2013) 753–764
+are called CpG islands and occur throughout the genome. Methylation of CpG islands located in the promoter region of a gene
+is usually inversely associated with transcription of that gene due to binding of methyl-CpG binding proteins, which recruit
+proteins to the promoter of the gene thereby blocking transcription (Meehan et al., 1992; Valinluck et al., 2004). The methylation status of intragenic regions or regions within a gene-body is also important in regulation of transcription, although
+the mechanism of action is not as well established (Shenker and Flanagan, 2011). Abnormally increased or loss of DNA methylation has been indicated as an important mechanism by which aberrant gene transcription occurs in diseases such as
+cancer.
+2.2. DNA methylation through the lifespan
+Upon fertilization, DNA methylation signatures of the genomes of both the oocytes and the sperm are erased, and a series
+of de novo lineage specific patterns of methylation is completed (Hajkova et al., 2002). It is during this time of re-programming that each gene will gain a specific DNA methylation pattern (Hajkova et al., 2002). Additionally, the process of X-chromosome inactivation will occur in female embryos at this time, leaving only one copy of each X-linked gene to be expressed
+(Allen et al., 1992). While historically X-chromosome inactivation in female development was thought to be random across
+alleles so that the ratio of maternal and paternal X-chromosome linked genes expressed is equal, recent research suggests
+that this ratio can deviate from equal inactivation, an incidence called skewed X-chromosome inactivation (Minks et al.,
+2008). One such study found skewed X-chromosome inactivation develops with age, beginning as early as the age of 10 years
+(Wong et al., 2011). This research may shed more light on the understanding of sex differences in diseases.
+While changes in global DNA methylation seem to occur naturally in aging, aberrations in methylation have also been
+established in cancerous cells. Global hypomethylation with site-specific increases in methylation is an epigenetic pattern
+that is associated both with age and cancer (Liu et al., 2003). While age-associated changes in DNA methylation may be a
+natural pattern of aging, specific regions of methylation changes have been associated with decreased organ function, memory, bone density and other age-related health problems (Lepeule et al., 2012; Liu et al., 2011). The future of studying epigenetics in aging may provide a key link in methods to prevent these age-related health problems.
+2.3. Maintenance and de novo DNA methylation
+DNA methylation patterns are passed on from the parental strand of DNA to the daughter cells during cellular replication.
+DNA methyltransferase 1, or DNMT1, is the enzyme that tends to keep the methylation mark in the nascent DNA during
+mitosis at cytosines that were methylated on the parental strand, called maintenance methylation. Maintenance methylation ensures that programmed DNA methylation patterns remain through cellular generations. Contrarily, DNMT3A and
+DNMT3B are referred to as the de novo methyltransferases because of their ability to methylate both unmodified cytosines
+and hemimethylated cytosines with similar efficiency, producing new DNA methylation marks (Gowher and Jeltsch, 2001).
+These de novo DNMTs primarily establish methylation patterns in early development as well as methylate maternally imprinted genes in oocytes (Gowher and Jeltsch, 2001; Hata et al., 2002). De novo methylation can also occur in differentiated
+somatic cells, albeit at a slow rate. It has been suggested that DNMT3a and DNMT3b may be the methyltransferases that are
+responsible for methylation of cytosines in non-CpG contexts, although this area of research is still developing (Aoki et al.,
+2001; Gowher and Jeltsch, 2001).
+Fig. 1. Epigenetic mechanisms provide the link between environmental factors and phenotypical changes during the whole lifetime.
+S.A. Tammen et al. / Molecular Aspects of Medicine 34 (2013) 753–764 755
+2.4. Localization of DNA methylation by the DNA sequence
+While understanding how methylation is incorporated and maintained in the genome is one important area of epigenetic
+research, another is exploring the causes of where methyl groups are added throughout the genome. One potential determinant of DNA methylation is the genetic code itself. An association between single nucleotide polymorphisms (SNPs) and
+changes in DNA methylation patterns in cis surrounding the SNP was made in early 2011 (Bell et al., 2011). Following this
+discovery, Lienert et al. investigated the role of the DNA sequence in DNA methylation in vitro by randomly inserting
+1,000 bp fragments of gene promoters into the genomes of mouse embryonic stem cells. They subsequently tracked the
+methylation of the DNA both in the original and the transplanted region, and found that the degree of methylation was
+the same regardless of location within the genome (Lienert et al., 2011). This interesting experiment provided novel insight
+that DNA methylation is dependent on the sequence in cis, that is, the genetic code of a promoter determines the methylation
+of surrounding cytosines on the same strand of DNA. Furthermore, the methylation patterns of the randomly inserted promoters maintained their expected methylation patterns throughout differentiation of the stem cells, further demonstrating
+the impact of the genetic sequence on methylation status.
+While the local base composition of a promoter seems to determine methylation, this is not the only determining factor.
+Factor binding sites along the genome may also impact DNA methylation patterns. For example, a mutation within a factorbinding site limits the maintenance of methylation patterns in the surrounding region of DNA (Lienert et al., 2011). Further
+research is needed to determine the degree by which the underlying genetic sequence establishes DNA methylation patterns,
+and the impact exposure to certain environmental factors may have on altering these patterns.
+3. DNA hydroxymethylation
+3.1. Hydroxymethylation as an intermediate in demethylation
+Recently a new epigenetic mark called 5-hydroxymethylcytosine has been proposed as a player in the removal of methyl
+groups from cytosine bases. Hydroxymethylcytosine (or 5-hmC) has been referred to as the ‘‘sixth-base’’ because of its potential regulatory role in gene transcription similar to 5-mC (Münzel et al., 2011). Less than 1% of cytosines are hydroxylated
+in mammalian DNA, and the level varies by tissue with the central nervous system having the highest amount (Globisch
+et al., 2010). Embryonic stem cells also have high levels of 5-hmC, but these levels decrease during differentiation (Globisch
+et al., 2010; Tahiliani et al., 2009). The most commonly regarded function of 5-hmC is as an intermediate in the removal of
+the methyl group from 5-mC, returning the cytosine to its unmodified form. The mechanism for the removal of methyl
+groups from cytosine residues is a growing topic in current epigenetic research. Several mechanisms have been proposed,
+including passive demethylation where the methyl marks are simply not replaced in the daughter cell after cell division
+resulting in an unmodified cytosine. Other proposed mechanisms of active demethylation involves the active removal of
+Fig. 2. Proposed mechanism of active demethylation through hydroxymethylation by TET.
+756 S.A. Tammen et al. / Molecular Aspects of Medicine 34 (2013) 753–764
+methyl groups by DNA glycosylase, deamination of the cytosine forming a thymine base followed by removal of that thymine
+by DNA repair machinery, or the oxidation of 5-mC to 5-hmC and several other intermediates before the return of an unmodified cytosine (Globisch et al., 2010; Jurkowski and Jeltsch, 2011). The latter hypothesis has garnered much attention in the
+research community, and has been supported by the discovery of the proposed intermediates (5-formylcytosine and 5-carboxylcytosine) of this oxidation process to be present in genomic mouse DNA (Ito et al., 2011). Interestingly, the same family
+of enzymes responsible for the conversion of methylcytosine to hydroxymethylcytosine may also convert methylcytosine to
+5-formylcytosine and 5-carboxylcytosine, which are then excised by a DNA glycosylase (Fig. 2) (He et al., 2011; Ito et al.,
+2011; Maiti and Drohat, 2011). These enzymes are called TET enzymes, discussed below.
+3.2. Functions of the TET enzymes
+The TET (ten-eleven translocation) family of proteins are responsible for the hydroxylation of 5-mC to 5-hmC in an iron
+(II), a-ketoglutarate and divalent oxygen dependent fashion (Ito et al., 2010; Tahiliani et al., 2009). TET1 is the form of the
+enzyme that is mainly expressed in embryonic stem cells, whereas TET2 and TET3 are more common throughout all other
+tissues (Tahiliani et al., 2009). Knockout of TET1 in embryonic stem cells leads to global increases in DNA methylation with a
+correlating decrease in hydroxymethylation, suggesting a role for TET1 in removal of DNA methyl groups (Dawlaty et al.,
+2011; Ficz et al., 2011).
+Hydroxymethylation of a gene has been associated with changes in transcription of that gene, but it is still unclear
+whether that transcriptional regulation is due to the 5-hmC mark itself or by the binding of the TET enzyme to the DNA.
+One key study that indicts TET as playing some part in transcriptional regulation found the enzymatic activity of TET was
+indispensable for the transcriptional regulation to occur (Zhang et al., 2010). In mouse embryonic stem cells TET1 binds
+mostly to regions of the DNA that are gene-rich, primarily at transcription start sites (TSS) of genes (Williams et al.,
+2011). Additionally TET1 target genes are associated with intermediate and high densities of CpG sites in the promoters
+and TSS (Williams et al., 2011; Xu et al., 2011b). One proposed function of TET1 at these locations might be to prevent
+any unwanted DNA methylation by preventing the binding of DNMTs, interfering with the addition of methyl groups.
+Additionally, TET1 may repress transcription of some of its target genes in a manner separate from the removal of DNA
+methylation by recruiting Polycomb repressor complex 2 (PRC2). The TET1 protein binds to many Polycomb group target
+genes and recruits PRC2 to the promoters resulting in changes in chromatin structure and gene transcription (Williams
+et al., 2011; Wu et al., 2011). Polycomb group proteins will be discussed in further detail in section 5.
+3.3. Hydroxymethylation as a transcriptional regulator
+Hydroxymethylation of cytosines within a gene promoter or CpG island is associated with an increase in transcription of
+that gene, the opposite pattern that is described for methylation of cytosines (Ficz et al., 2011). It has therefore been proposed that hydroxymethylation may in itself act as a regulator of gene transcription. The mechanism by which hydroxymethylation may cause a change in gene transcription is through the release of methyl-binding proteins from the DNA. Most of
+these 5-mC-binding proteins will no longer bind to DNA once the methylcytosine has been hydroxylated. These proteins
+then dissociate from the DNA, perhaps changing the transcriptional status of that gene (Jin et al., 2010; Valinluck et al.,
+2004). The longevity and heritability of 5-hmC has not been elucidated, but for the amount of time this epigenetic mark
+is present in the DNA gene transcription may be affected.
+4. Histone modifications
+4.1. Compacting the DNA
+DNA is compacted by tightly weaving approximately 147 base pairs around proteins called histones, forming a DNA-protein complex called a nucleosome. Each nucleosome consists of an octamer of two copies of four core histones: H2A, H2B, H3
+and H4. Various post-translational modifications to the N-terminal histone tails can occur in mammalian cells, including histone acetylation, methylation, phosphorylation, ubiquitination, ADP-ribosylation and biotinylation. These modifications result in a dynamic chromatin environment, where the epigenetic regulation of gene transcription is altered by histone
+modifications. Compared to DNA methylation, which is stably inherited between cell divisions, it is still unclear whether histone modifications can be reproduced following DNA replication and transmitted from one cell generation to the next. Recent research has however postulated several models for the heritability of chromatin structure (Margueron and Reinberg,
+2010; Xu et al., 2011a).
+4.2. Common modifications to histone tails
+Histone modifications can act by either altering the ionic charge of the histone tail or by functioning as a binding platform
+for other proteins. Histone acetyltransferases (HATs) are the class of enzymes that transfer acetyl groups onto the e amino
+group of a lysine residue within the histone tail. Through this action the positive charge of the lysine is neutralized and the
+S.A. Tammen et al. / Molecular Aspects of Medicine 34 (2013) 753–764 757
+interaction between the histone tail and DNA is weakened (Allfrey et al., 1964). In contrast to HATs, histone deacetylases
+(HDACs) remove acetyl groups from lysines and restore the positive charge on the histone tail. HATs are generally classified
+as transcriptional activators, whereas HDACs are transcriptional repressors (Shahbazian and Grunstein, 2007). Histone kinases and phosphatases add or remove phosphate groups from the hydroxyl group of serines, threonines and tyrosines
+on the histone tails. Like acetylation, phosphorylation of the histone tails alters the charge and ionic properties of the histone,
+resulting in a changed structure of the local chromatin environment (Xhemalce et al., 2011).
+Unlike the acetylation and phosphorylation of histone tails, methylation does not function by changing the ionic charge of
+the protein (Bannister and Kouzarides, 2011). Methylation of a lysine within the histone tail occurs via a histone lysine methyltransferase (HKMT). Likewise, methylation of arginine residues within the histone tail is catalyzed by the protein arginine
+methyltransferase (PRMT) family. Both of these protein methyltransferases use SAM as the methyl donor, similar to the
+DNMTs discussed in Section 2.1 above. Methylation of histone tails will affect gene transcription through the recruitment
+of chromatin factors. For example, histone 3 lysine 4 trimethylation is associated with active gene transcription, and is recognized by specific protein domains (Bannister and Kouzarides, 2011). One such domain is the tandem chromodomains
+within CHD1, which is an ATP-dependent chromatin remodeling protein (Sims et al., 2005). When both of the tandem
+chromodomains within CHD1 bind histone 3 lysine 4 trimethylation, factors mediating post-transcriptional initiation events
+are recruited, including components of the spliceosome (Sims et al., 2007). Other proteins that recognize and bind the histone 3 lysine 4 trimethylation mark are proteins containing the plant homeodomain (PHD) fingers in the ING family, and the
+tandem Tudor domains within JMJD2A (Bannister and Kouzarides, 2011; Huang et al., 2006; Shi et al., 2006; Wysocka et al.,
+2006). It is through this specific recruitment of proteins that histone modifications can participate in the transcription of
+genes.
+5. Chromatin remodeling
+5.1. Mechanisms for chromatin remodeling
+Regulation of gene transcription can also occur at the chromatin level. Through tightly packing the flexible euchromatin
+into nucleosome-rich heterochromatin, transcription factors and RNA polymerases can no longer transcribe regions of DNA
+and that gene becomes silenced. This compacted chromatin will form both to stabilize the genome (at the centromere and
+telomeres of a chromosome for example) and to prevent transcription of a specific target gene. The mechanism by which
+chromatin are remodeled to either silence or activate a gene is either through an ATP-dependent protein complex, or through
+combined covalent modifications of histone tails by histone modifying proteins like the Polycomb group proteins.
+5.2. ATP-dependent chromatin remodeling
+The SWI/SNF (SWItch/Sucrose NonFermentable) complex is a common ATP-dependent chromatin remodeling protein
+complex in eukaryotes. This remodeling complex binds to the nucleosome and disconnects the DNA from the histones, creating a transient DNA loop (Havas et al., 2000). This DNA loop will then travel around the nucleosome until it reaches the exit
+side, resulting in repositioning of that nucleosome (Tang et al., 2010). As the nucleosome is repositioned, it moves closer to
+its neighboring nucleosome, and the distance between nucleosomes is shortened (Dechassa et al., 2010). It has been posited
+that the SWI/SNF complex disassembles the nucleosome by removing the histone proteins and transferring those proteins to
+nearby free DNA (Bruno et al., 2003). This process may be dependent on dinucleosomes being present, as in vitro studies
+using mononucleosomes result in negative findings (Dechassa et al., 2010). After the nucleosome has been repositioned,
+transcription of targeted genes can be increased or decreased depending on whether the gene is located in the open chromatin or compacted chromatin region.
+5.3. Polycomb proteins and their function
+Polycomb group (PcG) proteins are also involved in gene silencing through chromatin remodeling. PcG proteins repress
+transcription by maintaining a heterochromatin state by means of particular histone modifications and DNA methylation.
+This is accomplished by the formation of multiprotein complexes, termed Polycomb repressor complexes (PRC). The composition of a PRC varies between organisms, cell types, developmental stage and even in some disease states (Otte and Kwaks,
+2003). These complexes are recruited to regions of the DNA where they regulate gene transcription through histone modifications. For example, in humans the EED-EZH2 complex, a component of PRC2, tri-methylates histone 3 at lysine 27, which
+then facilitates binding of PRC1. This is not always the case however, as PRC1 can also be recruited in a PRC2 independent
+manner, demonstrating the versatility and complexity of transcription regulation (Cao et al., 2002; Kuzmichev et al., 2002;
+Schoeftner et al., 2006). Recruitment of PRC1 can then lead to transcriptional repression through the mono-ubiquitination of
+histone 2A lysine 119. The addition of the ubiquitin mark ultimately stops gene transcription by inhibiting elongation of
+mRNA by RNA polymerase (Zhou et al., 2008). Through this multi-step protein recruitment pathway, gene expression can
+be affectively regulated, illustrating another important epigenetic mechanism.
+758 S.A. Tammen et al. / Molecular Aspects of Medicine 34 (2013) 753–764
+5.4. Interaction of ncRNAs and PRC
+Recent research has found a role of non-coding RNAs (ncRNA) in interacting with PcG protein complexes to bring the PRC
+to their target DNA. Kanhere and colleagues revealed that even when a Polycomb target gene was not being actively expressed, short non-coding RNAs about 50-200 nucleotides in length were transcribed from the 50 end of the gene. These short
+ncRNAs would then form stem-loop structures that interacted with PRC2 through the SUZ12 protein, which in turn caused
+gene repression (Kanhere et al., 2010). Furthermore, evidence for large intergenic non-coding RNAs (lincRNAs) in the silencing of genes through PRC2 has also been established. In a study analyzing lincRNAs in the human genome, it was found that
+approximately 20% were bound by PRC2. Additionally, inhibition of those PRC2-bound lincRNAs led to changes in expression
+of genes that would normally be silenced by PRC2 (Khalil et al., 2009).
+The interaction between ncRNAs and PRC2 also comes to light in the silencing of the extra X-chromosome in females. Xist
+is a ncRNA that is expressed on the inactive X-chromosome in females and plays an important part in the inactivation of the
+X-chromosome through PRC2 recruitment. A 1.6 kb region of ncRNA within Xist called RepA targets PRC2 and brings it to the
+X-chromosome (Zhao et al., 2008). This ncRNA seems to be required for the initiation and spreading of X-chromosome inactivation, but not for the maintenance of the silencing. Taken together, different forms of ncRNAs seem to contribute to the
+regulation of gene transcription via interactions with Polycomb repressor complexes.
+6. MicroRNAs
+6.1. Mechanism of action
+A relatively new area of epigenetic research focuses around a form of small non-coding RNAs that are usually about 20 to
+30 nucleotides in length called miRNAs. Unlike the ncRNAs discussed in section 5.4 above, the primary mechanism by which
+miRNAs act to post-transcriptionally silence target genes is by recognizing target sequences in the mRNA by Watson-Crick
+base pairing of nucleotides 2 through 8 in the miRNA, called the seed region. The miRNA can inhibit translation of mRNA
+either by directly binding the target sequence in the 30 UTR, forming double-stranded mRNA which is degraded, or through
+the formation of the RNA-induced silencing complex (RISC) (Bartel, 2004). Some miRNAs reside within introns of proteincoding genes and are transcribed along with the primary transcript. Other miRNAs are transcribed from their own gene,
+the primary transcript being called a pri-miRNA which is then processed by cellular machinery into mature miRNA (Winter
+et al., 2009). A single miRNA may have multiple target mRNA; likewise each mRNA may also be regulated by several miRNAs.
+6.2. Influencing miRNA
+Certain environmental factors can alter the expression of genes through expression of new or removal of old miRNAs
+(Carthew and Sontheimer, 2009). There is some evidence of feedback between miRNA expression and DNA methylation
+and histone modifications (Barski et al., 2009; Sato et al., 2011). For example, DNA methylation and histone modifications
+can regulate the transcription of miRNAs, and some miRNAs can alter the expression of DNMT3A and DNMT3B, and Polycomb
+group genes (Fabbri et al., 2007; Juan et al., 2009). Additionally, aberrant miRNA expression caused by changes in DNA methylation has been discovered in cancer cells (Bandres et al., 2009; Furuta et al., 2010; Kozaki et al., 2008).
+Besides endogenous sources of miRNA regulating protein expression, there is some evidence that exogenous miRNA may
+have an effect on our cells. In an interesting recently published study, the consumption of exogenous miRNA altered protein
+translation of target mRNA in mammals. Zhang et al. demonstrated that exogenous miRNAs that were consumed from rice
+can pass through the mammalian GI tract where they travel through the sera in microvesicles and are delivered to organs
+(Zhang et al., 2011). Furthermore, these miRNAs bound to their target mRNA sequences where they exerted their downstream effects of diminished protein expression. One such miRNA found abundantly in rice, called miR168a, was able to bind
+to human and mouse low-density lipoprotein receptor adapter protein 1 (LDLRAP1) mRNA and inhibit its translation in murine liver. Because LDLRAP1 is involved in removing LDL from the plasma, an increase in exogenous miR168a elevated plasma
+LDL-cholesterol levels (Zhang et al., 2011). This study provides a novel role of miRNAs as the bridge between our diet and
+gene expression through post-transcriptional silencing of mRNA translation, and gives evidence of a new mechanism by
+which our environment may alter our phenotype.
+7. Environmental influences and epigenetics
+7.1. Nutritional epigenetics
+Certain dietary bioactive food components can change gene expression via alterations in DNA methylation and histone
+modifications, a field of study that may one day lead to the development of the ‘‘epigenetic diet’’ (Hardy and Tollefsbol,
+2011; Park et al., 2011). The availability of the universal methyl donor, SAM, is determined by one-carbon metabolism, a
+pathway involving vitamins B6, B12, folate, betaine and choline along with the amino acids methionine, cysteine, serine
+and glycine. When a component of one-carbon metabolism is missing, in B-vitamin deficiency for example, DNA methylation
+S.A. Tammen et al. / Molecular Aspects of Medicine 34 (2013) 753–764 759
+and histone modifications are altered (Niculescu and Zeisel, 2002). Chronic alcohol consumption can also change epigenetic
+patterns through both the wastage of methionine and choline as well as modifying B-vitamin availability, thus reducing the
+amount of SAM available for methylation reactions (Mason and Choi, 2005).
+While perturbations in the one-carbon metabolism pathway are one way nutrition can have an impact on epigenetic patterns, other bioactive nutrients can have an affect through different pathways. For example, epigallocatechin-3-gallate
+(EGCG), the primary polyphenol found in green tea, can reduce global DNA methylation in cancer cell lines through the competitive inhibition of DNMT (Fang et al., 2003). The addition of EGCG to cancer cell lines reverses the repression of some tumor suppressor genes, including p16, O-6-methylguanine-DNA methyltransferase (MGMT) and reversion-inducing-cysteinerich protein with kazal motifs (RECK) (Fang et al., 2003; Kato et al., 2008). In 2011, Wang et al. found EGCG to have the ability
+to increase miR-210, a miRNA that stabilizes the hypoxia response protein hypoxia-inducible factor 1-alpha (HIF-1a), as well
+as decrease cancer cell proliferation (Wang et al., 2011). This provides another mechanism through which EGCG demonstrates anticancer activity.
+In recent years many other nutrients have demonstrated epigenetic capabilities. Selenium is a mineral found in grains and
+vegetables grown in selenium rich soil and can also alter DNA methylation. A reduction in selenium results in a decrease in
+global DNA methylation, as well as a decrease in the expression of DNMT1 in prostate and colon cancer cell lines as well as
+rat liver and colon tissue (Davis et al., 2000; Xiang et al., 2008). The red carotenoid lycopene potentially has demethylating
+capabilities in a breast cancer cell culture line, although these results have been questioned and further validation is needed
+(King-Batoon et al., 2008; Liu and Erdman, 2011).
+Sulforaphane is a bioactive food component found in broccoli sprouts and possesses HDAC inhibition activity in cancer
+cells. Other bioactive food components that have garnered interest in the nutritional epigenetics field are butyrate, resveratrol, genistein and curcumin (Chung, 2010; King-Batoon et al., 2008; Zhang and Chen, 2011). The research into the mechanisms of action for these molecules is ongoing, and sure to bring new insight into the field. Modifying the epigenome through
+the diet may one day provide means of early disease intervention or prevention through the diet.
+7.2. Maternal diet
+Maternal transmission of epigenetic traits may be altered by nutrients, affecting the offspring’s phenotype or disease risk.
+Maternal intake of B-vitamins is associated with changes in risk of both colon and breast cancer in the offspring. Specifically,
+loss of imprinting of the insulin-like growth factor 2 gene (Igf2) has been implicated in colorectal cancer in both rodents and
+humans (Cui et al., 2003; Sakatani et al., 2005). Periconceptional maternal supplementation of folic acid is associated with a
+higher degree of methylation of Igf2 in the offspring (Steegers-Theunissen et al., 2009). Moreover, maternal supplementation
+of choline, another nutritional factor involved in one-carbon metabolism, may influence histone modifications in the liver
+and brain of the offspring in rats (Davison et al., 2009). Both histone 3 lysine 9 dimethylation and histone 3 lysine 27 trimethylation are increased in the fetal tissue when the mother has increased choline intake, potentially due to an increase in
+histone methyltransferase expression (Davison et al., 2009).
+Maternal protein-restriction in rats seems to epigenetically program metabolism in the offspring. In pups whose mothers
+were fed a diet low in protein, reduced methylation and increased expression of peroxisome proliferator-activated receptor
+a (PPARa) in the liver has been demonstrated. A similar trend is seen for the glucocorticoid receptor gene, but these effects
+are lost in the offspring of mothers fed a protein-restricted diet supplemented with folate. This not only demonstrates the
+influence of the maternal diet on the pup’s fat and carbohydrate metabolism, but also that the effect most likely occurred
+through altered one-carbon metabolism (Lillycrop et al., 2005). More recently, low and high protein maternal diets in pigs
+were shown to effect global DNA methylation in the newborn offspring through changes in Dnmt1, Dnmt2 and Dnmt3 expression in both the liver and skeletal muscle (Altmann et al., 2012).
+7.3. Early life experiences
+A rather interesting area of research in epigenetics is the influence of one’s environment during childhood on central nervous system and stress response in later life. For example, when comparing the epigenetic patterns of the hippocampus of
+suicide victims with a history of childhood abuse to suicide victims without a history of abuse there is an increase in methylation of the promoter of the nuclear receptor subfamily 3 (NR3C1) gene (McGowan et al., 2009). NR3C1 is the gene encoding
+the neuron-specific glucocorticoid receptor, which when stimulated inhibits the hypothalamic-pituitary-adrenal (HPA)
+stress response (De Kloet et al., 2005). These same results were seen in a much earlier study in rats, where pups that were
+raised with less licking and grooming, and less arched-back nursing also had an altered stress response (Liu et al., 1997).
+Social stress in young mice has been linked to epigenetic changes in the hippocampus. In a previous study, mice that were
+exposed to social defeat stress caused by the introduction of a highly aggressive mouse develop long-term depression-like
+symptoms (Tsankova et al., 2006). Interestingly, both male and female offspring whose father had been exposed to social
+defeat stress also exhibited depressive and anxiety like behaviors, along with increased plasma corticosterone concentrations, potentially caused through epigenetic inheritance (Dietz and Nestler, 2012). Molecularly, mice that are subjected to
+social defeat stress have a decrease in expression of brain-derived neurotrophic factor (BDNF) transcripts, as well as an increase in methylation at histone 3 lysine 27 corresponding to the promoter regions of the transcripts (Tsankova et al., 2006).
+Decreased transcription of two splice variants of BDNF and corresponding increases in methylation of the promoter regions is
+760 S.A. Tammen et al. / Molecular Aspects of Medicine 34 (2013) 753–764
+also associated with maternal neglect in rodents (Roth et al., 2009). These studies suggest that early life experiences lead to
+molecular changes in the brain’s stress response through alterations in epigenetic patterns.
+7.4. Epigenetics and aging
+Epigenetic signatures tend to change naturally as we age. In general, there is a genomic decrease in DNA methylation,
+with a paradoxical hypermethylation of certain gene promoters throughout the genome (Bjornsson et al., 2008; Calvanese
+et al., 2009). While these patterns have been demonstrated in multiple organisms and tissues, it is still unclear whether
+the changes in epigenetic patterns are programmed or stochastic (Gravina and Vijg, 2010). Interestingly, the same DNA
+methylation patterns that are seen with aging appear in cancer development, where tumor suppressor genes are suppressed
+by hypermethylation of their promoter (Esteller, 2008). Changes in histone modifications also seem to occur with age. It has
+been demonstrated that in vitro senescence is associated with a decrease in the repressive histone mark histone 3 lysine 27
+trimethylation as well as an increase in methylation of histone 4 lysine 20, which is indicative of a heterochromatic region,
+thus repression of gene transcription (Bracken et al., 2007; Sarg et al., 2002). These alterations to epigenetic patterns may
+contribute to age-associated diseases, like cancer, or to the physiological process of aging itself. With better understanding
+of the specific changes in epigenetic marks that occur with aging a proper dietary or pharmaceutical intervention may be
+proposed.
+8. Conclusion and future perspectives
+The field of epigenetics is rapidly evolving to contain many types of modifications to the genome that do not alter the
+genetic sequence itself. As research continues, the mechanism of action for each of these epigenetic modifications is further
+elucidated. An interesting aspect of epigenetics is the interaction between the genome and the environment, a research area
+that is bettering our understanding of how the environment shapes our own phenotype along with the phenotype of our
+offspring, and potentially even lasting into the following generation. Nutritional epigenetics may provide a novel way to naturally modulate epigenetic traits that are seen in the progression of particular diseases, such as cancer. Future research is still
+needed to better discriminate a ‘‘healthy’’ epigenetic pattern from those related to disease state, which may aid the medical
+field in making earlier and more specific disease diagnoses and prognoses (Chu et al., 2009; Dworkin et al., 2009; Levenson
+and Melnikov, 2012; Lorincz, 2011).
+Epigenetic research does not come without its limitations. Because epigenetic traits are both tissue and cell-type specific,
+and most studies have been conducted in a single tissue or type of cell line, it is difficult to extrapolate results across an entire organism. Furthermore, studies in model organisms typically have the advantage of comparing inbred animals that are
+genetically similar. Because the underlying genetic sequence may impact the epigenetic pattern, the environmental impact
+on modifying these patterns is also under genetic influence. Conversely epigenetic studies in humans must tease out differences in epigenetic patterns that are truly due to the environment and not genetic factors (Feil and Fraga, 2012). Compared
+to animal models, humans are exposed to a much higher variety of environmental factors that may also interact with genes.
+Thus it is not an easy task for researchers to infer the epigenetic effects of particular environmental exposure in humans.
+The timing of an intervention may be important in the alteration of epigenetic patterns, be it a bioactive food component,
+hormone or pharmaceutical. For example, exposure to a nutrient prenatally may affect the epigenome differently than exposure in adolescence or adulthood. Likewise, the efficacy of an epigenetic intervention to prevent a disease or delay aging
+might depend on the timing of the intervention. Currently, inhibitors of DNMT or HDAC are being developed and used in
+cancer treatment to restore normal expression of tumor-suppressor genes. In the future, an epigenetic intervention may
+be extended to a secondary prevention or to treatment of diseases other than cancer. Through epigenetic research the scientific community can develop a better understanding of mammalian inheritance, changes in disease risk and progression,
+and the degree of impact certain environmental exposures may have on both our own, and our children’s phenotype.
+Acknowledgments
+This material is based upon work supported by the US Department of Agriculture, under Agreement No. 51000-074-01S.
+Any opinions, findings, conclusion, or recommendations expressed in this publication are those of the author(s) and do not
+necessarily reflect the view of the US Dept of Agriculture. This project has been supported in part by the National Institute of
+Health Grants R01 AG025834 (S.W.C.). Authors do not have any conflict of interest.
+References
+Allen, R.C., Zoghbi, H., Moseley, A., Rosenblatt, H., Belmont, J., 1992. Methylation of HpaII and HhaI sites near the polymorphic CAG repeat in the human
+androgen-receptor gene correlates with X chromosome inactivation. American Journal of Human Genetics 51 (6), 1229.
+Allfrey, V., Faulkner, R., Mirsky, A., 1964. Acetylation and methylation of histones and their possible role in the regulation of RNA synthesis. Proceedings of
+the National Academy of Sciences of the United States of America 51 (5), 786.
+Altmann, S., Murani, E., Schwerin, M., Metges, C.C., Wimmers, K., Ponsuksili, S., 2012. Maternal dietary protein restriction and excess affects offspring gene
+expression and methylation of non-SMC subunits of condensin I in liver and skeletal muscle. Epigenetics 7 (3), 0–1.
+S.A. Tammen et al. / Molecular Aspects of Medicine 34 (2013) 753–764 761
+Aoki, A., Suetake, I., Miyagawa, J., Fujio, T., Chijiwa, T., Sasaki, H., Tajima, S., 2001. Enzymatic properties of de novo-type mouse DNA (cytosine-5)
+methyltransferases. Nucleic Acids Research 29 (17), 3506–3512.
+Bandres, E., Agirre, X., Bitarte, N., Ramirez, N., Zarate, R., Roman-Gomez, J., Prosper, F., Garcia-Foncillas, J., 2009. Epigenetic regulation of microRNA
+expression in colorectal cancer. International Journal of Cancer 125 (11), 2737–2743.
+Bannister, A.J., Kouzarides, T., 2011. Regulation of chromatin by histone modifications. Cell Research 21 (3), 381–395.
+Barski, A., Jothi, R., Cuddapah, S., Cui, K., Roh, T.Y., Schones, D.E., Zhao, K., 2009. Chromatin poises miRNA- and protein-coding genes for expression. Genome
+Research 19 (10), 1742–1751.
+Bartel, D.P., 2004. MicroRNAs: genomics, biogenesis, mechanism, and function. Cell 116, 281–297.
+Bell, J.T., Pai, A.A., Pickrell, J.K., Gaffney, D.J., Pique-Regi, R., Degner, J.F., Gilad, Y., Pritchard, J.K., 2011. DNA methylation patterns associate with genetic and
+gene expression variation in HapMap cell lines. Genome Biology 12 (1), R10.
+Bjornsson, H.T., Sigurdsson, M.I., Fallin, M.D., Irizarry, R.A., Aspelund, T., Cui, H., Yu, W., Rongione, M.A., Ekström, T.J., Harris, T.B., 2008. Intra-individual
+change over time in DNA methylation with familial clustering. Journal of the American Medical Association 299 (24), 2877.
+Bracken, A.P., Kleine-Kohlbrecher, D., Dietrich, N., Pasini, D., Gargiulo, G., Beekman, C., Theilgaard-Mönch, K., Minucci, S., Porse, B.T., Marine, J.C., 2007. The
+Polycomb group proteins bind throughout the INK4A-ARF locus and are disassociated in senescent cells. Genes & Development 21 (5), 525.
+Bruno, M., Flaus, A., Stockdale, C., Rencurel, C., Ferreira, H., Owen-Hughes, T., 2003. Histone H2A/H2B dimer exchange by ATP-dependent chromatin
+remodeling activities. Molecular Cell 12 (6), 1599–1606.
+Calvanese, V., Lara, E., Kahn, A., Fraga, M.F., 2009. The role of epigenetics in aging and age-related diseases. Ageing Research Reviews 8 (4), 268–276.
+Cao, R., Wang, L., Wang, H., Xia, L., Erdjument-Bromage, H., Tempst, P., Jones, R.S., Zhang, Y., 2002. Role of histone H3 lysine 27 methylation in Polycombgroup silencing. Science 298 (5595), 1039–1043.
+Carthew, R.W., Sontheimer, E.J., 2009. Origins and mechanisms of miRNAs and siRNAs. Cell 136 (4), 642–655.
+Chu, T., Burke, B., Bunce, K., Surti, U., Allen Hogge, W., Peters, D.G., 2009. A microarray-based approach for the identification of epigenetic biomarkers for the
+noninvasive diagnosis of fetal disease. Prenatal Diagnosis 29 (11), 1020–1030.
+Chung, I.R.S., 2010. Dietary polyphenols, deacetylases and chromatin remodeling in inflammation. World Review of Nutrition and Dietetics 101, 84–94.
+Cocozza, S., Akhtar, M.M., Miele, G., Monticelli, A., 2011. CpG Islands undermethylation in human genomic regions under selective pressure. PLoS ONE 6 (8),
+e23156.
+Cropley, J.E., Suter, C.M., Beckman, K.B., Martin, D.I.K., 2006. Germ-line epigenetic modification of the murine Avy allele by nutritional supplementation.
+Proceedings of the National Academy of Sciences 103 (46), 17308–17312.
+Cui, H., Cruz-Correa, M., Giardiello, F.M., Hutcheon, D.F., Kafonek, D.R., Brandenburg, S., Wu, Y., He, X., Powe, N.R., Feinberg, A.P., 2003. Loss of IGF2
+imprinting: a potential marker of colorectal cancer risk. Science 299 (5613), 1753.
+Davis, C.D., Uthus, E.O., Finley, J.W., 2000. Dietary selenium and arsenic affect DNA methylation in vitro in Caco-2 cells and in vivo in rat liver and colon. The
+Journal of Nutrition 130 (12), 2903–2909.
+Davison, J.M., Mellott, T.J., Kovacheva, V.P., Blusztajn, J.K., 2009. Gestational choline supply regulates methylation of histone H3, expression of histone
+methyltransferases G9a (Kmt1c) and Suv39h1 (Kmt1a), and DNA methylation of their genes in rat fetal liver and brain. Journal of Biological Chemistry
+284 (4), 1982–1989.
+Dawlaty, M.M., Ganz, K., Powell, B.E., Hu, Y.C., Markoulaki, S., Cheng, A.W., Gao, Q., Kim, J., Choi, S.W., Page, D.C., 2011. Tet1 is dispensable for maintaining
+pluripotency and its loss is compatible with embryonic and postnatal development. Cell Stem Cell 9 (2), 166–175.
+De Kloet, E.R., Joëls, M., Holsboer, F., 2005. Stress and the brain: from adaptation to disease. Nature Reviews Neuroscience 6 (6), 463–475.
+Dechassa, M.L., Sabri, A., Pondugula, S., Kassabov, S.R., Chatterjee, N., Kladde, M.P., Bartholomew, B., 2010. SWI/SNF has intrinsic nucleosome disassembly
+activity that is dependent on adjacent nucleosomes. Molecular Cell 38 (4), 590–602.
+Dietz, D.M., Nestler, E.J., 2012. From father to offspring: paternal transmission of depressive-like behaviors. Neuropsychopharmacology 37 (1), 311–312.
+Dworkin, A.M., Huang, T.H.M., Toland, A.E., 2009. Epigenetic Alterations in the Breast: Implications for breast Cancer Detection, Prognosis and Treatment.
+Elsevier, pp. 165–171.
+Esteller, M., 2008. Epigenetics in Cancer. New England Journal of Medicine 358 (11), 1148–1159.
+Fabbri, M., Garzon, R., Cimmino, A., Liu, Z., Zanesi, N., Callegari, E., Liu, S., Alder, H., Costinean, S., Fernandez-Cymering, C., 2007. MicroRNA-29 family reverts
+aberrant methylation in lung cancer by targeting DNA methyltransferases 3A and 3B. Proceedings of the National Academy of Sciences 104 (40), 15805.
+Fang, M.Z., Wang, Y., Ai, N., Hou, Z., Sun, Y., Lu, H., Welsh, W., Yang, C.S., 2003. Tea polyphenol ()-epigallocatechin-3-gallate inhibits DNA methyltransferase
+and reactivates methylation-silenced genes in cancer cell lines. Cancer Research 63 (22), 7563.
+Feil, R., Fraga, M.F., 2012. Epigenetics and the environment: emerging patterns and implications. Nature Reviews Genetics.
+Ficz, G., Branco, M.R., Seisenberger, S., Santos, F., Krueger, F., Hore, T.A., Marques, C.J., Andrews, S., Reik, W., 2011. Dynamic regulation of 5-
+hydroxymethylcytosine in mouse ES cells and during differentiation. Nature 473 (7347), 398–402.
+Fraga, M.F., Ballestar, E., Paz, M.F., Ropero, S., Setien, F., Ballestar, M.L., Heine-Suñer, D., Cigudosa, J.C., Urioste, M., Benitez, J., 2005. Epigenetic differences
+arise during the lifetime of monozygotic twins. Proceedings of the National Academy of Sciences of the United States of America 102 (30), 10604.
+Furuta, M., Kozaki, K., Tanaka, S., Arii, S., Imoto, I., Inazawa, J., 2010. MiR-124 and miR-203 are epigenetically silenced tumor-suppressive microRNAs in
+hepatocellular carcinoma. Carcinogenesis 31 (5), 766–776.
+Globisch, D., Münzel, M., Müller, M., Michalakis, S., Wagner, M., Koch, S., Brückl, T., Biel, M., Carell, T., 2010. Tissue distribution of 5-hydroxymethylcytosine
+and search for active demethylation intermediates. PLoS ONE 5 (12), e15367.
+Gowher, H., Jeltsch, A., 2001. Enzymatic properties of recombinant Dnmt3a DNA methyltransferase from mouse: the enzyme modifies DNA in a nonprocessive manner and also methylates non-CpA sites1. Journal of Molecular Biology 309 (5), 1201–1208.
+Gravina, S., Vijg, J., 2010. Epigenetic factors in aging and longevity. Pflügers Archiv European Journal of Physiology 459 (2), 247–258.
+Hajkova, P., Erhardt, S., Lane, N., Haaf, T., El-Maarri, O., Reik, W., Walter, J., Surani, M.A., 2002. Epigenetic reprogramming in mouse primordial germ cells.
+Mechanisms of Development 117 (1), 15–23.
+Hardy, T.M., Tollefsbol, T.O., 2011. Epigenetic diet: impact on the epigenome and cancer. Epigenomics 3 (4), 503–518.
+Hata, K., Okano, M., Lei, H., Li, E., 2002. Dnmt3L cooperates with the Dnmt3 family of de novo DNA methyltransferases to establish maternal imprints in
+mice. Development 129 (8), 1983–1993.
+Havas, K., Flaus, A., Phelan, M., Kingston, R., Wade, P.A., Lilley, D.M.J., Owen-Hughes, T., 2000. Generation of superhelical torsion by ATP-dependent
+chromatin remodeling activities. Cell 103 (7), 1133–1142.
+He, Y.F., Li, B.Z., Li, Z., Liu, P., Wang, Y., Tang, Q., Ding, J., Jia, Y., Chen, Z., Li, L., 2011. Tet-mediated formation of 5-carboxylcytosine and its excision by TDG in
+mammalian DNA. Science 333 (6047), 1303–1307.
+Huang, Y., Fang, J., Bedford, M.T., Zhang, Y., Xu, R.M., 2006. Recognition of histone H3 lysine-4 methylation by the double tudor domain of JMJD2A. Science
+312 (5774), 748.
+Ito, S., D’Alessio, A.C., Taranova, O.V., Hong, K., Sowers, L.C., Zhang, Y., 2010. Role of Tet proteins in 5mC to 5hmC conversion, ES-cell self-renewal and inner
+cell mass specification. Nature.
+Ito, S., Shen, L., Dai, Q., Wu, S., Collins, L., Swenberg, J., He, C., Zhang, Y., 2011. Tet proteins can convert 5-methylcytosine to 5-formylcytosine and 5-
+carboxylcytosine. Science.
+Jaenisch, R., Bird, A., 2003. Epigenetic regulation of gene expression: how the genome integrates intrinsic and environmental signals. Nature Genetics 33,
+245–254.
+Jin, S.G., Kadam, S., Pfeifer, G.P., 2010. Examination of the specificity of DNA methylation profiling techniques towards 5-methylcytosine and 5-
+hydroxymethylcytosine. Nucleic Acids Research 38 (11), e125.
+762 S.A. Tammen et al. / Molecular Aspects of Medicine 34 (2013) 753–764
+Juan, A.H., Kumar, R.M., Marx, J.G., Young, R.A., Sartorelli, V., 2009. Mir-214-dependent regulation of the polycomb protein Ezh2 in skeletal muscle and
+embryonic stem cells. Molecular Cell 36 (1), 61–74.
+Jurkowski, T.P., Jeltsch, A., 2011. Burning off DNA Methylation: New Evidence for Oxygen-Dependent DNA Demethylation. ChemBioChem.
+Kanhere, A., Viiri, K., Araújo, C.C., Rasaiyaah, J., Bouwman, R.D., Whyte, W.A., Pereira, C.F., Brookes, E., Walker, K., Bell, G.W., 2010. Short RNAs are transcribed
+from repressed polycomb target genes and interact with polycomb repressive complex-2. Molecular Cell 38 (5), 675–688.
+Kato, K., Long, N., Makita, H., Toida, M., Yamashita, T., Hatakeyama, D., Hara, A., Mori, H., Shibata, T., 2008. Effects of green tea polyphenol on methylation
+status of RECK gene and cancer cell invasion in oral squamous cell carcinoma cells. British Journal of Cancer 99 (4), 647–654.
+Khalil, A.M., Guttman, M., Huarte, M., Garber, M., Raj, A., Rivea Morales, D., Thomas, K., Presser, A., Bernstein, B.E., Van Oudenaarden, A., 2009. Many human
+large intergenic noncoding RNAs associate with chromatin-modifying complexes and affect gene expression. Proceedings of the National Academy of
+Sciences 106 (28), 11667–11672.
+King-Batoon, A., Leszczynska, J.M., Klein, C.B., 2008. Modulation of gene methylation by genistein or lycopene in breast cancer cells. Environmental and
+Molecular Mutagenesis 49 (1), 36–45.
+Kozaki, K., Imoto, I., Mogi, S., Omura, K., Inazawa, J., 2008. Exploration of tumor-suppressive microRNAs silenced by DNA hypermethylation in oral cancer.
+Cancer Research 68 (7), 2094.
+Kuzmichev, A., Nishioka, K., Erdjument-Bromage, H., Tempst, P., Reinberg, D., 2002. Histone methyltransferase activity associated with a human
+multiprotein complex containing the Enhancer of Zeste protein. Genes & Development 16 (22), 2893.
+Lepeule, J., Baccarelli, A., Tarantini, L., Motta, V., Cantone, L., Litonjua, A.A., Sparrow, D., Vokonas, P.S., Schwartz, J., 2012. Gene promoter methylation is
+associated with lung function in the elderly: The Normative Aging Study. Epigenetics 7 (3), 0–1.
+Levenson, V.V., Melnikov, A.A., 2012. DNA methylation as clinically useful biomarkers—light at the end of the tunnel. Pharmaceuticals 5 (1), 94–113.
+Lienert, F., Wirbelauer, C., Som, I., Dean, A., Mohn, F., Schübeler, D., 2011. Identification of genetic elements that autonomously determine DNA methylation
+states. Nature Genetics 43 (11), 1091–1097.
+Lillycrop, K.A., Phillips, E.S., Jackson, A.A., Hanson, M.A., Burdge, G.C., 2005. Dietary protein restriction of pregnant rats induces and folic acid
+supplementation prevents epigenetic modification of hepatic gene expression in the offspring. The Journal of Nutrition 135 (6), 1382.
+Lister, R., Ecker, J.R., 2009. Finding the fifth base: genome-wide sequencing of cytosine methylation. Genome Research 19 (6), 959–966.
+Lister, R., Pelizzola, M., Dowen, R.H., Hawkins, R.D., Hon, G., Tonti-Filippini, J., Nery, J.R., Lee, L., Ye, Z., Ngo, Q.M., 2009. Human DNA methylomes at base
+resolution show widespread epigenomic differences. Nature 462 (7271), 315–322.
+Liu, A.G., Erdman, J.W., 2011. Lycopene and apo-100
+-lycopenal do not alter DNA methylation of GSTP1 in LNCaP cells. Biochemical and Biophysical Research
+Communications.
+Liu, D., Diorio, J., Tannenbaum, B., Caldji, C., Francis, D., Freedman, A., Sharma, S., Pearson, D., Plotsky, P.M., Meaney, M.J., 1997. Maternal care, hippocampal
+glucocorticoid receptors, and hypothalamic–pituitary–adrenal responses to stress. Science 277 (5332), 1659.
+Liu, L., van Groen, T., Kadish, I., Li, Y., Wang, D., James, S.R., Karpf, A.R., Tollefsbol, T.O., 2011. Insufficient DNA methylation affects healthy aging and promotes
+age-related health problems. Clinical Epigenetics, 1–12.
+Liu, L., Wylie, R.C., Andrews, L.G., Tollefsbol, T.O., 2003. Aging, cancer and nutrition: the DNA methylation connection. Mechanisms of Ageing and
+Development 124 (10–12), 989–998.
+Lorincz, A.T., 2011. The promise and the problems of epigenetic biomarkers in cancer. Expert Opinion on Medical Diagnostics 5 (5), 375–379.
+Maiti, A., Drohat, A.C., 2011. Thymine DNA glycosylase can rapidly excise 5-formylcytosine and 5-carboxylcytosine. Journal of Biological Chemistry 286 (41),
+35334–35338.
+Margueron, R., Reinberg, D., 2010. Chromatin structure and the inheritance of epigenetic information. Nature Reviews Genetics 11 (4), 285–296.
+Mason, J.B., Choi, S.W., 2005. Effects of alcohol on folate metabolism: implications for carcinogenesis. Alcohol 35 (3), 235–241.
+McGowan, P.O., Sasaki, A., D’Alessio, A.C., Dymov, S., Labonté, B., Szyf, M., Turecki, G., Meaney, M.J., 2009. Epigenetic regulation of the glucocorticoid receptor
+in human brain associates with childhood abuse. Nature Neuroscience 12 (3), 342–348.
+Meehan, R., Lewis, J.D., Bird, A.P., 1992. Characterization of MeCP2, a vertebrate DNA binding protein with affinity for methylated DNA. Nucleic Acids
+Research 20 (19), 5085–5092.
+Minks, J., Robinson, W.P., Brown, C.J., 2008. A skewed view of X chromosome inactivation. Journal of Clinical Investigation 118 (1), 20–22.
+Münzel, M., Globisch, D., Carell, T., 2011. 5-Hydroxymethylcytosine, the Sixth Base of the Genome. Angewandte Chemie International Edition 50 (29), 6460–
+6468.
+Niculescu, M.D., Zeisel, S.H., 2002. Diet, methyl donors and DNA methylation: interactions between dietary folate, methionine and choline. The Journal of
+Nutrition 132 (8), 2333S.
+Otte, A.P., Kwaks, T.H.J., 2003. Gene repression by Polycomb group protein complexes: a distinct complex for every occasion? Current Opinion in Genetics &
+Development 13 (5), 448–454.
+Park, L., Friso, S., Choi, S., 2011. Nutritional influences on epigenetics and age-related disease. The Proceedings of the Nutrition Society, 1.
+Puri, D., Dhawan, J., Mishra, R.K., 2010. The paternal hidden agenda: epigenetic inheritance through sperm chromatin. Epigenetics 5 (5), 386–391.
+Roth, T.L., Lubin, F.D., Funk, A.J., Sweatt, J.D., 2009. Lasting epigenetic influence of early-life adversity on the BDNF gene. Biological Psychiatry 65 (9), 760–
+769.
+Sakatani, T., Kaneda, A., Iacobuzio-Donahue, C.A., Carter, M.G., de Boom Witzel, S., Okano, H., Ko, M.S.H., Ohlsson, R., Longo, D.L., Feinberg, A.P., 2005. Loss of
+imprinting of Igf2 alters intestinal maturation and tumorigenesis in mice. Science 307 (5717), 1976.
+Sarg, B., Koutzamani, E., Helliger, W., Rundquist, I., Lindner, H.H., 2002. Postsynthetic trimethylation of histone H4 at lysine 20 in mammalian tissues is
+associated with aging. Journal of Biological Chemistry 277 (42), 39195–39201.
+Sato, F., Tsuchiya, S., Meltzer, S.J., Shimizu, K., 2011. MicroRNAs and epigenetics. FEBS Journal 278 (10), 1598–1609.
+Schoeftner, S., Sengupta, A.K., Kubicek, S., Mechtler, K., Spahn, L., Koseki, H., Jenuwein, T., Wutz, A., 2006. Recruitment of PRC1 function at the initiation of X
+inactivation independent of PRC2 and silencing. The EMBO Journal 25 (13), 3110–3122.
+Shahbazian, M.D., Grunstein, M., 2007. Functions of site-specific histone acetylation and deacetylation. Annual Review of Biochemistry 76, 75–100.
+Shenker, N., Flanagan, J., 2011. Intragenic DNA methylation: implications of this epigenetic mechanism for cancer research. British Journal of Cancer.
+Shi, X., Hong, T., Walter, K.L., Ewalt, M., Michishita, E., Hung, T., Carney, D., Peña, P., Lan, F., Kaadige, M.R., 2006. ING2 PHD domain links histone H3 lysine 4
+methylation to active gene repression. Nature 442 (7098), 96–99.
+Sims III, R.J., Millhouse, S., Chen, C.F., Lewis, B.A., Erdjument-Bromage, H., Tempst, P., Manley, J.L., Reinberg, D., 2007. Recognition of trimethylated histone
+H3 lysine 4 facilitates the recruitment of transcription postinitiation factors and pre-mRNA splicing. Molecular Cell 28 (4), 665–676.
+Sims, R.J., Chen, C.F., Santos-Rosa, H., Kouzarides, T., Patel, S.S., Reinberg, D., 2005. Human but not yeast CHD1 binds directly and selectively to histone H3
+methylated at lysine 4 via its tandem chromodomains. Journal of Biological Chemistry 280 (51), 41789.
+Steegers-Theunissen, R.P., Obermann-Borst, S.A., Kremer, D., Lindemans, J., Siebel, C., Steegers, E.A., Slagboom, P.E., Heijmans, B.T., 2009. Periconceptional
+maternal folic acid use of 400 lg per day is related to increased methylation of the IGF2 gene in the very young child. PLoS ONE 4 (11), e7845.
+Tahiliani, M., Koh, K.P., Shen, Y., Pastor, W.A., Bandukwala, H., Brudno, Y., Agarwal, S., Iyer, L.M., Liu, D.R., Aravind, L., 2009. Conversion of 5-methylcytosine
+to 5-hydroxymethylcytosine in mammalian DNA by MLL partner TET1. Science 324 (5929), 930.
+Tang, L., Nogales, E., Ciferri, C., 2010. Structure and function of SWI/SNF chromatin remodeling complexes and mechanistic implications for transcription.
+Progress in Biophysics and Molecular Biology 102 (2–3), 122–128.
+Tsankova, N.M., Berton, O., Renthal, W., Kumar, A., Neve, R.L., Nestler, E.J., 2006. Sustained hippocampal chromatin regulation in a mouse model of
+depression and antidepressant action. Nature Neuroscience 9 (4), 519–525.
+Valinluck, V., Tsai, H.H., Rogstad, D.K., Burdzy, A., Bird, A., Sowers, L.C., 2004. Oxidative damage to methyl-CpG sequences inhibits the binding of the methylCpG binding domain (MBD) of methyl-CpG binding protein 2 (MeCP2). Nucleic Acids Research 32 (14), 4100–4108.
+S.A. Tammen et al. / Molecular Aspects of Medicine 34 (2013) 753–764 763
+Wang, H., Bian, S., Yang, C.S., 2011. Green tea polyphenol EGCG suppresses lung cancer cell growth through upregulating miR-210 expression caused by
+stabilizing HIF-1a. Carcinogenesis.
+Williams, K., Christensen, J., Pedersen, M.T., Johansen, J.V., Cloos, P.A.C., Rappsilber, J., Helin, K., 2011. TET1 and hydroxymethylcytosine in transcription and
+DNA methylation fidelity. Nature 473 (7347), 343–348.
+Winter, J., Jung, S., Keller, S., Gregory, R.I., Diederichs, S., 2009. Many roads to maturity: microRNA biogenesis pathways and their regulation. Nature Cell
+Biology 11 (3), 228–234.
+Wong, C.C.Y., Caspi, A., Williams, B., Houts, R., Craig, I.W., Mill, J., 2011. A longitudinal twin study of skewed X chromosome-inactivation. PLoS ONE 6 (3),
+e17873.
+Wu, H., D’Alessio, A.C., Ito, S., Xia, K., Wang, Z., Cui, K., Zhao, K., Sun, Y.E., Zhang, Y., 2011. Dual functions of Tet1 in transcriptional regulation in mouse
+embryonic stem cells. Nature 473 (7347), 389–393.
+Wysocka, J., Swigut, T., Xiao, H., Milne, T.A., Kwon, S.Y., Landry, J., Kauer, M., Tackett, A.J., Chait, B.T., Badenhorst, P., 2006. A PHD finger of NURF couples
+histone H3 lysine 4 trimethylation with chromatin remodelling. Nature 442 (7098), 86–90.
+Xhemalce, B., Dawson, M.A., Bannister, A.J., 2011. Histone modifications. In: Meyers, R.A. (Ed.), Encyclopedia of Molecular Cell Biology and Molecular
+Medicine. Wiley-VCH Verlag, Weinheim.
+Xiang, N., Zhao, R., Song, G., Zhong, W., 2008. Selenite reactivates silenced genes by modifying DNA methylation and histones in prostate cancer cells.
+Carcinogenesis 29 (11), 2175.
+Xu, M., Wang, W., Chen, S., Zhu, B., 2011a. A model for mitotic inheritance of histone lysine methylation. EMBO Reports.
+Xu, Y., Wu, F., Tan, L., Kong, L., Xiong, L., Deng, J., Barbera, A.J., Zheng, L., Zhang, H., Huang, S., 2011b. Genome-wide regulation of 5hmC, 5mC, and gene
+expression by Tet1 hydroxylase in mouse embryonic stem cells. Molecular Cell.
+Yan, J., Zierath, J.R., Barrès, R., 2011. Evidence for non-CpG methylation in mammals. Experimental Cell Research.
+Zhang, H., Zhang, X., Clark, E., Mulcahey, M., Huang, S., Shi, Y.G., 2010. TET1 is a DNA-binding protein that modulates DNA methylation and gene
+transcription via hydroxylation of 5-methylcytosine. Cell Research.
+Zhang, L., Hou, D., Chen, X., Li, D., Zhu, L., Zhang, Y., Li, J., Bian, Z., Liang, X., Cai, X., 2011. Exogenous plant MIR168a specifically targets mammalian LDLRAP1:
+evidence of cross-kingdom regulation by microRNA. Cell Research.
+Zhang, Y., Chen, H., 2011. Genistein, an epigenome modifier during cancer prevention. Epigenetics: Official Journal of the DNA Methylation Society 6 (7).
+Zhao, J., Sun, B.K., Erwin, J.A., Song, J.J., Lee, J.T., 2008. Polycomb proteins targeted by a short repeat RNA to the mouse X chromosome. Science 322 (5902),
+750.
+Zhou, W., Zhu, P., Wang, J., Pascual, G., Ohgi, K.A., Lozach, J., Glass, C.K., Rosenfeld, M.G., 2008. Histone H2A monoubiquitination represses transcription by
+inhibiting RNA polymerase II transcriptional elongation. Molecular Cell 29 (1), 69–80
