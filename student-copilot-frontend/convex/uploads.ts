@@ -11,8 +11,8 @@ export const generateUploadUrl = mutation(async (ctx) => {
 
 
 type VideoMetaData = {
-  videoId: string,
-  outputFormat: string
+  video_id: string,
+  output_format: string
 }
 
 type AudioMetaData = {
@@ -33,8 +33,8 @@ export async function processVideoDetails(
 
 
   const data: VideoMetaData = {
-    "outputFormat": outputFormat,
-    "videoId": videoId
+    "output_format": outputFormat,
+    "video_id": videoId
 
   }
 
