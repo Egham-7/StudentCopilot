@@ -1,6 +1,18 @@
 import { CardContent, Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { Id } from "convex/_generated/dataModel";
+import { z } from "zod";
+
+const ACCEPTED_FILE_TYPES = [
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/wav",
+  "audio/ogg",
+  "application/pdf",
+  "video/mp4"
+];
+
+const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB in bytes
 
 export const renderTriggerCard = (title: string, description: string) => (
   <Card className="cursor-pointer hover:bg-accent transition-colors duration-200 flex items-center justify-center h-full" >
@@ -31,3 +43,14 @@ export type LecturesData = {
   fileType: "audio" | "video" | "pdf";
 }
 
+export const formSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  moduleId: z.string().min(1, 'Module ID is required'),
+  file: z.instanceof(File)
+    .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is 200MB.`)
+    .refine(
+      (file) => ACCEPTED_FILE_TYPES.includes(file.type),
+      "Only audio, video, and PDF files are accepted."
+    ),
+});

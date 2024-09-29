@@ -13,7 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import AnimatedCircularProgressBar from '@/components/magicui/animated-circular-progress-bar';
 import pdfToText from 'react-pdftotext'
 import { chunk } from 'lodash-es';
-
+import { formSchema } from '@/lib/ui_utils';
 
 import * as z from 'zod';
 
@@ -22,30 +22,12 @@ interface UploadProgressSetter {
 }
 
 
-const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB in bytes
 
 const PDF_CHUNK_SIZE = 500 // 500 words
 
-const ACCEPTED_FILE_TYPES = [
-  "audio/mpeg",
-  "audio/mp3",
-  "audio/wav",
-  "audio/ogg",
-  "application/pdf",
-  "video/mp4"
-];
 
-export const formSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  moduleId: z.string().min(1, 'Module ID is required'),
-  file: z.instanceof(File)
-    .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is 200MB.`)
-    .refine(
-      (file) => ACCEPTED_FILE_TYPES.includes(file.type),
-      "Only audio, video, and PDF files are accepted."
-    ),
-});
+
+
 interface LectureUploadFormProps {
   moduleId: Id<"modules">;
   fileType: 'pdf' | 'audio' | 'video';
