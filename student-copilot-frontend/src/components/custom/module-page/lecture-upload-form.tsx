@@ -210,12 +210,17 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
 
     setUploadProgress(50)
 
+    // Ensure transcription_ids is an array of strings
+    const transcriptionIds = Array.isArray(audioMetaData.transcription_ids)
+      ? audioMetaData.transcription_ids
+      : [audioMetaData.transcription_ids];
+
     await storeLecture({
       title: values.title,
       description: values.description,
       completed: false,
       lectureTranscriptionEmbedding: audioMetaData.transcription_embedding,
-      lectureTranscription: audioMetaData.transcription_ids as Id<"_storage">[],
+      lectureTranscription: transcriptionIds as Id<"_storage">[],
       contentStorageId: videoId,
       moduleId: moduleId as Id<"modules">,
       fileType: "video"
