@@ -61,7 +61,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
   const generateUploadUrl = useMutation(api.uploads.generateUploadUrl);
   const storeLecture = useMutation(api.lectures.store);
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
-  const extractAudio = useAction(api.uploads.extractAudio);
+  const processVideo = useAction(api.uploads.processVideo);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -226,51 +226,20 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
 
   const handleVideoUpload = async (file: File, values: z.infer<typeof formSchema>, moduleId: string, setUploadProgress: UploadProgressSetter) => {
 
-
-
-
-
     const videoId = await uploadFile(file, file.type);
 
 
-    const audioBuffer = await extractAudio({ videoId: videoId })
+    const audioMetaData = await processVideo({ videoId: videoId })
 
-
-    const results = await chunkAndProcess(
-      audioBuffer,
-      5 * 1024 * 1024, // 5MB chunks
-      async (chunk, index, setProgress, totalChunks) => {
-        const { storageId, embedding } = await transcribeAudio({
-          audioChunk: chunk,
-          chunkIndex: index,
-        });
-        setProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 100)));
-        return { storageId, embedding };
-      },
-      setUploadProgress
-    );
-
-
-    const allStorageIds: Id<"_storage">[] = results.map(r => r.storageId);
-    const combinedEmbedding = results.reduce((acc, { embedding }) =>
-      acc.map((val, i) => val + embedding[i]),
-      new Array(1536).fill(0)
-    );
-
-    const magnitude = Math.sqrt(combinedEmbedding.reduce((sum, val) => sum + val * val, 0));
-    const normalizedEmbedding = combinedEmbedding.map(val => val / magnitude);
-
-
-    const storageId = await uploadFile(file, file.type);
-
+    setUploadProgress(50)
 
     await storeLecture({
       title: values.title,
       description: values.description,
       completed: false,
-      lectureTranscriptionEmbedding: normalizedEmbedding,
-      lectureTranscription: allStorageIds,
-      contentStorageId: storageId,
+      lectureTranscriptionEmbedding: audioMetaData.transcription_embedding,
+      lectureTranscription: audioMetaData.transcription_ids as Id<"_storage">[],
+      contentStorageId: videoId,
       moduleId: moduleId as Id<"modules">,
       fileType: "video"
     });

@@ -8,41 +8,44 @@ export const generateUploadUrl = mutation(async (ctx) => {
 });
 
 
-export interface ExtractAudioOptions {
-  startTime?: number;
-  duration?: number;
-  outputFormat?: string;
+
+
+type VideoMetaData = {
+  videoId: string,
+  outputFormat: string
 }
-export async function extractAudioFromVideo(
+
+type AudioMetaData = {
+
+  "transcription_ids": string[],
+  "transcription_embedding": number[]
+
+}
+
+export async function processVideoDetails(
   videoId: string,
   outputFormat: string = 'mp3',
-  options: ExtractAudioOptions = {}
-): Promise<ArrayBuffer> {
+): Promise<AudioMetaData> {
   const apiUrl = 'https://victorious-happiness-production.up.railway.app/extract-audio/';
-  if (videoId.length === 0) {
+  if (videoId.length <= 0) {
     throw new Error('Video id cannot be empty.');
   }
 
 
-  // Construct query parameters
-  const queryParams = new URLSearchParams();
-  queryParams.append('video_id', videoId);
-  queryParams.append('output_format', outputFormat);
+  const data: VideoMetaData = {
+    "outputFormat": outputFormat,
+    "videoId": videoId
 
-  // Add optional parameters if they exist
-  if (options.startTime !== undefined) {
-    queryParams.append('start_time', options.startTime.toString());
   }
-  if (options.duration !== undefined) {
-    queryParams.append('duration', options.duration.toString());
-  }
+
 
   try {
-    const response = await fetch(`${apiUrl}?${queryParams.toString()}`, {
-      method: 'GET',
+    const response = await fetch(`${apiUrl}`, {
+      method: 'POST',
       headers: {
         'Accept': 'audio/*',
       },
+      body: JSON.stringify(data)
     });
 
     if (!response.ok) {
@@ -51,14 +54,16 @@ export async function extractAudioFromVideo(
       throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
     }
 
-    return response.arrayBuffer();
+    return response.json();
+
+
   } catch (error) {
     console.error('Error in extractAudioFromVideo:', error);
     throw error;
   }
 }
 
-export const extractAudio = action({
+export const processVideo = action({
   args: {
     videoId: v.string(),
     outputFormat: v.optional(v.string()),
@@ -67,13 +72,14 @@ export const extractAudio = action({
       duration: v.optional(v.number()),
     }))
   },
-  handler: async (_ctx, args) => {
-    const audioBuffer = await extractAudioFromVideo(
+  handler: async (_ctx, args): Promise<AudioMetaData> => {
+
+    const audioMetaData: AudioMetaData = await processVideoDetails(
       args.videoId,
       args.outputFormat,
-      args.options
     );
-    return audioBuffer;
+
+    return audioMetaData
   }
 });
 
