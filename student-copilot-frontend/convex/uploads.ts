@@ -26,7 +26,7 @@ export async function processVideoDetails(
   videoId: string,
   outputFormat: string = 'mp3',
 ): Promise<AudioMetaData> {
-  const apiUrl = 'https://victorious-happiness-production.up.railway.app/extract-audio/';
+  const apiUrl = 'https://victorious-happiness-production.up.railway.app/process-video';
   if (videoId.length <= 0) {
     throw new Error('Video id cannot be empty.');
   }
