@@ -205,6 +205,8 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
 
     const videoId = await uploadFile(file, file.type);
 
+    setUploadProgress(25);
+
 
     const audioMetaData = await processVideo({ videoId: videoId })
 
