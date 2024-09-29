@@ -10,6 +10,8 @@ from moviepy.editor import AudioFileClip
 import numpy as np
 from openai import OpenAI
 from io import BytesIO
+import json
+
 
 CHUNK_SIZE = 5 * 1024 * 1024  # 5MB
 EMBEDDING_MODEL = "text-embedding-3-small"
@@ -133,11 +135,12 @@ class AudioExtractor:
 
         upload_url = self.convex_client.mutation("uploads:generateUploadUrl")
 
-        data = {"transcription": transcription}
+        data = json.dumps({"transcription": transcription})
 
-        async with self.session.post(upload_url, data=data) as response:
+        async with self.session.post(upload_url, data=data, headers={'Content-Type': 'application/json'}) as response:
             if response.status == 200:
-                return await response.text()
+                data = await response.json()
+                return data['storageId']
             else:
                 raise Exception(
                     f"Failed to upload transcription: {response.status}")
