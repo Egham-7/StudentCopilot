@@ -57,3 +57,4 @@ data/scratch/*
 !data/scratch/.gitkeep
 
 .venv/
+.env.local
