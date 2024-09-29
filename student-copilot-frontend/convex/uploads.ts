@@ -1,4 +1,3 @@
-'use node';
 
 import { mutation } from "./_generated/server";
 import { action } from "./_generated/server";
@@ -44,7 +43,7 @@ export async function processVideoDetails(
     const response = await fetch(`${apiUrl}`, {
       method: 'POST',
       headers: {
-        'Accept': 'audio/*',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(data)
     });
