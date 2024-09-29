@@ -14,18 +14,13 @@ import AnimatedCircularProgressBar from '@/components/magicui/animated-circular-
 import pdfToText from 'react-pdftotext'
 import { chunk } from 'lodash-es';
 import { formSchema } from '@/lib/ui_utils';
-
 import * as z from 'zod';
+
+const PDF_CHUNK_SIZE = 500 // 500 words
 
 interface UploadProgressSetter {
   (progress: number): void;
 }
-
-
-
-const PDF_CHUNK_SIZE = 500 // 500 words
-
-
 
 
 interface LectureUploadFormProps {

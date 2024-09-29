@@ -23,5 +23,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Set the default command to run the FastAPI application
-CMD ["python", "code/MainController.py"]
+CMD ["python", "-m", "code.MainController"]
 
