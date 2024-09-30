@@ -18,10 +18,10 @@ export const getLecturesByModuleId = query({
 
     const lecturesWithUrl = await Promise.all(lectures.map(async (lecture) => {
       const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
-      const imageUrl = await ctx.storage.getUrl(lecture.image);
+      const imageUrl = lecture.image !== undefined ? await ctx.storage.getUrl(lecture.image) : null;
 
       // Assert that these URLs are always strings
-      if (contentUrl === null || imageUrl === null) {
+      if (contentUrl === null) {
         throw new Error("Expected content URL and image URL to be non-null");
       }
 
@@ -48,10 +48,10 @@ export const getLecturesByIds = query({
         }
 
         const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
-        const imageUrl = await ctx.storage.getUrl(lecture.image);
+        const imageUrl = lecture.image !== undefined ? await ctx.storage.getUrl(lecture?.image) : null;
 
         // Assert that these URLs are always strings
-        if (contentUrl === null || imageUrl === null) {
+        if (contentUrl === null) {
           throw new Error("Expected content URL and image URL to be non-null");
         }
 

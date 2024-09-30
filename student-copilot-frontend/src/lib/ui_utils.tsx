@@ -41,7 +41,7 @@ export type LecturesData = {
   lectureTranscription: Id<"_storage">[];
   lectureTranscriptionEmbedding: number[];
   fileType: "audio" | "video" | "pdf";
-  image: string;
+  image: string | null;
 
 }
 
@@ -57,6 +57,6 @@ export const formSchema = z.object({
     ),
 });
 
-export const PDF_ICON_STORAGE_ID = "kg27xr1sxrc1pfnnbd1hc9tn9s71pckb"
-export const AUDIO_ICON_STORAGE_ID = "kg2d0qbt0s94rjw3c8atzcw5m571p89r"
-export const VIDEO_ICON_STORAGE_ID = "kg2fc7p9wnz25s7mpesd4sqq2x71qvgf"
+export const PDF_ICON_STORAGE_ID = "kg2a7kfy6teycgrzs4jnnppvtn71rsag"
+export const AUDIO_ICON_STORAGE_ID = "kg2djkrr60q4nkt65y4gz2t8ed71r548"
+export const VIDEO_ICON_STORAGE_ID = "kg21gq85jdzymxk270vd75vrq971rrq1"

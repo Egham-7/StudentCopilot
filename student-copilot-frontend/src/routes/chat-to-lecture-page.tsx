@@ -102,7 +102,7 @@ export default function LectureChat() {
                 className="relative cursor-pointer transition-all duration-300 ring-2 ring-primary"
               >
                 <img
-                  src={lecture.image}
+                  src={lecture.image ?? " "}
                   alt={lecture.title}
                   className="rounded-lg"
                 />
