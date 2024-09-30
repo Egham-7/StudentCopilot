@@ -1,19 +1,17 @@
 
-import { useState, useEffect, useCallback } from 'react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Send, Loader2 } from 'lucide-react'
-
-const lectures = [
-  { id: '1', title: 'Introduction to React', color: 'hsl(210, 100%, 50%)' },
-  { id: '2', title: 'State Management in React', color: 'hsl(210, 100%, 84%)' },
-  { id: '3', title: 'React Hooks Deep Dive', color: 'hsl(210, 50%, 90%)' },
-  { id: '4', title: 'Building Scalable React Applications', color: 'hsl(210, 100%, 94%)' },
-]
+import { api } from '../../convex/_generated/api'
+import { useParams } from 'react-router-dom'
+import { useQuery } from 'convex/react'
+import { Id } from 'convex/_generated/dataModel'
+import LoadingPage from '@/components/custom/loading'
+import { LecturesData } from '@/lib/ui_utils'
 
 interface Message {
   id: string;
@@ -21,23 +19,30 @@ interface Message {
   content: string;
 }
 
+
+
 export default function LectureChat() {
-  const [selectedLecture, setSelectedLecture] = useState(lectures[0].id)
+  const { lectureIds: lectureIdsString } = useParams();
+  const lectureIds = lectureIdsString?.split(",") as Id<"lectures">[] | undefined;
+
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const lectures = useQuery(api.lectures.getLecturesByIds, lectureIds ? { lectureIds: lectureIds } : "skip")
+
+  const isPageLoading = !lectureIdsString || !lectures
+
   const sendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim()) return
+    if (!input.trim() || !lectures) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input
+      content: input.trim()
     }
-
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
@@ -50,37 +55,35 @@ export default function LectureChat() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: input,
-          lectureId: selectedLecture,
+          message: input.trim(),
+          lectureIds: lectures.map(lecture => lecture?._id),
         }),
       })
-
       if (!response.ok) {
         throw new Error('Failed to get response from AI')
       }
-
       const data = await response.json()
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.message
       }
-
       setMessages(prev => [...prev, aiMessage])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred')
     } finally {
       setIsLoading(false)
     }
-  }, [input, selectedLecture])
+  }, [input, lectures])
 
   useEffect(() => {
-    // Scroll to bottom of message list when new message is added
     const messageList = document.getElementById('message-list')
     if (messageList) {
       messageList.scrollTop = messageList.scrollHeight
     }
   }, [messages])
+
+  if (isPageLoading) return <LoadingPage />
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -92,27 +95,23 @@ export default function LectureChat() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <Select
-            value={selectedLecture}
-            onValueChange={setSelectedLecture}
-          >
-            <SelectTrigger className="w-full mb-6 bg-input text-input-foreground border-input">
-              <SelectValue placeholder="Select a lecture" />
-            </SelectTrigger>
-            <SelectContent className="bg-popover text-popover-foreground border-border">
-              {lectures.map((lecture) => (
-                <SelectItem key={lecture.id} value={lecture.id}>
-                  <div className="flex items-center">
-                    <div
-                      className="w-3 h-3 rounded-full mr-2"
-                      style={{ backgroundColor: lecture.color }}
-                    />
-                    {lecture.title}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex space-x-4 mb-6 overflow-x-auto pb-2">
+            {lectures && lectures.map((lecture: LecturesData) => (
+              <div
+                key={lecture._id}
+                className="relative cursor-pointer transition-all duration-300 ring-2 ring-primary"
+              >
+                <img
+                  src={lecture.image}
+                  alt={lecture.title}
+                  className="rounded-lg"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center rounded-lg">
+                  <span className="text-white text-center text-sm px-2">{lecture.title}</span>
+                </div>
+              </div>
+            ))}
+          </div>
           <ScrollArea className="h-[400px] w-full rounded-md border border-border p-4 bg-muted" id="message-list">
             <AnimatePresence>
               {messages.map((message) => (
@@ -157,7 +156,7 @@ export default function LectureChat() {
             />
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !input.trim()}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isLoading ? (
@@ -173,3 +172,4 @@ export default function LectureChat() {
     </div>
   )
 }
+

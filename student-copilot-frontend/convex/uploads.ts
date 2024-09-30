@@ -67,15 +67,11 @@ export const processVideo = action({
   args: {
     videoId: v.string(),
     outputFormat: v.optional(v.string()),
-    options: v.optional(v.object({
-      startTime: v.optional(v.number()),
-      duration: v.optional(v.number()),
-    }))
   },
   handler: async (_ctx, args): Promise<AudioMetaData> => {
 
     const audioMetaData: AudioMetaData = await processVideoDetails(
-      args.videoId,
+      args.videoId.toString(),
       args.outputFormat,
     );
 

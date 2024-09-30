@@ -11,6 +11,7 @@ import SearchBar from "./search-bar";
 import LecturesTab from "./lectures-tab";
 import NotesTab from "./notes-tab";
 import { SearchResults, LecturesData } from "@/lib/ui_utils";
+import { useNavigate } from "react-router-dom";
 
 
 type ModuleTabsProps = {
@@ -29,6 +30,9 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
 
   const [filteredLectures, setFilteredLectures] = useState(lectures);
   const [filteredNotes, setFilteredNotes] = useState(notes);
+  const navigate = useNavigate();
+
+
 
   useEffect(() => {
     setFilteredLectures(lectures);
@@ -37,6 +41,16 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
   useEffect(() => {
     setFilteredNotes(notes);
   }, [notes]);
+
+
+  const handleRouteToChat = () => {
+
+    const selectedLecturesString = selectedLectures.join(",")
+
+    navigate(`chat/lectures/${selectedLecturesString}`)
+
+
+  }
 
 
   const generateNotes = useMutation(api.notes.storeClient);
@@ -103,6 +117,14 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
                       <FileText className="w-4 h-4 mr-2" />
                       Generate Notes
                     </>
+                  )}
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={handleRouteToChat}>
+                  {selectedLectures.length > 1 ? (
+                    <p>Chat to lectures</p>
+                  ) : (
+                    <p>Chat to lecture</p>
                   )}
                 </DropdownMenuItem>
               </DropdownMenuContent>

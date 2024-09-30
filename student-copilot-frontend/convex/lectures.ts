@@ -17,13 +17,53 @@ export const getLecturesByModuleId = query({
     }
 
     const lecturesWithUrl = await Promise.all(lectures.map(async (lecture) => {
+      const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
+      const imageUrl = await ctx.storage.getUrl(lecture.image);
+
+      // Assert that these URLs are always strings
+      if (contentUrl === null || imageUrl === null) {
+        throw new Error("Expected content URL and image URL to be non-null");
+      }
+
       return {
         ...lecture,
-        contentUrl: await ctx.storage.getUrl(lecture.contentUrl)
+        contentUrl,
+        image: imageUrl
       };
     }));
 
     return lecturesWithUrl;
+  },
+});
+
+export const getLecturesByIds = query({
+  args: { lectureIds: v.array(v.id('lectures')) },
+  handler: async (ctx, args) => {
+    const lectures = await Promise.all(
+      args.lectureIds.map(async (id) => {
+        const lecture = await ctx.db.get(id);
+
+        if (lecture == null) {
+          throw new Error("lecture cannot be null in chat.")
+        }
+
+        const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
+        const imageUrl = await ctx.storage.getUrl(lecture.image);
+
+        // Assert that these URLs are always strings
+        if (contentUrl === null || imageUrl === null) {
+          throw new Error("Expected content URL and image URL to be non-null");
+        }
+
+
+        return {
+          ...lecture,
+          contentUrl: contentUrl,
+          image: imageUrl
+        }
+      })
+    );
+    return lectures;
   },
 });
 
@@ -117,7 +157,8 @@ export const store = mutation({
       v.literal("pdf"),
       v.literal("audio"),
       v.literal("video")
-    )
+    ),
+    image: v.id("_storage")
   },
 
   handler: async (ctx, args) => {
@@ -156,7 +197,8 @@ export const store = mutation({
       moduleId: args.moduleId,
       completed: args.completed,
       userId: identity.subject,
-      fileType: args.fileType
+      fileType: args.fileType,
+      image: args.image
 
     })
 
