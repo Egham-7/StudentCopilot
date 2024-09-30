@@ -57,7 +57,8 @@ export default defineSchema({
       v.literal("pdf"),
       v.literal("audio"),
       v.literal("video")
-    )
+    ),
+    image: v.id("_storage")
   })
     .index("by_moduleId", ["moduleId"])
     .vectorIndex("by_lectureTranscriptionEmbedding", {

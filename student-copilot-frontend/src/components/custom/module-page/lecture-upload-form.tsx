@@ -13,8 +13,9 @@ import { useToast } from '@/components/ui/use-toast';
 import AnimatedCircularProgressBar from '@/components/magicui/animated-circular-progress-bar';
 import pdfToText from 'react-pdftotext'
 import { chunk } from 'lodash-es';
-import { formSchema } from '@/lib/ui_utils';
+import { AUDIO_ICON_STORAGE_ID, formSchema, PDF_ICON_STORAGE_ID, VIDEO_ICON_STORAGE_ID } from '@/lib/ui_utils';
 import * as z from 'zod';
+
 
 const PDF_CHUNK_SIZE = 500 // 500 words
 
@@ -39,6 +40,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
   const storeLecture = useMutation(api.lectures.store);
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
   const processVideo = useAction(api.uploads.processVideo);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -155,7 +157,8 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       lectureTranscription: textChunkStorageIds,
       contentStorageId: storageId,
       moduleId: moduleId as Id<"modules">,
-      fileType: "pdf"
+      fileType: "pdf",
+      image: PDF_ICON_STORAGE_ID as Id<"_storage">
     });
   }
 
@@ -195,7 +198,8 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       lectureTranscription: allStorageIds,
       contentStorageId: storageId,
       moduleId: moduleId as Id<"modules">,
-      fileType: "audio"
+      fileType: "audio",
+      image: AUDIO_ICON_STORAGE_ID as Id<"_storage">
     });
   }
 
@@ -214,6 +218,8 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
 
 
 
+
+
     await storeLecture({
       title: values.title,
       description: values.description,
@@ -222,7 +228,8 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       lectureTranscription: audioMetaData.transcription_ids as Id<"_storage">[],
       contentStorageId: videoId,
       moduleId: moduleId as Id<"modules">,
-      fileType: "video"
+      fileType: "video",
+      image: VIDEO_ICON_STORAGE_ID as Id<"_storage">
     });
 
     setUploadProgress(100);

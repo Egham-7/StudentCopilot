@@ -35,7 +35,7 @@ class AudioExtractor:
         if self.executor:
             self.executor.shutdown()
 
-    async def extract_audio(self, video_meta_data: VideoMetaData) -> str:
+    async def extract_audio(self, video_meta_data: VideoMetaData) -> Tuple[List[str], List[float]]:
         try:
             video_data = await self.fetch_video(video_meta_data.video_id)
             audio_clip = await self.process_video(video_data)

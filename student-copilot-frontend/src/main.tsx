@@ -15,6 +15,7 @@ import DashboardPage from './routes/dashboard'
 import ModulePage from './routes/module-page'
 import PricingPage from './routes/upgrade-plan-page'
 import NotePage from './routes/note-page'
+import LectureChat from './routes/chat-to-lecture-page'
 
 
 const router = createBrowserRouter([
@@ -40,7 +41,8 @@ const router = createBrowserRouter([
           { path: 'home', element: <DashboardPage /> },
           { path: 'module/:moduleId', element: <ModulePage /> },
           { path: 'upgrade-plan', element: <PricingPage /> },
-          { path: 'notes/:noteId', element: <NotePage /> }
+          { path: 'notes/:noteId', element: <NotePage /> },
+          { path: 'chat/lectures/:lectureIds', element: <LectureChat /> }
         ],
       },
     ],
