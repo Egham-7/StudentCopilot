@@ -29,6 +29,8 @@ export const getLecturesByModuleId = query({
         ...lecture,
         contentUrl,
         image: imageUrl
+        contentUrl,
+        image: imageUrl
       };
     }));
 
@@ -159,6 +161,8 @@ export const store = mutation({
       v.literal("video")
     ),
     image: v.id("_storage")
+    ),
+    image: v.id("_storage")
   },
 
   handler: async (ctx, args) => {
@@ -198,6 +202,7 @@ export const store = mutation({
       completed: args.completed,
       userId: identity.subject,
       fileType: args.fileType,
+      image: args.image,
       image: args.image
 
     })

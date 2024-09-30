@@ -41,7 +41,7 @@ export default function ModulePage() {
       {lectures && notes && (
         <ModuleTabs
           moduleId={moduleId as Id<"modules">}
-          lectures={lectures}
+          lectures={lectures!}
           notes={notes}
           selectedLectures={selectedLectures}
           setSelectedLectures={setSelectedLectures}
