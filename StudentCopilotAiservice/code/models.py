@@ -1,9 +1,9 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 
 class VideoMetaData(BaseModel):
-    output_format: str = "mp3"
+    output_format: Optional[str] = "mp3"
     video_id: str
 
 
