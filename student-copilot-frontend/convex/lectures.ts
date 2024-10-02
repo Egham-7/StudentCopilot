@@ -157,7 +157,7 @@ export const store = mutation({
       v.literal("pdf"),
       v.literal("audio"),
       v.literal("video")
-    ), 
+    ),
     image: v.optional(v.id("_storage"))
   },
 

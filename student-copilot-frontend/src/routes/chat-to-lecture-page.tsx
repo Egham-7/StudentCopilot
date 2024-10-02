@@ -1,17 +1,17 @@
-
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import { useParams } from 'react-router-dom'
+import { useQuery } from 'convex/react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Sparkles, Send, Loader2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, Send, Loader2 } from 'lucide-react'
-import { api } from '../../convex/_generated/api'
-import { useParams } from 'react-router-dom'
-import { useQuery } from 'convex/react'
-import { Id } from 'convex/_generated/dataModel'
 import LoadingPage from '@/components/custom/loading'
+import { api } from '../../convex/_generated/api'
+import { Id } from 'convex/_generated/dataModel'
 import { LecturesData } from '@/lib/ui_utils'
+import { useDebounce } from '@/hooks/use-debounce'
 
 interface Message {
   id: string;
@@ -19,71 +19,80 @@ interface Message {
   content: string;
 }
 
-
+const ICON_PATHS = {
+  pdf: "/pdf_icon.jpg",
+  audio: "/audio_icon.png",
+  video: "/video_icon.png",
+} as const;
 
 export default function LectureChat() {
-  const { lectureIds: lectureIdsString } = useParams();
-  const lectureIds = lectureIdsString?.split(",") as Id<"lectures">[] | undefined;
+  const { lectureIds: lectureIdsString } = useParams<{ lectureIds: string }>();
+  const lectureIds = useMemo(() => lectureIdsString?.split(",") as Id<"lectures">[] | undefined, [lectureIdsString]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const debouncedInput = useDebounce(input, 300);
 
-  const lectures = useQuery(api.lectures.getLecturesByIds, lectureIds ? { lectureIds: lectureIds } : "skip")
+  const lectures = useQuery(api.lectures.getLecturesByIds, lectureIds ? { lectureIds } : "skip");
 
-  const isPageLoading = !lectureIdsString || !lectures
+  const handleDefaultImage = useCallback((fileType: keyof typeof ICON_PATHS): string => {
+    return ICON_PATHS[fileType] || ICON_PATHS.video;
+  }, []);
+
+  const isPageLoading = !lectureIdsString || !lectures;
 
   const sendMessage = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || !lectures) return
+    e.preventDefault();
+    if (!debouncedInput.trim() || !lectures) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim()
-    }
-    setMessages(prev => [...prev, userMessage])
-    setInput('')
-    setIsLoading(true)
-    setError(null)
+      content: debouncedInput.trim()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+    setError(null);
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: input.trim(),
+          message: debouncedInput.trim(),
           lectureIds: lectures.map(lecture => lecture?._id),
         }),
-      })
-      if (!response.ok) {
-        throw new Error('Failed to get response from AI')
-      }
-      const data = await response.json()
+      });
+
+      if (!response.ok) throw new Error('Failed to get response from AI');
+
+      const data = await response.json();
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.message
-      }
-      setMessages(prev => [...prev, aiMessage])
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred')
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [input, lectures])
+  }, [debouncedInput, lectures]);
 
   useEffect(() => {
-    const messageList = document.getElementById('message-list')
+    const messageList = document.getElementById('message-list');
     if (messageList) {
-      messageList.scrollTop = messageList.scrollHeight
+      messageList.scrollTop = messageList.scrollHeight;
     }
-  }, [messages])
+  }, [messages]);
 
-  if (isPageLoading) return <LoadingPage />
+  if (isPageLoading) return <LoadingPage />;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -99,12 +108,12 @@ export default function LectureChat() {
             {lectures && lectures.map((lecture: LecturesData) => (
               <div
                 key={lecture._id}
-                className="relative cursor-pointer transition-all duration-300 ring-2 ring-primary"
+                className="relative cursor-pointer transition-all duration-300 "
               >
                 <img
-                  src={lecture.image ?? " "}
+                  src={lecture.image ?? handleDefaultImage(lecture.fileType as keyof typeof ICON_PATHS)}
                   alt={lecture.title}
-                  className="rounded-lg"
+                  className="rounded-lg w-16 h-16 object-scale-down mix-blend-multiply aspect-square"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center rounded-lg">
                   <span className="text-white text-center text-sm px-2">{lecture.title}</span>
@@ -153,11 +162,13 @@ export default function LectureChat() {
               placeholder="Type your message here..."
               disabled={isLoading}
               className="flex-grow bg-input border-input text-input-foreground placeholder-muted-foreground"
+              aria-label="Chat input"
             />
             <Button
               type="submit"
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || !debouncedInput.trim()}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              aria-label="Send message"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -170,6 +181,6 @@ export default function LectureChat() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }
 

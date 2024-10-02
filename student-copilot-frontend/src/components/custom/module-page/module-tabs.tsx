@@ -43,13 +43,10 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
   }, [notes]);
 
 
+
   const handleRouteToChat = () => {
-
     const selectedLecturesString = selectedLectures.join(",")
-
-    navigate(`chat/lectures/${selectedLecturesString}`)
-
-
+    navigate(`/dashboard/chat/lectures/${selectedLecturesString}`)
   }
 
 
