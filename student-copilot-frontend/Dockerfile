@@ -1,5 +1,5 @@
 # Build stage
-FROM node:22-alpine AS build
+FROM node:22.7-alpine AS build
 
 # Set working directory
 WORKDIR /app
@@ -15,6 +15,7 @@ COPY src ./src
 COPY public ./public
 COPY vite.config.js ./
 COPY convex ./convex
+COPY index.html ./
 
 ARG CONVEX_DEPLOY_KEY
 ARG VITE_CLERK_PUBLISHABLE_KEY
