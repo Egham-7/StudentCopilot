@@ -8,12 +8,11 @@ import { api } from "../../../../convex/_generated/api";
 import UploadLectureDialog from "./upload-lecture-dialog";
 import DeleteLectureDialog from "./delete-lecture-dialog";
 import LecturePlayer from "./lecture-player";
-import { useEffect } from "react";
 import { LecturesData } from "@/lib/ui_utils";
 
 type LecturesTabProps = {
   moduleId: Id<"modules">;
-  lectures: LecturesData[];
+  lectures: LecturesData[] | undefined;
   selectedLectures: Id<"lectures">[];
   setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
 };
@@ -38,10 +37,6 @@ export default function LecturesTab({ moduleId, lectures, selectedLectures, setS
 
   const visibleLectures = lectures?.slice(0, 6);
 
-  useEffect(() => {
-
-    console.log("visibleLectures: ", visibleLectures);
-  })
 
   return (
     <>

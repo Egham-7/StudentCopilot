@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "convex/_generated/dataModel";
@@ -7,6 +7,8 @@ import { Id } from "convex/_generated/dataModel";
 import ModuleHeader from "@/components/custom/module-page/module-header";
 import ModuleProgress from "@/components/custom/module-page/module-progress";
 import ModuleTabs from "@/components/custom/module-page/module-tabs";
+import ModuleChat from "@/components/custom/module-page/module-chat";
+
 
 export default function ModulePage() {
   const { moduleId } = useParams<{ moduleId: string }>();
@@ -20,14 +22,14 @@ export default function ModulePage() {
   const progressPercentage = lectures ? (completedLectures.length / lectures.length) * 100 : 0;
 
   if (!moduleId) {
-    return <div>Invalid module ID</div>;
+    return <Navigate to="dashboard/home" />
   }
 
 
 
 
   return (
-    <div className="container mx-auto p-3 md:p-6 space-y-8">
+    <div className="container relative mx-auto p-3 md:p-6 space-y-8">
       <ModuleHeader moduleUser={moduleUser} />
 
       <div className="space-y-6">
@@ -41,13 +43,19 @@ export default function ModulePage() {
       {lectures && notes && (
         <ModuleTabs
           moduleId={moduleId as Id<"modules">}
-          lectures={lectures!}
+          lectures={lectures}
           notes={notes}
           selectedLectures={selectedLectures}
           setSelectedLectures={setSelectedLectures}
         />
 
       )}
+
+      <div className="fixed bottom-4 right-4">
+
+        <ModuleChat module={moduleUser!} lectures={lectures} />
+
+      </div>
 
     </div>
   );

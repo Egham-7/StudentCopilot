@@ -1,5 +1,10 @@
 import { Id } from "./_generated/dataModel";
-import { mutation, query, internalMutation } from "./_generated/server";
+import {
+  mutation,
+  query,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -10,7 +15,11 @@ export const store = mutation({
     department: v.string(),
     credits: v.number(),
     image: v.string(),
-    semester: v.union(v.literal("Fall"), v.literal("Spring"), v.literal("Summer")),
+    semester: v.union(
+      v.literal("Fall"),
+      v.literal("Spring"),
+      v.literal("Summer"),
+    ),
     year: v.string(),
     description: v.optional(v.string()),
     prerequisites: v.optional(v.array(v.string())),
@@ -25,7 +34,6 @@ export const store = mutation({
     }
 
     const userId = identity.subject;
-
 
     const moduleId = await ctx.db.insert("modules", {
       ...args,
@@ -51,7 +59,9 @@ export const update = mutation({
     department: v.optional(v.string()),
     credits: v.optional(v.number()),
     image: v.optional(v.string()),
-    semester: v.optional(v.union(v.literal("Fall"), v.literal("Spring"), v.literal("Summer"))),
+    semester: v.optional(
+      v.union(v.literal("Fall"), v.literal("Spring"), v.literal("Summer")),
+    ),
     year: v.optional(v.string()),
     description: v.optional(v.string()),
     prerequisites: v.optional(v.array(v.string())),
@@ -90,13 +100,14 @@ export const update = mutation({
   },
 });
 
-
 export const deleteModule = mutation({
   args: { moduleId: v.id("modules") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Called scheduleModuleDeletion without authentication present");
+      throw new Error(
+        "Called scheduleModuleDeletion without authentication present",
+      );
     }
 
     const existingModule = await ctx.db.get(args.moduleId);
@@ -109,7 +120,11 @@ export const deleteModule = mutation({
     }
 
     // Schedule the deletion
-    await ctx.scheduler.runAfter(0, internal.modules.deleteModuleAndRelatedData, { moduleId: args.moduleId });
+    await ctx.scheduler.runAfter(
+      0,
+      internal.modules.deleteModuleAndRelatedData,
+      { moduleId: args.moduleId },
+    );
 
     await ctx.scheduler.runAfter(0, internal.notifications.store, {
       userId: existingModule.userId,
@@ -156,45 +171,62 @@ export const getById = query({
   args: { id: v.id("modules") },
 
   handler: async (ctx, args) => {
-
-
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
-
-      throw new Error("Tried to fetch module info without authentication present.")
-
+      throw new Error(
+        "Tried to fetch module info without authentication present.",
+      );
     }
 
     const moduleUser = await ctx.db.get(args.id);
 
-
     if (!moduleUser) {
-
       throw new Error("Module not found.");
     }
 
-
     if (moduleUser.userId !== identity.subject) {
-
       throw new Error("Not authorized to view this module.");
     }
 
     return moduleUser;
+  },
+});
 
+export const getByIdInternal = internalQuery({
+  args: { id: v.id("modules") },
 
-  }
-})
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
 
+    if (!identity) {
+      throw new Error(
+        "Tried to fetch module info without authentication present.",
+      );
+    }
 
+    const moduleUser = await ctx.db.get(args.id);
 
+    if (!moduleUser) {
+      throw new Error("Module not found.");
+    }
+
+    if (moduleUser.userId !== identity.subject) {
+      throw new Error("Not authorized to view this module.");
+    }
+
+    return moduleUser;
+  },
+});
 
 export const queryByUserId = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Called queryModulesByUserId without authentication present");
+      throw new Error(
+        "Called queryModulesByUserId without authentication present",
+      );
     }
 
     const userId = identity.subject;
@@ -209,7 +241,9 @@ export const queryByUserId = query({
       modules.map(async (module) => {
         if (module.image) {
           try {
-            const imageUrl = await ctx.storage.getUrl(module.image as Id<"_storage">);
+            const imageUrl = await ctx.storage.getUrl(
+              module.image as Id<"_storage">,
+            );
             return { ...module, image: imageUrl || undefined };
           } catch (error) {
             console.error(`Failed to get URL for module ${module._id}:`, error);
@@ -218,7 +252,7 @@ export const queryByUserId = query({
         } else {
           return { ...module, image: undefined };
         }
-      })
+      }),
     );
 
     return modulesWithImages;

@@ -1,16 +1,22 @@
-import { internalAction, internalMutation, internalQuery, mutation, query, action } from "./_generated/server";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+  action,
+} from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
 import OpenAI from "openai";
 import { callChatCompletionsAPI, generateEmbedding } from "./ai";
-import { exponentialBackoff } from "./utils"
-
+import { exponentialBackoff } from "./utils";
 
 export const storeClient = mutation({
   args: {
     lectureIds: v.array(v.id("lectures")),
-    moduleId: v.id("modules")
+    moduleId: v.id("modules"),
   },
   handler: async (ctx, args) => {
     // Schedule the fetch and process action
@@ -33,21 +39,26 @@ export const storeClient = mutation({
       throw new Error("Module not found.");
     }
 
-
     if (moduleUser.userId != identity.subject) {
       throw new Error("Not allowed to create notes for this module.");
     }
 
+    await ctx.scheduler.runAfter(
+      0,
+      internal.notes.fetchAndProcessTranscriptions,
+      {
+        lectureIds: args.lectureIds,
+        noteTakingStyle: user.noteTakingStyle,
+        learningStyle: user.learningStyle,
+        course: user.course,
+        levelOfStudy: user.levelOfStudy,
+      },
+    );
 
-    await ctx.scheduler.runAfter(0, internal.notes.fetchAndProcessTranscriptions, {
-      lectureIds: args.lectureIds,
-      noteTakingStyle: user.noteTakingStyle,
-      learningStyle: user.learningStyle,
-      course: user.course,
-      levelOfStudy: user.levelOfStudy
-    });
-
-    return { success: true, message: "Lecture transcription processing scheduled." };
+    return {
+      success: true,
+      message: "Lecture transcription processing scheduled.",
+    };
   },
 });
 
@@ -59,23 +70,23 @@ export const fetchAndProcessTranscriptions = internalAction({
       v.literal("auditory"),
       v.literal("visual"),
       v.literal("kinesthetic"),
-      v.literal("analytical")
+      v.literal("analytical"),
     ),
     course: v.string(),
     levelOfStudy: v.union(
       v.literal("Bachelors"),
       v.literal("Associate"),
       v.literal("Masters"),
-      v.literal("PhD")
-    )
-
-
+      v.literal("PhD"),
+    ),
   },
   handler: async (ctx, args) => {
     const transcriptionChunks: string[] = [];
 
     for (const lectureId of args.lectureIds) {
-      const lecture = await ctx.runQuery(internal.notes.getLecture, { lectureId });
+      const lecture = await ctx.runQuery(internal.notes.getLecture, {
+        lectureId,
+      });
       if (!lecture) {
         throw new Error(`Lecture with ID ${lectureId} not found.`);
       }
@@ -99,7 +110,7 @@ export const fetchAndProcessTranscriptions = internalAction({
       noteTakingStyle: args.noteTakingStyle,
       learningStyle: args.learningStyle,
       course: args.course,
-      levelOfStudy: args.levelOfStudy
+      levelOfStudy: args.levelOfStudy,
     });
   },
 });
@@ -120,27 +131,36 @@ export const generateNotes = internalAction({
       v.literal("auditory"),
       v.literal("visual"),
       v.literal("kinesthetic"),
-      v.literal("analytical")
+      v.literal("analytical"),
     ),
     course: v.string(),
     levelOfStudy: v.union(
       v.literal("Bachelors"),
       v.literal("Associate"),
       v.literal("Masters"),
-      v.literal("PhD")
-    )
+      v.literal("PhD"),
+    ),
   },
   handler: async (ctx, args) => {
-    const { transcriptionChunks, noteTakingStyle, learningStyle, course, levelOfStudy } = args;
-
+    const {
+      transcriptionChunks,
+      noteTakingStyle,
+      learningStyle,
+      course,
+      levelOfStudy,
+    } = args;
 
     // Process chunks in parallel
 
-
     const chunkPromises = transcriptionChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
-        const noteChunk = await processChunk(chunk, { noteTakingStyle, learningStyle, course, levelOfStudy });
-        const noteChunkBlob = new Blob([noteChunk], { type: 'text/plain' });
+        const noteChunk = await processChunk(chunk, {
+          noteTakingStyle,
+          learningStyle,
+          course,
+          levelOfStudy,
+        });
+        const noteChunkBlob = new Blob([noteChunk], { type: "text/plain" });
         const storageId = await ctx.storage.store(noteChunkBlob);
 
         // Generate embedding for the chunk
@@ -149,7 +169,6 @@ export const generateNotes = internalAction({
         return { storageId, embedding };
       });
     });
-
 
     const processedChunks = await Promise.all(chunkPromises);
 
@@ -164,7 +183,10 @@ export const generateNotes = internalAction({
     // Concatenate embeddings into a single 1536-dimensional vector
     const concatenatedEmbedding: number[] = [];
     for (let i = 0; i < 1536; i++) {
-      const sum = allEmbeddings.reduce((acc, embedding) => acc + (embedding[i] || 0), 0);
+      const sum = allEmbeddings.reduce(
+        (acc, embedding) => acc + (embedding[i] || 0),
+        0,
+      );
       concatenatedEmbedding.push(sum / allEmbeddings.length);
     }
 
@@ -172,22 +194,18 @@ export const generateNotes = internalAction({
     await ctx.runMutation(internal.notes.storeNotes, {
       noteChunkIds: noteChunkIds,
       lectureIds: args.lectureIds,
-      embedding: concatenatedEmbedding
+      embedding: concatenatedEmbedding,
     });
-  }
+  },
 });
-
-
-
 
 export const storeNotes = internalMutation({
   args: {
     noteChunkIds: v.array(v.id("_storage")),
     lectureIds: v.array(v.id("lectures")),
-    embedding: v.array(v.float64())
+    embedding: v.array(v.float64()),
   },
   handler: async (ctx, args) => {
-
     const firstLectureId = args.lectureIds[0];
 
     const firstLecture = await ctx.db.get(firstLectureId);
@@ -197,7 +215,6 @@ export const storeNotes = internalMutation({
     }
 
     const moduleId = firstLecture?.moduleId;
-
 
     const moduleUser = await ctx.db.get(moduleId);
 
@@ -209,7 +226,7 @@ export const storeNotes = internalMutation({
       textChunks: args.noteChunkIds,
       lectureIds: args.lectureIds,
       moduleId: moduleId,
-      noteEmbedding: args.embedding
+      noteEmbedding: args.embedding,
     });
 
     // Create a notification for the user
@@ -221,21 +238,19 @@ export const storeNotes = internalMutation({
       createdAt: new Date().toISOString(),
       isRead: false,
     });
-
-
-
-  }
+  },
 });
 
-async function processChunk(chunk: string, userInfo: {
-  noteTakingStyle: string;
-  learningStyle: "auditory" | "visual" | "kinesthetic" | "analytical";
-  levelOfStudy: "Bachelors" | "Associate" | "Masters" | "PhD";
-  course: string;
-}): Promise<string> {
-
+async function processChunk(
+  chunk: string,
+  userInfo: {
+    noteTakingStyle: string;
+    learningStyle: "auditory" | "visual" | "kinesthetic" | "analytical";
+    levelOfStudy: "Bachelors" | "Associate" | "Masters" | "PhD";
+    course: string;
+  },
+): Promise<string> {
   return exponentialBackoff(async () => {
-
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       {
         role: "system",
@@ -264,23 +279,20 @@ Your task is to:
 14. For kinesthetic learners, suggest practical applications or hands-on activities related to the content.
 15. For analytical learners, include logical breakdowns and connections between concepts.
 
-Produce notes that would be valuable for review and quick reference, tailored to the user's specific needs and the course content. If the lecture chunk appears to be cut off mid-sentence or mid-thought, please use your best judgment to infer the intended meaning and complete the idea logically. Do not leave any sentences or thoughts unfinished in your summary.`
+Produce notes that would be valuable for review and quick reference, tailored to the user's specific needs and the course content. If the lecture chunk appears to be cut off mid-sentence or mid-thought, please use your best judgment to infer the intended meaning and complete the idea logically. Do not leave any sentences or thoughts unfinished in your summary.`,
       },
       {
         role: "user",
         content: `Please summarize the following lecture chunk into well-structured Markdown notes, tailored to the user's preferences. If the chunk is cut off, please infer the intended meaning and complete the summary accordingly:
 
-${chunk}`
-      }
+${chunk}`,
+      },
     ];
 
     const response = await callChatCompletionsAPI(messages);
 
     return response;
-
-
-
-  })
+  });
 }
 
 export const getNotesForModule = query({
@@ -298,13 +310,9 @@ export const getNotesForModule = query({
   },
 });
 
-
 export const getNote = internalQuery({
   args: { noteId: v.id("notes"), userId: v.string() },
   handler: async (ctx, args) => {
-
-
-
     const note = await ctx.db.get(args.noteId);
 
     if (!note) {
@@ -333,12 +341,25 @@ export const getNoteById = action({
       throw new Error("Not authorized to use this action.");
     }
 
-    const note = await ctx.runQuery(internal.notes.getNote, { noteId: args.noteId, userId: identity.subject });
+    const note = await ctx.runQuery(internal.notes.getNote, {
+      noteId: args.noteId,
+      userId: identity.subject,
+    });
     if (!note) {
       throw new Error(`Note with ID ${args.noteId} not found.`);
     }
 
+    const noteModule = await ctx.runQuery(internal.modules.getByIdInternal, {
+      id: note.moduleId as Id<"modules">,
+    });
 
+    if (!noteModule) {
+      throw new Error(`Module with ID ${note.moduleId} not found.`);
+    }
+
+    if (noteModule.userId !== identity.subject) {
+      throw new Error("Not authorized to view this note.");
+    }
 
     // Fetch content for each text chunk
     const textContent = await Promise.all(
@@ -349,7 +370,7 @@ export const getNoteById = action({
         }
         const response = await fetch(url);
         return response.text();
-      })
+      }),
     );
 
     // Combine all text chunks
@@ -362,11 +383,10 @@ export const getNoteById = action({
   },
 });
 
-
 export const searchNotesByContent = action({
   args: {
     moduleId: v.optional(v.id("modules")),
-    query: v.string()
+    query: v.string(),
   },
   handler: async (ctx, args) => {
     const queryEmbedding = await generateEmbedding(args.query);
@@ -376,11 +396,11 @@ export const searchNotesByContent = action({
       limit: 10,
       filter: args.moduleId
         ? (q) => q.eq("moduleId", args.moduleId as Id<"modules">)
-        : undefined
+        : undefined,
     });
 
     return notes;
-  }
+  },
 });
 
 export const deleteNote = mutation({
@@ -388,13 +408,11 @@ export const deleteNote = mutation({
     noteId: v.id("notes"),
   },
   handler: async (ctx, args) => {
-
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
       throw new Error("Authentication not present.");
     }
-
 
     const note = await ctx.db.get(args.noteId);
 
@@ -411,9 +429,6 @@ export const deleteNote = mutation({
     if (moduleUser.userId != identity.subject) {
       throw new Error("Not authorized to delete this note.");
     }
-
-
-
 
     // Delete the note's text chunks from storage
     for (const chunkId of note.textChunks) {
