@@ -145,6 +145,7 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
       sessions,
       createNewSession,
       handleSessionClick,
+      handleSessionsClear,
     ],
   );
 
