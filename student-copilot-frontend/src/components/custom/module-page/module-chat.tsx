@@ -1,30 +1,45 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
-import { MessageCircleIcon, PlusCircleIcon } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { LecturesData } from '@/lib/ui_utils'
-import { Popover } from '@/components/ui/popover'
-import { PopoverContent, PopoverTrigger } from '@radix-ui/react-popover'
-import { Doc, Id } from 'convex/_generated/dataModel'
-import LoadingPage from '@/components/custom/loading'
-import ErrorPage from '@/components/custom/error-page'
-import { v4 as uuidv4 } from 'uuid'
-import ChatDialog from './chat-dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useQuery } from 'convex/react'
-import { api } from '../../../../convex/_generated/api'
-
-
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { MessageCircleIcon, PlusCircleIcon, TrashIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { LecturesData } from "@/lib/ui_utils";
+import { Popover } from "@/components/ui/popover";
+import { PopoverContent, PopoverTrigger } from "@radix-ui/react-popover";
+import { Doc, Id } from "convex/_generated/dataModel";
+import LoadingPage from "@/components/custom/loading";
+import ErrorPage from "@/components/custom/error-page";
+import { v4 as uuidv4 } from "uuid";
+import ChatDialog from "./chat-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 interface SessionsListProps {
   sessions: Session[];
   onSessionClick: (id: string) => void;
   onNewSession: () => void;
+  onSessionsClear: () => void;
 }
 
-const SessionsList: React.FC<SessionsListProps> = ({ sessions, onSessionClick, onNewSession }) => {
+const SessionsList: React.FC<SessionsListProps> = ({
+  sessions,
+  onSessionClick,
+  onNewSession,
+  onSessionsClear,
+}) => {
   return (
     <div className="p-4">
-      <h3 className="text-lg font-semibold mb-4">Chat Sessions</h3>
+      <div className="flex  justify-between items-center w-full mb-4">
+        <h3 className="text-lg font-semibold">Chat Sessions</h3>
+
+        <Button
+          variant={"ghost"}
+          onClick={onSessionsClear}
+          className="text-red-500"
+        >
+          <TrashIcon className="mr-2 h-4 w-4" />
+          Clear All
+        </Button>
+      </div>
       <ul className="space-y-2 mb-4">
         {sessions.map((session) => (
           <li
@@ -38,37 +53,38 @@ const SessionsList: React.FC<SessionsListProps> = ({ sessions, onSessionClick, o
       </ul>
       <Button onClick={onNewSession} className="w-full">
         <PlusCircleIcon className="mr-2 h-4 w-4" />
-        New Session
+        New Chat
       </Button>
     </div>
   );
 };
 
-
-
-
 interface ModuleChatProps {
   lectures: LecturesData[] | undefined | null;
-  module: Doc<"modules">
+  module: Doc<"modules">;
 }
 
 type Session = {
   id: string;
   name: string;
-}
+};
 
 export default function ModuleChat({ lectures, module }: ModuleChatProps) {
-
   // Query only the last message of each session
-  const sessionMessages = useQuery(api.aiChats.listLastMessagesPerSession,
-    module?._id ? { moduleId: module._id as Id<"modules"> } : "skip"
+  const sessionMessages = useQuery(
+    api.aiChats.listLastMessagesPerSession,
+    module?._id ? { moduleId: module._id as Id<"modules"> } : "skip",
   );
+
+  const deleteChats = useMutation(api.aiChats.clearAllChats);
+
+  const [activeTab, setActiveTab] = useState("chat");
 
   const sessions: Session[] = useMemo(() => {
     if (!sessionMessages) return [];
-    return sessionMessages.map(message => ({
+    return sessionMessages.map((message) => ({
       id: message.sessionId,
-      name: message.body
+      name: message.body,
     }));
   }, [sessionMessages]);
 
@@ -77,6 +93,7 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
   const createNewSession = useCallback(() => {
     const newSessionId = uuidv4();
     setSessionId(newSessionId);
+    setActiveTab("chat");
   }, []);
 
   useEffect(() => {
@@ -91,20 +108,45 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
     setSessionId(id);
   }, []);
 
+  const handleSessionsClear = useCallback(() => {
+    deleteChats({ moduleId: module?._id });
+  }, [module?._id, deleteChats]);
 
-
-  const tabs = useMemo(() => [
-    {
-      value: "chat",
-      label: "Chat",
-      content: <ChatDialog lectures={lectures} moduleId={module?._id} sessionId={sessionId} />
-    },
-    {
-      value: "sessions",
-      label: "Sessions",
-      content: <SessionsList sessions={sessions} onSessionClick={handleSessionClick} onNewSession={createNewSession} />
-    }
-  ], [lectures, module?._id, sessionId, sessions, createNewSession, handleSessionClick]);
+  const tabs = useMemo(
+    () => [
+      {
+        value: "chat",
+        label: "Chat",
+        content: (
+          <ChatDialog
+            lectures={lectures}
+            moduleId={module?._id}
+            sessionId={sessionId}
+          />
+        ),
+      },
+      {
+        value: "sessions",
+        label: "Sessions",
+        content: (
+          <SessionsList
+            sessions={sessions}
+            onSessionClick={handleSessionClick}
+            onNewSession={createNewSession}
+            onSessionsClear={handleSessionsClear}
+          />
+        ),
+      },
+    ],
+    [
+      lectures,
+      module?._id,
+      sessionId,
+      sessions,
+      createNewSession,
+      handleSessionClick,
+    ],
+  );
 
   if (lectures === undefined || module === undefined) return <LoadingPage />;
   if (lectures === null || module === null) return <ErrorPage />;
@@ -117,7 +159,12 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 sm:w-96 p-0 mr-5 mb-5 bg-background border border-border rounded-md shadow-lg">
-        <Tabs defaultValue="chat" className="w-full">
+        <Tabs
+          defaultValue={activeTab}
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
           <TabsList className="w-full bg-muted h-full">
             {tabs.map((tab) => (
               <TabsTrigger
@@ -139,4 +186,3 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
     </Popover>
   );
 }
-

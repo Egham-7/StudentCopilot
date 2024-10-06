@@ -19,17 +19,19 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { useMutation } from 'convex/react';
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api.js";
-import { Id } from 'convex/_generated/dataModel';
-import { Trash2 } from 'lucide-react';
+import { Id } from "convex/_generated/dataModel";
+import { Trash2 } from "lucide-react";
 
 interface DeleteModuleDialogProps {
-  lectureId: Id<"lectures">
+  lectureId: Id<"lectures">;
 }
 
-const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({ lectureId }) => {
+const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({
+  lectureId,
+}) => {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const deleteLecture = useMutation(api.lectures.deleteLecture);
 
@@ -40,10 +42,12 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({ lectureId }) =
   const content = (
     <>
       <DialogHeader className="space-y-2">
-        <DialogTitle className="text-2xl font-bold text-foreground">Are you absolutely sure?</DialogTitle>
+        <DialogTitle className="text-2xl font-bold text-foreground">
+          Are you absolutely sure?
+        </DialogTitle>
         <DialogDescription className="text-muted-foreground">
-          This action cannot be undone. This will permanently delete your lecture
-          and remove your data from our servers.
+          This action cannot be undone. This will permanently delete your
+          lecture and remove your data from our servers.
         </DialogDescription>
       </DialogHeader>
       <DialogFooter className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-6">
@@ -53,8 +57,13 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({ lectureId }) =
           </Button>
         </DialogClose>
         <DialogClose asChild>
-          <Button type="button" variant="destructive" onClick={onDelete} className="w-full sm:w-auto">
-            Delete Module
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={onDelete}
+            className="w-full sm:w-auto"
+          >
+            Delete Lecture
           </Button>
         </DialogClose>
       </DialogFooter>
@@ -76,11 +85,20 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({ lectureId }) =
         <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
         <DrawerContent className="px-4 py-6 bg-background">
           <DrawerHeader className="space-y-2">
-            <DrawerTitle className="text-2xl font-bold text-foreground">{content.props.children[0].props.children[0].props.children}</DrawerTitle>
-            <DrawerDescription className="text-muted-foreground">{content.props.children[0].props.children[1].props.children}</DrawerDescription>
+            <DrawerTitle className="text-2xl font-bold text-foreground">
+              {content.props.children[0].props.children[0].props.children}
+            </DrawerTitle>
+            <DrawerDescription className="text-muted-foreground">
+              {content.props.children[0].props.children[1].props.children}
+            </DrawerDescription>
           </DrawerHeader>
           <DrawerFooter className="flex flex-col space-y-2 pt-6">
-            <Button type="button" variant="destructive" onClick={onDelete} className="w-full">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={onDelete}
+              className="w-full"
+            >
               Delete Module
             </Button>
             <DrawerClose asChild>
@@ -105,5 +123,3 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({ lectureId }) =
 };
 
 export default DeleteLectureDialog;
-
-
