@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS build
+FROM node:22-alpine AS build
 
 # Set working directory
 WORKDIR /app
@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (including dev dependencies)
+RUN npm ci
 
 # Copy only necessary files
 COPY src ./src
@@ -24,7 +24,7 @@ ARG VITE_CLERK_SIGN_UP_FORCE_REDIRECT_URL
 ARG VITE_CONVEX_URL
 
 # Build the app and deploy Convex functions
-RUN npx convex deploy --cmd 'vite build'
+RUN npx convex deploy --cmd 'npx vite build'
 
 # Production stage
 FROM nginx:alpine
