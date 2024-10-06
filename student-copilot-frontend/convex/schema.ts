@@ -91,6 +91,19 @@ export default defineSchema({
       vectorField: "noteEmbedding",
       dimensions: 1536,
       filterFields: ["moduleId"]
-    })
+    }),
+
+  messages: defineTable({
+
+    moduleId: v.id("modules"),
+    sessionId: v.string(),
+    body: v.string(),
+    isViewer: v.boolean(),
+    isPartial: v.boolean()
+
+
+  })
+    .index("bySessionAndModule", ["sessionId", "moduleId"])
+    .index("byModuleId", ["moduleId"])
 
 });

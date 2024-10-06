@@ -12,7 +12,7 @@ import { LecturesData } from "@/lib/ui_utils";
 
 type LecturesTabProps = {
   moduleId: Id<"modules">;
-  lectures: LecturesData[];
+  lectures: LecturesData[] | undefined;
   selectedLectures: Id<"lectures">[];
   setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
 };

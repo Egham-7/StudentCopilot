@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 type ModuleTabsProps = {
   moduleId: Id<"modules">;
-  lectures: LecturesData[];
+  lectures: LecturesData[] | undefined;
   notes: Doc<"notes">[] | undefined;
   selectedLectures: Id<"lectures">[];
   setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
@@ -78,7 +78,7 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
 
   const handleSearchResults = useCallback((type: 'lectures' | 'notes', results: SearchResults) => {
     if (type === 'lectures') {
-      setFilteredLectures(lectures.filter(lecture => results.lectures.includes(lecture._id)));
+      setFilteredLectures(lectures?.filter(lecture => results.lectures.includes(lecture._id)));
     } else if (type === 'notes') {
       setFilteredNotes(notes?.filter(note => results.notes.includes(note._id)));
     }

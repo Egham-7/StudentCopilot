@@ -41,7 +41,7 @@ export type LecturesData = {
   lectureTranscription: Id<"_storage">[];
   lectureTranscriptionEmbedding: number[];
   fileType: "audio" | "video" | "pdf";
-  image: string | null;
+  image: string | undefined | null;
 
 }
 

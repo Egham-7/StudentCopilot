@@ -1,4 +1,4 @@
-import { query, mutation, action, internalMutation } from "./_generated/server";
+import { query, mutation, action, internalMutation, internalQuery, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { generateEmbedding, transcribeAudioChunk } from "./ai";
 import { internal } from "./_generated/api";
@@ -18,7 +18,7 @@ export const getLecturesByModuleId = query({
 
     const lecturesWithUrl = await Promise.all(lectures.map(async (lecture) => {
       const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
-      const imageUrl = lecture.image !== undefined ? await ctx.storage.getUrl(lecture.image) : null;
+      const imageUrl = lecture.image !== undefined ? await ctx.storage.getUrl(lecture.image) : undefined;
 
       // Assert that these URLs are always strings
       if (contentUrl === null) {
@@ -36,7 +36,44 @@ export const getLecturesByModuleId = query({
   },
 });
 
+
+
+
+
 export const getLecturesByIds = query({
+  args: { lectureIds: v.array(v.id('lectures')) },
+  handler: async (ctx, args) => {
+    const lectures = await Promise.all(
+      args.lectureIds.map(async (id) => {
+        const lecture = await ctx.db.get(id);
+
+        if (lecture == null) {
+          throw new Error("lecture cannot be null in chat.")
+        }
+
+        const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
+        const imageUrl = lecture.image !== undefined ? await ctx.storage.getUrl(lecture.image) : undefined;
+
+        // Assert that these URLs are always strings
+        if (contentUrl === null) {
+          throw new Error("Expected content URL and image URL to be non-null");
+        }
+
+
+        return {
+          ...lecture,
+          contentUrl: contentUrl,
+          image: imageUrl
+        }
+      })
+    );
+    return lectures;
+  },
+});
+
+
+
+export const getLecturesByIdsInternal = internalQuery({
   args: { lectureIds: v.array(v.id('lectures')) },
   handler: async (ctx, args) => {
     const lectures = await Promise.all(
@@ -317,3 +354,26 @@ export const transcribeAudio = action({
 });
 
 
+export const fetchTranscription = internalAction({
+  args: {
+    transcriptionIds: v.array(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    const { transcriptionIds } = args;
+
+    const transcription = await Promise.all(
+      transcriptionIds.map(async (transcriptionId) => {
+        const url = await ctx.storage.getUrl(transcriptionId);
+        if (!url) throw new Error("COntent url cannot be null.");
+
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch transcription: ${response.statusText}`);
+        }
+        return response.text();
+      })
+    );
+
+    return transcription.join('\n')
+  },
+});
