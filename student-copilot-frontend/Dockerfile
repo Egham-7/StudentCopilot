@@ -10,12 +10,8 @@ COPY package*.json ./
 # Install dependencies (including dev dependencies)
 RUN npm ci
 
-# Copy only necessary files
-COPY src ./src
-COPY public ./public
-COPY vite.config.js ./
-COPY convex ./convex
-COPY index.html ./
+# Copy all project files
+COPY . .
 
 ARG CONVEX_DEPLOY_KEY
 ARG VITE_CLERK_PUBLISHABLE_KEY
