@@ -13,7 +13,7 @@ import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
 import { useToast } from "@/components/ui/use-toast"
 import { Navigate, useNavigate } from 'react-router-dom'
-
+import { cn } from '@/lib/utils'
 const formSchema = z.object({
   course: z.string().min(10, {
     message: "Course must be at least 10 characters long.",
@@ -219,6 +219,7 @@ export default function OnboardingFormPage() {
                 <Button type="button" onClick={nextStep} className="w-full">Next</Button>
               </div>
             )}
+
             {step === 2 && (
               <div className="space-y-4">
                 <h3 className="text-base sm:text-lg font-semibold">What best describes your level of study?</h3>
@@ -230,12 +231,17 @@ export default function OnboardingFormPage() {
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                           className="grid grid-cols-2 gap-2 sm:gap-4"
                         >
                           {levelOfStudyOptions.map(({ value, icon: Icon, label }) => (
                             <FormItem key={value}>
-                              <FormLabel className="flex flex-col items-center space-y-2 cursor-pointer">
+                              <FormLabel className={cn(
+                                "flex flex-col items-center space-y-2 cursor-pointer p-4 rounded-lg transition-colors",
+                                field.value === value
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-background hover:bg-muted"
+                              )}>
                                 <FormControl>
                                   <RadioGroupItem value={value} className="sr-only" />
                                 </FormControl>
@@ -256,6 +262,9 @@ export default function OnboardingFormPage() {
                 </div>
               </div>
             )}
+
+
+
             {step === 3 && (
               <div className="space-y-4">
                 <h3 className="text-base sm:text-lg font-semibold">Choose your preferred note-taking style:</h3>
@@ -272,14 +281,25 @@ export default function OnboardingFormPage() {
                         >
                           {noteTakingStyles.map((style) => (
                             <FormItem key={style.id}>
-                              <FormLabel className="cursor-pointer [&:has([data-state=checked])>div]:border-primary [&:has([data-state=checked])>div]:shadow-lg">
+                              <FormLabel className="cursor-pointer">
                                 <FormControl>
                                   <RadioGroupItem value={style.id} className="sr-only" />
                                 </FormControl>
-                                <Card className="relative overflow-hidden border-2 hover:border-primary transition-all">
-                                  <CardContent className="flex flex-row sm:flex-col items-center max-h-sm p-6 md:p-3 md:max-h-md  ">
-                                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-0 sm:mb-4 mr-4 sm:mr-0">
-                                      <style.icon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+                                <Card className={cn(
+                                  "relative overflow-hidden border-2 transition-all",
+                                  field.value === style.id
+                                    ? "border-primary shadow-lg bg-primary/5"
+                                    : "hover:border-primary/50"
+                                )}>
+                                  <CardContent className="flex flex-row sm:flex-col items-center max-h-sm p-6 md:p-3 md:max-h-md">
+                                    <div className={cn(
+                                      "w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-0 sm:mb-4 mr-4 sm:mr-0",
+                                      field.value === style.id ? "bg-primary" : "bg-primary/10"
+                                    )}>
+                                      <style.icon className={cn(
+                                        "w-6 h-6 sm:w-8 sm:h-8",
+                                        field.value === style.id ? "text-primary-foreground" : "text-primary"
+                                      )} />
                                     </div>
                                     <div className="flex-1">
                                       <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2">{style.title}</h3>
@@ -287,9 +307,11 @@ export default function OnboardingFormPage() {
                                         {style.description}
                                       </p>
                                     </div>
-                                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center opacity-0 transition-opacity [input:checked~&]:opacity-100">
-                                      <Check className="w-3 h-3 text-primary-foreground" />
-                                    </div>
+                                    {field.value === style.id && (
+                                      <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                        <Check className="w-3 h-3 text-primary-foreground" />
+                                      </div>
+                                    )}
                                   </CardContent>
                                 </Card>
                               </FormLabel>
@@ -307,6 +329,10 @@ export default function OnboardingFormPage() {
                 </div>
               </div>
             )}
+
+
+
+
             {step === 4 && (
               <div className='space-y-4'>
                 <h3 className="text-base sm:text-lg font-semibold">What's your primary learning style?</h3>
@@ -327,10 +353,21 @@ export default function OnboardingFormPage() {
                                 <FormControl>
                                   <RadioGroupItem value={style.id} className="sr-only" />
                                 </FormControl>
-                                <Card className="relative overflow-hidden border-2 hover:border-primary transition-all">
+                                <Card className={cn(
+                                  "relative overflow-hidden border-2 transition-all",
+                                  field.value === style.id
+                                    ? "border-primary shadow-lg bg-primary/5"
+                                    : "hover:border-primary/50"
+                                )}>
                                   <CardContent className="flex flex-row sm:flex-col items-center p-6 max-h-sm md:p-3 md:max-h-md">
-                                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mb-0 sm:mb-4 mr-4 sm:mr-0">
-                                      <style.icon className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+                                    <div className={cn(
+                                      "w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-0 sm:mb-4 mr-4 sm:mr-0",
+                                      field.value === style.id ? "bg-primary" : "bg-primary/10"
+                                    )}>
+                                      <style.icon className={cn(
+                                        "w-6 h-6 sm:w-8 sm:h-8",
+                                        field.value === style.id ? "text-primary-foreground" : "text-primary"
+                                      )} />
                                     </div>
                                     <div className="flex-1">
                                       <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2">{style.title}</h3>
@@ -338,9 +375,12 @@ export default function OnboardingFormPage() {
                                         {style.description}
                                       </p>
                                     </div>
-                                    <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center opacity-0 transition-opacity [input:checked~&]:opacity-100">
-                                      <Check className="w-3 h-3 text-primary-foreground" />
-                                    </div>
+
+                                    {field.value === style.id && (
+                                      <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                        <Check className="w-3 h-3 text-primary-foreground" />
+                                      </div>
+                                    )}
                                   </CardContent>
                                 </Card>
                               </FormLabel>
