@@ -1,7 +1,5 @@
 
 import { mutation } from "./_generated/server";
-import { action } from "./_generated/server";
-import { v } from "convex/values";
 
 export const generateUploadUrl = mutation(async (ctx) => {
   return await ctx.storage.generateUploadUrl();
@@ -63,19 +61,4 @@ export async function processVideoDetails(
   }
 }
 
-export const processVideo = action({
-  args: {
-    videoId: v.string(),
-    outputFormat: v.optional(v.string()),
-  },
-  handler: async (_ctx, args): Promise<AudioMetaData> => {
-
-    const audioMetaData: AudioMetaData = await processVideoDetails(
-      args.videoId.toString(),
-      args.outputFormat,
-    );
-
-    return audioMetaData
-  }
-});
 

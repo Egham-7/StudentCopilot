@@ -154,11 +154,25 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
 
   return (
     <Popover>
+
       <PopoverTrigger asChild>
-        <Button className="rounded-full w-12 h-12 fixed bottom-6 right-6 shadow-lg bg-primary text-primary-foreground hover:bg-primary/90">
-          <MessageCircleIcon className="h-6 w-6" />
+        <Button
+          className="
+      rounded-full
+      fixed
+      bottom-6
+      right-6
+      shadow-lg
+      bg-primary
+      text-primary-foreground
+      hover:bg-primary/90
+    "
+        >
+          Module Assistant
+          <MessageCircleIcon className="h-6 w-6 ml-2" />
         </Button>
       </PopoverTrigger>
+
       <PopoverContent className="w-80 sm:w-96 p-0 mr-5 mb-5 bg-background border border-border rounded-md shadow-lg">
         <Tabs
           defaultValue={activeTab}

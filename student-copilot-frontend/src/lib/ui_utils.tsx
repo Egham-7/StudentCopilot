@@ -57,6 +57,3 @@ export const formSchema = z.object({
     ),
 });
 
-export const PDF_ICON_STORAGE_ID = "kg2a7kfy6teycgrzs4jnnppvtn71rsag"
-export const AUDIO_ICON_STORAGE_ID = "kg2djkrr60q4nkt65y4gz2t8ed71r548"
-export const VIDEO_ICON_STORAGE_ID = "kg21gq85jdzymxk270vd75vrq971rrq1"
