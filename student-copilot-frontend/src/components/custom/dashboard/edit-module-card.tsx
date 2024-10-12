@@ -142,7 +142,7 @@ const EditModuleCard: React.FC<EditModuleCardProps> = ({ module }) => {
   }
 
   return (
-    <Drawer open={open} onOpenChange={handleOpenChange}>
+    <Drawer open={open} onOpenChange={handleOpenChange} >
       <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
       <DrawerContent className="bg-background">
         <div className="max-h-[80vh] overflow-y-auto px-4 py-6">

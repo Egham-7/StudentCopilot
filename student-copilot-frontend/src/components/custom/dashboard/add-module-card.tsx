@@ -135,7 +135,7 @@ const AddModuleCard: React.FC = () => {
   }
 
   return (
-    <Drawer open={open}>
+    <Drawer open={open} onOpenChange={handleOpenChange}>
       <DrawerTrigger asChild>
         {renderTriggerCard(triggerCardTitle, triggerCardDescription)}
       </DrawerTrigger>
