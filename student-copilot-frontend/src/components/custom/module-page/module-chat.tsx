@@ -173,7 +173,7 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-80 sm:w-96 p-0 mr-5 mb-5 bg-background border border-border rounded-md shadow-lg">
+      <PopoverContent className="w-96  min-w-[500px] mr-5 mb-5 bg-background border border-border rounded-md shadow-lg">
         <Tabs
           defaultValue={activeTab}
           value={activeTab}
