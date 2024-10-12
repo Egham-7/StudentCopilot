@@ -14,7 +14,7 @@ export const store = mutation({
     name: v.string(),
     department: v.string(),
     credits: v.number(),
-    image: v.string(),
+    image: v.optional(v.id("_storage")),
     semester: v.union(
       v.literal("Fall"),
       v.literal("Spring"),
@@ -58,7 +58,7 @@ export const update = mutation({
     name: v.optional(v.string()),
     department: v.optional(v.string()),
     credits: v.optional(v.number()),
-    image: v.optional(v.string()),
+    image: v.optional(v.id("_storage")),
     semester: v.optional(
       v.union(v.literal("Fall"), v.literal("Spring"), v.literal("Summer")),
     ),

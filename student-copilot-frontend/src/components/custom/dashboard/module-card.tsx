@@ -7,8 +7,13 @@ import EditModuleCard from './edit-module-card';
 import DeleteModuleDialog from './delete-dialog';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+
+
+type ModuleWithStringImage = Omit<Doc<"modules">, 'image'> & {
+  image: string | undefined;
+};
 interface ModuleCardProps {
-  module: Doc<"modules">;
+  module: ModuleWithStringImage
 }
 
 const ModuleCard: React.FC<ModuleCardProps> = ({ module }) => {

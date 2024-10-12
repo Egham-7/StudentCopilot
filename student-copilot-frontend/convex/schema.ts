@@ -25,7 +25,7 @@ export default defineSchema({
     name: v.string(),
     department: v.string(),
     credits: v.number(),
-    image: v.optional(v.string()),
+    image: v.optional(v.id("_storage")),
     userId: v.string(),
     semester: v.union(
       v.literal("Fall"),
