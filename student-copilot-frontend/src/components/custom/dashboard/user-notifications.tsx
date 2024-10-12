@@ -23,7 +23,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ message, type, crea
 
 export const UserNotifications: React.FC = () => {
   const userNotifications = useQuery(api.notifications.getUserNotifications, {
-    limit: 20
+    limit: 6
   }) || [];
 
 
