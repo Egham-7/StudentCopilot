@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import IndexPage from "../src/routes/index"
-
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import IndexPage from "../src/routes/index";
 
 // Mock the Clerk provider
 vi.mock('@clerk/clerk-react', () => ({

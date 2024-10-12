@@ -1,19 +1,19 @@
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { RunnableSequence } from "@langchain/core/runnables";
+import { ChatOpenAI } from "@langchain/openai";
+import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import { Doc, Id } from "./_generated/dataModel";
 import {
+  action,
   internalAction,
   internalMutation,
   internalQuery,
   mutation,
-  query,
-  action,
+  query
 } from "./_generated/server";
-import { v } from "convex/values";
-import { internal } from "./_generated/api";
-import { Doc, Id } from "./_generated/dataModel";
 import { generateEmbedding } from "./ai";
 import { exponentialBackoff } from "./utils";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { RunnableSequence } from "@langchain/core/runnables";
-import { ChatOpenAI } from "@langchain/openai";
 
 export const storeClient = mutation({
   args: {
