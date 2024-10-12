@@ -11,7 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { DialogClose } from '@radix-ui/react-dialog';
 import { ModuleFormValues } from './add-module-card';
 
 import { Button } from '@/components/ui/button';
@@ -175,11 +174,9 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({ form, onSubmit, classNam
         />
 
         <div className="mt-4">
-          <DialogClose asChild>
-            <Button type='submit'>
-              {form.formState.isSubmitting ? 'Adding Module...' : 'Add Module'}
-            </Button>
-          </DialogClose>
+          <Button type='submit'>
+            {form.formState.isSubmitting ? 'Adding Module...' : 'Add Module'}
+          </Button>
         </div>
 
 

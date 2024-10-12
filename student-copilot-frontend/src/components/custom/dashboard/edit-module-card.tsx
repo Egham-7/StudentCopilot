@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -69,9 +69,11 @@ const EditModuleCard: React.FC<EditModuleCardProps> = ({ module }) => {
     },
   });
 
+  const [open, setOpen] = useState(false);
+
   const onSubmit = async (values: ModuleFormValues) => {
     try {
-      let storageId = module.image;
+      let storageId: Id<"_storage"> | undefined = undefined;
 
       if (values.image instanceof FileList) {
         const postUrl = await generateUploadUrl();
@@ -93,6 +95,7 @@ const EditModuleCard: React.FC<EditModuleCardProps> = ({ module }) => {
       };
 
       await updateModule({ id: module._id, ...moduleData });
+      setOpen(false);
       console.log("Module updated successfully");
     } catch (err: unknown) {
       console.error("Error: ", err);
@@ -117,9 +120,13 @@ const EditModuleCard: React.FC<EditModuleCardProps> = ({ module }) => {
     </>
   );
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+  };
+
   if (isDesktop) {
     return (
-      <Dialog>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>{triggerButton}</DialogTrigger>
         <DialogContent className="sm:max-w-[425px] bg-background">
           <DialogHeader>
@@ -135,7 +142,7 @@ const EditModuleCard: React.FC<EditModuleCardProps> = ({ module }) => {
   }
 
   return (
-    <Drawer>
+    <Drawer open={open} onOpenChange={handleOpenChange}>
       <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
       <DrawerContent className="bg-background">
         <div className="max-h-[80vh] overflow-y-auto px-4 py-6">

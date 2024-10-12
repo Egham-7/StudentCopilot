@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,6 +26,7 @@ import { useMutation } from 'convex/react';
 import { ModuleForm } from './module-form';
 import { api } from "../../../../convex/_generated/api.js";
 import { renderTriggerCard } from '@/lib/ui_utils.js';
+import { Id } from 'convex/_generated/dataModel.js';
 
 
 const MAX_FILE_SIZE = 5000000; // 5MB
@@ -70,9 +71,11 @@ const AddModuleCard: React.FC = () => {
     },
   });
 
+  const [open, setOpen] = useState(false);
+
   const onSubmit = async (values: ModuleFormValues) => {
     try {
-      let storageId = null;
+      let storageId: Id<"_storage"> | undefined = undefined;
       if (values.image instanceof FileList) {
         const postUrl = await generateUploadUrl();
         const imageResult = await fetch(postUrl, {
@@ -94,7 +97,10 @@ const AddModuleCard: React.FC = () => {
 
       const storedId = await storeModule(moduleData);
       console.log("Module stored with ID:", storedId);
-      // Add success notification or redirect here
+
+      setOpen(false);
+
+
     } catch (err: unknown) {
       console.error("Error: ", err);
       // Add error notification here
@@ -104,10 +110,14 @@ const AddModuleCard: React.FC = () => {
   const triggerCardTitle = "Add New Module"
   const triggerCardDescription = "Click to add a new module to your dashboard"
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+  };
+
 
   if (isDesktop) {
     return (
-      <Dialog>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           {renderTriggerCard(triggerCardTitle, triggerCardDescription)}
         </DialogTrigger>
@@ -125,7 +135,7 @@ const AddModuleCard: React.FC = () => {
   }
 
   return (
-    <Drawer>
+    <Drawer open={open}>
       <DrawerTrigger asChild>
         {renderTriggerCard(triggerCardTitle, triggerCardDescription)}
       </DrawerTrigger>
