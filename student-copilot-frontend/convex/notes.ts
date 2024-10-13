@@ -9,9 +9,11 @@ import {
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
-import OpenAI from "openai";
-import { callChatCompletionsAPI, generateEmbedding } from "./ai";
+import { generateEmbedding } from "./ai";
 import { exponentialBackoff } from "./utils";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { RunnableSequence } from "@langchain/core/runnables";
+import { ChatOpenAI } from "@langchain/openai";
 
 export const storeClient = mutation({
   args: {
@@ -29,17 +31,17 @@ export const storeClient = mutation({
 
     const user = await ctx.db.query("users").withIndex("by_clerkId").first();
 
-    if (user == null) {
+    if (!user) {
       throw new Error("User not found.");
     }
 
     const moduleUser = await ctx.db.get(args.moduleId);
 
-    if (moduleUser == null) {
+    if (!moduleUser) {
       throw new Error("Module not found.");
     }
 
-    if (moduleUser.userId != identity.subject) {
+    if (moduleUser.userId !== identity.subject) {
       throw new Error("Not allowed to create notes for this module.");
     }
 
@@ -250,49 +252,61 @@ async function processChunk(
     course: string;
   },
 ): Promise<string> {
+
   return exponentialBackoff(async () => {
-    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      {
-        role: "system",
-        content: `You are an expert note-taker and summarizer with a keen ability to distill complex information into clear, concise, and well-structured notes. Tailor your notes to the following user preferences:
+    const prompt: string = `
+    Your task is to:
+    1. Analyze the given lecture chunk thoroughly.
+    2. Create a comprehensive summary in Markdown format, adapting to the user's note-taking and learning style.
+    3. Use appropriate Markdown syntax for headings, subheadings, lists, and emphasis.
+    4. Highlight key concepts, definitions, and important points.
+    5. Organize the information logically and hierarchically.
+    6. Include any relevant examples or case studies mentioned.
+    7. If applicable, add bullet points for easy readability.
+    8. Ensure the notes are concise yet informative, appropriate for the user's level of study.
+    9. Use code blocks for any multiline code content.
+    10. Use markdown math syntax that is compatible with Katex for math formulas and equations.
+    11. End with a brief "Key Takeaways" section if appropriate.
+    12. For visual learners, include suggestions for diagrams or visual aids where applicable.
+    13. For auditory learners, emphasize key phrases or mnemonics that could be easily remembered.
+    14. For kinesthetic learners, suggest practical applications or hands-on activities related to the content.
+    15. For analytical learners, include logical breakdowns and connections between concepts.
+    Produce notes that would be valuable for review and quick reference, tailored to the user's specific needs and the course content. If the lecture chunk appears to be cut off mid-sentence or mid-thought, please use your best judgment to infer the intended meaning and complete the idea logically. Do not leave any sentences or thoughts unfinished in your summary.`;
+    const question: string = `Please summarize the following lecture chunk into well-structured Markdown notes, tailored to the user's preferences. If the chunk is cut off, please infer the intended meaning and complete the summary accordingly:${chunk}`;
+    const qaPrompt = ChatPromptTemplate.fromMessages([
+      ["system", prompt],
+      ["human", "{question}"],
+    ]);
+    const llm = new ChatOpenAI({ model: "gpt-3.5-turbo", temperature: 0 }); // Make sure you have your OpenAI API key set up
+    const simpleChain = RunnableSequence.from([
+      async (input: {
+        question: string,
+        noteTakingStyle: string;
+        learningStyle: string;
+        levelOfStudy: string;
+        course: string,
+      }) => ({
+        context: `This is some example context related to:
+        Note-taking style: ${input.noteTakingStyle}
+        Learning style: ${input.learningStyle}
+        Level of study: ${input.levelOfStudy}
+        Course: ${input.course}`,
+        question: input.question,
+      }),
+      qaPrompt,
+      llm,
+    ]);
+    const result = await simpleChain.invoke({
+      question,
+      noteTakingStyle: userInfo.noteTakingStyle,
+      learningStyle: userInfo.learningStyle,
+      levelOfStudy: userInfo.levelOfStudy,
+      course: userInfo.course
+    });
 
-Note-taking style: ${userInfo.noteTakingStyle}
-Learning style: ${userInfo.learningStyle}
-Level of study: ${userInfo.levelOfStudy}
-Course: ${userInfo.course}
-
-Your task is to:
-
-1. Analyze the given lecture chunk thoroughly.
-2. Create a comprehensive summary in Markdown format, adapting to the user's note-taking and learning style.
-3. Use appropriate Markdown syntax for headings, subheadings, lists, and emphasis.
-4. Highlight key concepts, definitions, and important points.
-5. Organize the information logically and hierarchically.
-6. Include any relevant examples or case studies mentioned.
-7. If applicable, add bullet points for easy readability.
-8. Ensure the notes are concise yet informative, appropriate for the user's level of study.
-9. Use code blocks for any multiline code content.
-10. Use markdown math syntax that is compatible with Katex for math formulas and equations.
-11. End with a brief "Key Takeaways" section if appropriate.
-12. For visual learners, include suggestions for diagrams or visual aids where applicable.
-13. For auditory learners, emphasize key phrases or mnemonics that could be easily remembered.
-14. For kinesthetic learners, suggest practical applications or hands-on activities related to the content.
-15. For analytical learners, include logical breakdowns and connections between concepts.
-
-Produce notes that would be valuable for review and quick reference, tailored to the user's specific needs and the course content. If the lecture chunk appears to be cut off mid-sentence or mid-thought, please use your best judgment to infer the intended meaning and complete the idea logically. Do not leave any sentences or thoughts unfinished in your summary.`,
-      },
-      {
-        role: "user",
-        content: `Please summarize the following lecture chunk into well-structured Markdown notes, tailored to the user's preferences. If the chunk is cut off, please infer the intended meaning and complete the summary accordingly:
-
-${chunk}`,
-      },
-    ];
-
-    const response = await callChatCompletionsAPI(messages);
-
-    return response;
+    return result.content as string;
   });
+
 }
 
 export const getNotesForModule = query({
