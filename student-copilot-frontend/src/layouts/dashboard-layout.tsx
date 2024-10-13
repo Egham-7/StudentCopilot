@@ -1,11 +1,12 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/custom/sidebar";
-import { IconHome, IconSettings, IconCrown } from '@tabler/icons-react';
+import { IconHome, IconSettings, IconCrown } from "@tabler/icons-react";
 import { UserButton } from "@clerk/clerk-react";
 import { useConvexAuth } from "convex/react";
 import LoadingPage from "../components/custom/loading";
 import { Button } from "@/components/ui/button";
+import TreeView from "@/components/ui/tree-view";
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -13,7 +14,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
 
   if (isLoading) {
-    return <LoadingPage />
+    return <LoadingPage />;
   }
 
   if (!isAuthenticated) {
@@ -33,27 +34,27 @@ export default function DashboardLayout() {
               link={{
                 label: "Home",
                 href: "/dashboard/home",
-                icon: <IconHome size={24} />
+                icon: <IconHome size={24} />,
               }}
             />
+            {/* Add TreeView here */}
+            <div className="mt-4">
+              <TreeView />
+            </div>
+
             <SidebarLink
               link={{
                 label: "Settings",
                 href: "/settings",
-                icon: <IconSettings size={24} />
+                icon: <IconSettings size={24} />,
               }}
             />
-
           </div>
-
 
           <div className="hidden md:flex  md:justify-start md:items-between md:w-full md:gap-4">
             <UserButton />
 
-
-
             {sidebarOpen && (
-
               <Button
                 onClick={handleUpgrade}
                 className=" bg-primary text-primary-foreground hover:bg-primary/90"
@@ -61,9 +62,6 @@ export default function DashboardLayout() {
                 <IconCrown size={20} className="mr-2" />
                 Upgrade to Pro
               </Button>
-
-
-
             )}
           </div>
         </SidebarBody>
@@ -84,6 +82,5 @@ export default function DashboardLayout() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

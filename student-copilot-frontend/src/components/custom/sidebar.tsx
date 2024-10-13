@@ -5,14 +5,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import { useSidebar, SidebarContext } from "@/hooks/use-sidebar";
 
-
 interface Links {
   label: string;
   href: string;
   icon: React.JSX.Element | React.ReactNode;
 }
-
-
 
 export const SidebarProvider = ({
   children,
@@ -64,7 +61,6 @@ export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
       <div className="py-4 px-1 md:hidden md:p-0">
         <MobileSidebar {...(props as React.ComponentProps<"div">)} />
       </div>
-
     </>
   );
 };
@@ -178,4 +174,3 @@ export const SidebarLink = ({
     </Link>
   );
 };
-
