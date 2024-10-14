@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Tree, NodeRendererProps } from "react-arborist";
+import { PiStackFill } from "react-icons/pi";
 
 interface TreeNode {
   id: string;
@@ -45,17 +46,20 @@ function Node({
 
   return (
     <div
-      style={style}
+      style={{ ...style, display: "flex", alignItems: "center" }} // Align items in a row
       ref={node.isLeaf ? null : dragHandle} // Only parent nodes (non-leaf) are draggable
       onClick={() => node.toggle()}
     >
       {/* Use 🗂️ for module and 📖 for lecture */}
-      {node.isLeaf
-        ? isSidebarExpanded && "📖" // Show lecture icon only if sidebar is expanded
-        : "🗂️"}{" "}
-      {/* Show module icon */}
-      {isSidebarExpanded && node.data.name}{" "}
-      {/* Show name only if sidebar is expanded */}
+      {node.isLeaf ? (
+        isSidebarExpanded && "📖" // Show lecture icon only if sidebar is expanded
+      ) : (
+        <PiStackFill />
+      )}
+      {isSidebarExpanded && (
+        <span style={{ marginLeft: "8px" }}>{node.data.name}</span>
+      )}{" "}
+      {/* Add margin to space out the text */}
     </div>
   );
 }

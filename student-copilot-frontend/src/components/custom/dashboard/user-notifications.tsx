@@ -9,7 +9,11 @@ interface NotificationItemProps {
   createdAt: string;
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({ message, type, createdAt }) => {
+const NotificationItem: React.FC<NotificationItemProps> = ({
+  message,
+  type,
+  createdAt,
+}) => {
   return (
     <div className="bg-card text-card-foreground shadow-md rounded-lg p-4 w-full max-w-md">
       <p className="text-foreground">{message}</p>
@@ -22,11 +26,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ message, type, crea
 };
 
 export const UserNotifications: React.FC = () => {
-  const userNotifications = useQuery(api.notifications.getUserNotifications, {
-    limit: 6
-  }) || [];
-
-
+  const userNotifications =
+    useQuery(api.notifications.getUserNotifications, {
+      limit: 6,
+    }) || [];
 
   return (
     <StaticList className="w-full max-w-md lg:max-w-none space-y-4">
@@ -43,4 +46,3 @@ export const UserNotifications: React.FC = () => {
 };
 
 export default UserNotifications;
-
