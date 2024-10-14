@@ -455,3 +455,91 @@ export const deleteNote = mutation({
     return { success: true, message: "Note deleted successfully." };
   },
 });
+
+
+
+
+import axios from 'axios';
+const Google_API_KEY="AIzaSyCg8w5Fl2crl1yv0kU5VQnpOhh1wECdyic";
+const CX="804432fb1eb884936";
+async function getImage(
+  searchingQuery1: string,
+): Promise<string> {
+  return exponentialBackoff(async () => {
+  const url = `https://www.googleapis.com/customsearch/v1?q=${searchingQuery1}&cx=${CX}&key=${Google_API_KEY}&searchType=image&num=1`;
+  try {
+    const response = await axios.get(url);
+    const items = response.data.items;
+
+    if (items && items.length > 0) {
+      return items[0].link; // Return the first (best match) image URL
+    } else {
+      throw new Error('No images found');
+    }
+  } catch (error) {
+    console.error('Error fetching image:', error);
+    throw error;
+  }
+});
+}
+//to openURL needed
+//hide env Variables as Google_API+CX
+
+
+
+async function generateSearchQuery(
+  note: string,
+  userInfo: {
+    noteTakingStyle: string;
+    learningStyle: "auditory" | "visual" | "kinesthetic" | "analytical";
+    levelOfStudy: "Bachelors" | "Associate" | "Masters" | "PhD";
+    course: string;
+  },
+ 
+): Promise<string> {
+
+  return exponentialBackoff(async () => {
+    const prompt: string = `
+    Your task is to:
+    1.Highlight Core Themes: Identify and focus on the main concepts and themes present in the note. Ensure that the image encapsulates these key ideas visually.
+    2.Use Simple and Clear Visuals: Create or select images that use clear, simple designs and symbols to represent complex ideas. Avoid clutter to enhance understanding and retention.
+    3.Incorporate Relevant Context: Ensure that the image includes relevant contextual elements that help visual learners connect the visual representation with the information in the notes. Use annotations, labels, or color coding to provide additional clarity.
+   4.Please ensure the search query does not exceed a maximum of 6 words to maintain clarity and focus.
+    Given the note, provide the most relevant search query to find a highly accurate image that visually explains or represents the key concept. Focus on the essential elements and context of the note to create the search query.`;
+
+    const question: string = `Based on the following lecture note: ${note}, generate the most relevant search query to find an accurate image that visually explains or represents the key concept of this content.
+                                       Focus on the essential elements and context to ensure the search query retrieves the best possible image.`;
+
+    const qaPrompt = ChatPromptTemplate.fromMessages([
+      ["system", prompt],
+      ["human", "{question}"],
+    ]);
+    const llm = new ChatOpenAI({ model: "gpt-3.5-turbo", temperature: 0 }); // Make sure you have your OpenAI API key set up
+    const simpleChain = RunnableSequence.from([
+      async (input: {
+        question: string,
+        learningStyle: string;
+        levelOfStudy: string;
+        course: string,
+      }) => ({
+        context: `This is some example context related to:,
+        Learning style: ${input.learningStyle}
+        Level of study: ${input.levelOfStudy},
+        Course: ${input.course}`,
+        question: input.question,
+      }),
+      qaPrompt,
+      llm,
+    ]);
+    const result = await simpleChain.invoke({
+      question,
+      learningStyle: userInfo.learningStyle,
+      levelOfStudy: userInfo.levelOfStudy,
+      course: userInfo.course
+    });
+    return result.content as string;
+  });
+}
+
+
+
