@@ -55,30 +55,44 @@ export default function TreeView({
     }
   }, [modules]);
 
-  // Handle node movement
   const onMove = ({ dragIds, parentId, index }) => {
     const newData = [...treeData];
+
+    // Check if the target is a module (parent) or lecture (child)
+    const isParentModule = parentId
+      ? newData.some((node) => node.id === parentId && node.children)
+      : true;
 
     // Remove the node(s) being dragged
     const nodesToMove: TreeNode[] = [];
     dragIds.forEach((id) => {
       const node = removeNodeById(newData, id);
       if (node) {
+        const isNodeModule = !!node.children;
+
+        // Allow modules to move at the top level only (no parentId)
+        if (isNodeModule && parentId) {
+          return; // Prevent moving modules into other modules
+        }
         nodesToMove.push(node);
       }
     });
 
-    // Find the parent node to insert the dragged node(s)
-    if (parentId) {
-      const parentNode = newData.find((node) => node.id === parentId);
-      if (parentNode && parentNode.children) {
-        parentNode.children.splice(index, 0, ...nodesToMove); // Insert node at the new index under the parent
+    // Only proceed if the move is valid
+    if (nodesToMove.length > 0) {
+      if (parentId && isParentModule) {
+        // Find the parent node to insert the dragged node(s) if it's a valid parent
+        const parentNode = newData.find((node) => node.id === parentId);
+        if (parentNode && parentNode.children) {
+          parentNode.children.splice(index, 0, ...nodesToMove); // Insert node at the new index under the parent
+        }
+      } else if (!parentId) {
+        // Allow reordering of modules at the top level
+        newData.splice(index, 0, ...nodesToMove);
       }
-    } else {
-      newData.splice(index, 0, ...nodesToMove); // If no parent, insert at the top level
-    }
 
-    setTreeData(newData); // Update the tree data
+      setTreeData(newData); // Update the tree data
+    }
   };
 
   return (
