@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Tree, NodeRendererProps } from "react-arborist";
-import { PiStackFill } from "react-icons/pi";
+import { PiStackFill, PiBookOpenTextFill } from "react-icons/pi"; // Icons for module and lecture
+import { Link } from "react-router-dom";
+import { useQuery } from "convex/react"; // Querying from Convex
+import { api } from "../../../convex/_generated/api"; // Import API methods from Convex
 
 interface TreeNode {
   id: string;
@@ -8,100 +11,55 @@ interface TreeNode {
   children?: TreeNode[];
 }
 
-// Sample tree data
-const initialData: TreeNode[] = [
-  {
-    id: "3",
-    name: "Module 1",
-    children: [
-      { id: "c1", name: "Lecture 1" },
-      { id: "c2", name: "Lecture 2" },
-      { id: "c3", name: "Lecture 3" },
-    ],
-  },
-  {
-    id: "4",
-    name: "Module 2",
-    children: [
-      { id: "d1", name: "Lecture 1" },
-      { id: "d2", name: "Lecture 2" },
-      { id: "d3", name: "Lecture 3" },
-    ],
-  },
-];
-
-// Node rendering function with toggling and conditional rendering
-function Node({
-  node,
-  style,
-  dragHandle,
-  isSidebarExpanded,
-}: NodeRendererProps<TreeNode> & { isSidebarExpanded: boolean }) {
-  // Automatically close the node if the sidebar is collapsed
-  useEffect(() => {
-    if (!isSidebarExpanded && node.isOpen) {
-      node.close();
+// Helper function to find and remove a node by ID
+function removeNodeById(data: TreeNode[], id: string): TreeNode | null {
+  for (let i = 0; i < data.length; i++) {
+    const node = data[i];
+    if (node.id === id) {
+      data.splice(i, 1);
+      return node;
     }
-  }, [isSidebarExpanded, node]);
-
-  return (
-    <div
-      style={{ ...style, display: "flex", alignItems: "center" }} // Align items in a row
-      ref={node.isLeaf ? null : dragHandle} // Only parent nodes (non-leaf) are draggable
-      onClick={() => node.toggle()}
-    >
-      {/* Use 🗂️ for module and 📖 for lecture */}
-      {node.isLeaf ? (
-        isSidebarExpanded && "📖" // Show lecture icon only if sidebar is expanded
-      ) : (
-        <PiStackFill />
-      )}
-      {isSidebarExpanded && (
-        <span style={{ marginLeft: "8px" }}>{node.data.name}</span>
-      )}{" "}
-      {/* Add margin to space out the text */}
-    </div>
-  );
+    if (node.children) {
+      const removedNode = removeNodeById(node.children, id);
+      if (removedNode) {
+        return removedNode;
+      }
+    }
+  }
+  return null;
 }
 
 // TreeView component
-export default function TreeView() {
-  const [data, setData] = useState<TreeNode[]>(initialData);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false); // Track sidebar state
+export default function TreeView({
+  isSidebarOpen,
+}: {
+  isSidebarOpen: boolean;
+}) {
+  const modules = useQuery(api.modules.queryByUserId); // Querying Convex for user modules
+  const [treeData, setTreeData] = useState<TreeNode[]>([]);
 
-  // Helper function to find a node by its ID
-  function findNodeById(data: TreeNode[], id: string): TreeNode | null {
-    for (const node of data) {
-      if (node.id === id) return node;
-      if (node.children) {
-        const childNode = findNodeById(node.children, id);
-        if (childNode) return childNode;
-      }
+  // Format the data received from Convex to match the TreeNode structure
+  useEffect(() => {
+    if (modules) {
+      // Each module is a parent node, with lectures as children
+      const formattedData: TreeNode[] = modules.map((module) => ({
+        id: module._id,
+        name: module.name, // Module name
+        children:
+          module.lectures?.map((lecture) => ({
+            id: lecture._id,
+            name: lecture.title, // Lecture title
+          })) || [], // Ensure we have an empty array if there are no lectures
+      }));
+      setTreeData(formattedData);
     }
-    return null;
-  }
-
-  // Helper function to remove a node by its ID
-  function removeNodeById(data: TreeNode[], id: string): TreeNode | null {
-    for (let i = 0; i < data.length; i++) {
-      const node = data[i];
-      if (node.id === id) {
-        data.splice(i, 1);
-        return node;
-      }
-      if (node.children) {
-        const removedNode = removeNodeById(node.children, id);
-        if (removedNode) return removedNode;
-      }
-    }
-    return null;
-  }
+  }, [modules]);
 
   // Handle node movement
   const onMove = ({ dragIds, parentId, index }) => {
-    const newData = [...data];
+    const newData = [...treeData];
 
-    // Remove the nodes being moved
+    // Remove the node(s) being dragged
     const nodesToMove: TreeNode[] = [];
     dragIds.forEach((id) => {
       const node = removeNodeById(newData, id);
@@ -110,44 +68,79 @@ export default function TreeView() {
       }
     });
 
-    // Find the parent to move the nodes into
-    const parent = findNodeById(newData, parentId);
-    if (parent && parent.children) {
-      parent.children.splice(index, 0, ...nodesToMove);
+    // Find the parent node to insert the dragged node(s)
+    if (parentId) {
+      const parentNode = newData.find((node) => node.id === parentId);
+      if (parentNode && parentNode.children) {
+        parentNode.children.splice(index, 0, ...nodesToMove); // Insert node at the new index under the parent
+      }
     } else {
-      newData.splice(index, 0, ...nodesToMove); // Move to top level if no parent
+      newData.splice(index, 0, ...nodesToMove); // If no parent, insert at the top level
     }
 
-    setData(newData);
+    setTreeData(newData); // Update the tree data
   };
 
   return (
-    <div
-      onMouseEnter={() => setIsSidebarExpanded(true)}
-      onMouseLeave={() => setIsSidebarExpanded(false)}
-      style={{
-        width: isSidebarExpanded ? "300px" : "60px", // Adjust width based on sidebar state
-        transition: "width 0.3s ease", // Smooth transition
-        overflow: "hidden", // Prevent TreeView from expanding beyond sidebar
-      }}
-    >
+    <div className="flex-grow overflow-hidden">
       <Tree
-        data={data}
-        onMove={onMove}
-        openByDefault={false}
-        width={isSidebarExpanded ? 300 : 60} // Dynamic tree width
-        height={1000}
+        data={treeData} // Data contains modules (parents) and lectures (children)
+        onMove={onMove} // Handle node movement
+        openByDefault={false} // Tree starts closed by default
+        width={isSidebarOpen ? 300 : 60} // Adjusts based on sidebar state
+        height={400} // Adjust height according to your layout
         indent={24}
         rowHeight={36}
         overscanCount={1}
-        paddingTop={30}
-        paddingBottom={10}
+        paddingTop={10}
+        paddingBottom={0}
         padding={25}
       >
-        {(nodeProps) => (
-          <Node {...nodeProps} isSidebarExpanded={isSidebarExpanded} />
-        )}
+        {(nodeProps) => <Node {...nodeProps} isSidebarOpen={isSidebarOpen} />}
       </Tree>
+    </div>
+  );
+}
+
+// Node rendering function with linking and conditional rendering
+function Node({
+  node,
+  style,
+  dragHandle,
+  isSidebarOpen,
+}: NodeRendererProps<TreeNode> & { isSidebarOpen: boolean }) {
+  useEffect(() => {
+    if (!isSidebarOpen && node.isOpen) {
+      node.close();
+    }
+  }, [isSidebarOpen, node]);
+
+  return (
+    <div
+      style={{
+        ...style,
+        display: "flex",
+        alignItems: "center",
+        paddingLeft: "8px",
+      }}
+      ref={node.isLeaf ? null : dragHandle} // Only draggable if it's not a leaf node
+      onClick={() => node.toggle()} // Toggle node (open/close) on click
+    >
+      {/* Show correct icon depending on whether it's a module or a lecture */}
+      {node.children ? <PiStackFill /> : <PiBookOpenTextFill />}{" "}
+      {/* If there are children, it's a module (parent); otherwise, it's a lecture (leaf) */}
+      {isSidebarOpen && (
+        <Link
+          to={`/dashboard/module/${node.id}`} // Links to the specific module page
+          style={{
+            marginLeft: "8px",
+            textDecoration: "none",
+            color: "inherit",
+          }}
+        >
+          {node.data.name} {/* Show the name of the module or lecture */}
+        </Link>
+      )}
     </div>
   );
 }

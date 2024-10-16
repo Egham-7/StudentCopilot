@@ -39,7 +39,7 @@ export default function DashboardLayout() {
             />
             {/* Add TreeView here */}
             <div className="mt-4">
-              <TreeView />
+              <TreeView isSidebarOpen={sidebarOpen} />
             </div>
 
             <SidebarLink
