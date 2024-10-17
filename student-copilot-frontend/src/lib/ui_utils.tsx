@@ -45,10 +45,16 @@ export type LecturesData = {
 
 }
 
-export const formSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  moduleId: z.string().min(1, 'Module ID is required'),
+
+// Base schema for all lecture types
+const baseSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  moduleId: z.string(),
+});
+
+// File upload schema
+const fileSchema = baseSchema.extend({
   file: z.instanceof(File)
     .refine((file) => file.size <= MAX_FILE_SIZE, `Max file size is 200MB.`)
     .refine(
@@ -57,3 +63,15 @@ export const formSchema = z.object({
     ),
 });
 
+// Website link schema
+const websiteSchema = baseSchema.extend({
+  link: z.string().url("Invalid URL"),
+});
+
+// Union of all possible schemas
+export const formSchema = z.discriminatedUnion('type', [
+  fileSchema.extend({ type: z.literal('file') }),
+  websiteSchema.extend({ type: z.literal('website') }),
+]);
+
+export type UploadLectureFormSchema = typeof formSchema;

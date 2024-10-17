@@ -2,9 +2,10 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { FileText, FileAudio, FileVideo } from 'lucide-react';
+import { IconGlobe } from '@tabler/icons-react';
 
 interface FileTypeSelectionProps {
-  onSelect: (type: 'pdf' | 'audio' | 'video') => void;
+  onSelect: (type: 'pdf' | 'audio' | 'video' | 'website') => void;
 }
 
 const FileTypeSelection: React.FC<FileTypeSelectionProps> = ({ onSelect }) => {
@@ -42,6 +43,20 @@ const FileTypeSelection: React.FC<FileTypeSelectionProps> = ({ onSelect }) => {
           <FileVideo className="w-8 h-8" />
           <span>Video</span>
         </Button>
+
+
+        <Button
+          variant="outline"
+          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
+          onClick={() => onSelect('website')}
+        >
+
+          <IconGlobe className='w-8 h-8' />
+          <span>Website</span>
+        </Button>
+
+
+
 
       </div>
     </>

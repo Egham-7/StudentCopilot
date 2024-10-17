@@ -243,7 +243,7 @@ export const store = mutation({
     description: v.optional(v.string()),
     moduleId: v.id("modules"),
     completed: v.boolean(),
-    fileType: v.union(v.literal("pdf"), v.literal("audio"), v.literal("video")),
+    fileType: v.union(v.literal("pdf"), v.literal("audio"), v.literal("video"), v.literal("website")),
     image: v.optional(v.id("_storage")),
   },
 
@@ -259,11 +259,11 @@ export const store = mutation({
       .filter((q) => q.eq(q.field("_id"), args.moduleId))
       .first();
 
-    if (module == null) {
+    if (!module) {
       throw new Error("Module not allowed to be null.");
     }
 
-    if (module.userId != identity.subject) {
+    if (module.userId !== identity.subject) {
       throw new Error("You are not allowed to upload lectures to this module.");
     }
 
@@ -377,6 +377,8 @@ export const transcribeAudio = action({
     }
   },
 });
+
+
 
 export const fetchTranscription = internalAction({
   args: {
