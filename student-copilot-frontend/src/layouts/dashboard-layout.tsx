@@ -37,11 +37,10 @@ export default function DashboardLayout() {
                 icon: <IconHome size={24} />,
               }}
             />
-            {/* Add TreeView here */}
-            <div className="mt-4">
-              <TreeView isSidebarOpen={sidebarOpen} />
-            </div>
+            <TreeView isSidebarOpen={sidebarOpen} />
+          </div>
 
+          <div className="hidden md:flex flex-col md:justify-start md:items-start md:w-full md:gap-4">
             <SidebarLink
               link={{
                 label: "Settings",
@@ -49,20 +48,18 @@ export default function DashboardLayout() {
                 icon: <IconSettings size={24} />,
               }}
             />
-          </div>
-
-          <div className="hidden md:flex  md:justify-start md:items-between md:w-full md:gap-4">
-            <UserButton />
-
-            {sidebarOpen && (
-              <Button
-                onClick={handleUpgrade}
-                className=" bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <IconCrown size={20} className="mr-2" />
-                Upgrade to Pro
-              </Button>
-            )}
+            <div className="flex justify-start items-center w-full gap-4">
+              <UserButton />
+              {sidebarOpen && (
+                <Button
+                  onClick={handleUpgrade}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 flex-grow"
+                >
+                  <IconCrown size={20} className="mr-2" />
+                  Upgrade to Pro
+                </Button>
+              )}
+            </div>
           </div>
         </SidebarBody>
       </Sidebar>
