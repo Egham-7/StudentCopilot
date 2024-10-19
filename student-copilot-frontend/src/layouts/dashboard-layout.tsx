@@ -27,9 +27,10 @@ export default function DashboardLayout() {
 
   return (
     <div className="flex w-full ">
-      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
-        <SidebarBody className="flex flex-col justify-between md:h-full">
-          <div>
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} className="h-screen">
+        <SidebarBody className="flex flex-col h-full">
+          {/* Scrollable top section */}
+          <div className="overflow-y-auto flex-grow">
             <SidebarLink
               link={{
                 label: "Home",
@@ -40,7 +41,8 @@ export default function DashboardLayout() {
             <TreeView isSidebarOpen={sidebarOpen} />
           </div>
 
-          <div className="hidden md:flex flex-col md:justify-start md:items-start md:w-full md:gap-4">
+          {/* Fixed bottom section */}
+          <div className="sticky bottom-0 flex-shrink-0 p-4 border-t">
             <SidebarLink
               link={{
                 label: "Settings",
@@ -48,7 +50,7 @@ export default function DashboardLayout() {
                 icon: <IconSettings size={24} />,
               }}
             />
-            <div className="flex justify-start items-center w-full gap-4">
+            <div className="flex justify-start items-center w-full gap-4 mt-2">
               <UserButton />
               {sidebarOpen && (
                 <Button
@@ -63,6 +65,7 @@ export default function DashboardLayout() {
           </div>
         </SidebarBody>
       </Sidebar>
+
       <div className="flex flex-col w-full h-full">
         <div className="flex justify-end items-center p-4 md:hidden">
           <UserButton />
