@@ -50,7 +50,7 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
     };
 
     fetchWebsiteUrl();
-  }, [fileType, fileUrl, toast]);
+  }, [fileType, fileUrl]);
 
 
 

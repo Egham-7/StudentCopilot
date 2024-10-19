@@ -1,9 +1,28 @@
 declare module '@microlink/react' {
   import React from 'react';
 
+  export interface MicrolinkData {
+    url: string;
+    title?: string;
+    description?: string;
+    image?: {
+      url: string;
+      width: number;
+      height: number;
+      type: string;
+      size: number;
+      size_pretty: string;
+    };
+    logo?: {
+      url: string;
+      type: string;
+    };
+    [key: string]: unknown;
+  }
+
   export interface MicrolinkProps {
     url?: string;
-    setData?: (data: any) => void;
+    setData?: (data: MicrolinkData) => void;
     size?: 'large' | 'small';
     contrast?: boolean;
     preset?: 'auto' | 'amp' | 'classic' | 'card';
@@ -22,9 +41,9 @@ declare module '@microlink/react' {
     style?: React.CSSProperties;
     className?: string;
     transition?: string;
-    as?: keyof JSX.IntrinsicElements | React.ComponentType<any>;
+    as?: keyof JSX.IntrinsicElements | React.ComponentType<MicrolinkProps>;
     children?: React.ReactNode;
-    [key: string]: any;
+    [key: string]: unknown;
   }
 
   export interface MicrolinkCardProps extends MicrolinkProps {
@@ -43,7 +62,7 @@ declare module '@microlink/react' {
     apiKey?: string;
     endpoint?: string;
     headers?: Record<string, string>;
-    [key: string]: any;
+    [key: string]: unknown;
   }
 
   export function useMicrolinkData(
@@ -52,7 +71,7 @@ declare module '@microlink/react' {
   ): {
     loading: boolean;
     error: Error | null;
-    data: any;
+    data: MicrolinkData;
   };
 
   export const MicrolinkCard: React.FC<MicrolinkCardProps>;

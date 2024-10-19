@@ -40,7 +40,7 @@ export const getLecturesByModuleId = query({
 
     const lecturesWithUrl = await Promise.all(
       lectures.map(async (lecture) => {
-        let contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
+        const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
 
 
         const imageUrl =
