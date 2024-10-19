@@ -5,7 +5,6 @@ import { IconMenu2, IconX } from "@tabler/icons-react";
 
 import { cn } from "@/lib/utils";
 
-
 interface Links {
   label: string;
   href: string;
@@ -18,7 +17,9 @@ interface SidebarContextProps {
   animate: boolean;
 }
 
-const SidebarContext = createContext<SidebarContextProps | undefined>(undefined);
+const SidebarContext = createContext<SidebarContextProps | undefined>(
+  undefined
+);
 
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
@@ -58,7 +59,9 @@ export const Sidebar: React.FC<{
   );
 };
 
-export const SidebarBody: React.FC<React.ComponentProps<typeof motion.div>> = (props) => {
+export const SidebarBody: React.FC<React.ComponentProps<typeof motion.div>> = (
+  props
+) => {
   return (
     <>
       <div className="hidden md:block">
@@ -69,11 +72,9 @@ export const SidebarBody: React.FC<React.ComponentProps<typeof motion.div>> = (p
   );
 };
 
-export const DesktopSidebar: React.FC<React.ComponentProps<typeof motion.div>> = ({
-  className,
-  children,
-  ...props
-}) => {
+export const DesktopSidebar: React.FC<
+  React.ComponentProps<typeof motion.div>
+> = ({ className, children, ...props }) => {
   const { open, setOpen, animate } = useSidebar();
 
   return (
@@ -170,4 +171,3 @@ export const SidebarLink: React.FC<{
     </Link>
   );
 };
-
