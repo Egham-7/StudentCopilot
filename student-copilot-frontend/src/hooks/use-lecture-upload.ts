@@ -4,16 +4,12 @@ import { useAction, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Id } from 'convex/_generated/dataModel';
 import pdfToText from 'react-pdftotext';
-import { chunk } from 'lodash-es';
 import * as z from 'zod';
 import { formSchema } from '@/lib/ui_utils';
 import useAudioExtractor from './use-audio-extractor';
+import { useWebsiteUploaders } from './use-website-uploaders';
+import { chunkAndProcess, UploadProgressSetter } from '@/lib/lecture-upload-utils';
 const PDF_CHUNK_SIZE = 500; // 500 words
-
-
-
-type UploadProgressSetter = (progress: number) => void;
-
 
 
 export const useLectureUpload = () => {
@@ -25,6 +21,8 @@ export const useLectureUpload = () => {
   const generateUploadUrl = useMutation(api.uploads.generateUploadUrl);
   const storeLecture = useMutation(api.lectures.store);
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
+  const { getUploader } = useWebsiteUploaders();
+
 
   const { extractAudioFromVideo } = useAudioExtractor();
 
@@ -47,38 +45,7 @@ export const useLectureUpload = () => {
     return text;
   };
 
-  const chunkAndProcess = async <T, R>(
-    data: T,
-    chunkSize: number,
-    processChunk: (chunk: T, index: number, setProgress: UploadProgressSetter, totalChunks: number) => Promise<R>,
-    setUploadProgress: UploadProgressSetter
-  ): Promise<R[]> => {
-    let chunks: T[];
-    if (data instanceof ArrayBuffer) {
-      chunks = [];
-      for (let i = 0; i < data.byteLength; i += chunkSize) {
-        chunks.push(data.slice(i, i + chunkSize) as T);
-      }
-    } else if (typeof data === 'string') {
-      chunks = chunk(data.split(' '), chunkSize).map(chunk => chunk.join(' ') as T);
-    } else if (data instanceof File) {
-      chunks = [];
-      for (let i = 0; i < data.size; i += chunkSize) {
-        chunks.push(data.slice(i, i + chunkSize) as T);
-      }
-    } else {
-      throw new Error('Unsupported data type for chunking');
-    }
-
-    const totalChunks = chunks.length;
-    const results = await Promise.all(chunks.map((chunk, index) =>
-      processChunk(chunk, index, setUploadProgress, totalChunks)
-    ));
-
-    return results;
-  };
-
-  const processPdfChunk = async (
+  const processTextChunk = async (
     chunkText: string,
     index: number,
     setUploadProgress: UploadProgressSetter,
@@ -99,6 +66,9 @@ export const useLectureUpload = () => {
     return { storageId, embedding: chunkEmbedding };
   };
 
+
+
+
   const handlePdfUpload = async (
     file: File,
     values: z.infer<typeof formSchema>,
@@ -110,7 +80,7 @@ export const useLectureUpload = () => {
     const results = await chunkAndProcess(
       rawText,
       PDF_CHUNK_SIZE,
-      processPdfChunk,
+      processTextChunk,
       setUploadProgress
     );
 
@@ -224,40 +194,96 @@ export const useLectureUpload = () => {
     setUploadProgress(100);
   };
 
-
   const uploadLecture = async (
     values: z.infer<typeof formSchema>,
     moduleId: Id<"modules">,
-    fileType: 'pdf' | 'audio' | 'video'
+    fileType: 'pdf' | 'audio' | 'video' | 'website'
   ) => {
     setIsLoading(true);
     try {
-      const file = values.file;
-      if (fileType === 'pdf') {
-        await handlePdfUpload(file, values, moduleId, setUploadProgress);
-      } else if (fileType === 'audio') {
-        await handleAudioUpload(file, values, moduleId, setUploadProgress);
+      let success = false;
+
+      if (values.type === 'website') {
+        success = await handleWebsiteUpload(values, moduleId);
+      } else if (values.type === 'file' && values.file && fileType !== "website") {
+        success = await handleFileUpload(values, moduleId, fileType);
       } else {
-        await handleVideoUpload(file, values, moduleId, setUploadProgress);
+        throw new Error("Invalid form data");
       }
-      setUploadProgress(100);
-      toast({
-        title: "Lecture uploaded successfully.",
-        description: "Your lecture has been added to the module.",
-      });
-      return true;
+
+      if (success) {
+        showSuccessToast();
+      }
+
+      return success;
     } catch (error) {
       console.error('Upload failed:', error);
-      toast({
-        title: "Upload failed.",
-        description: "Hang tight and try again later!",
-        variant: "destructive",
-      });
+      showErrorToast();
       return false;
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleWebsiteUpload = async (
+    values: z.infer<typeof formSchema>,
+    moduleId: Id<"modules">
+  ): Promise<boolean> => {
+
+    if (values.type !== "website") throw new Error("Has to be a website.");
+
+    try {
+      const uploader = getUploader(values.link);
+
+      return await uploader.upload(values, moduleId, setUploadProgress);
+    } catch (err) {
+
+      if (err instanceof Error) {
+        showErrorToast(err.message);
+      }
+    }
+
+    return false;
+  };
+
+
+  const handleFileUpload = async (
+    values: z.infer<typeof formSchema> & { type: 'file', file: File },
+    moduleId: Id<"modules">,
+    fileType: 'pdf' | 'audio' | 'video'
+  ): Promise<boolean> => {
+    switch (fileType) {
+      case 'pdf':
+        await handlePdfUpload(values.file, values, moduleId, setUploadProgress);
+        break;
+      case 'audio':
+        await handleAudioUpload(values.file, values, moduleId, setUploadProgress);
+        break;
+      case 'video':
+        await handleVideoUpload(values.file, values, moduleId, setUploadProgress);
+        break;
+      default:
+        throw new Error("Unsupported file type");
+    }
+    setUploadProgress(100);
+    return true;
+  }
+
+  const showSuccessToast = () => {
+    toast({
+      title: "Lecture uploaded successfully.",
+      description: "Your lecture has been added to the module.",
+    });
+  };
+
+  const showErrorToast = (message?: string) => {
+    toast({
+      title: "Upload failed.",
+      description: message || "Hang tight and try again later!",
+      variant: "destructive",
+    });
+  };
+
 
   return {
     isLoading,

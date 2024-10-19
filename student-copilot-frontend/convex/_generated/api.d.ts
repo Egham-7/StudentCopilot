@@ -21,10 +21,10 @@ import type * as lectures from "../lectures.js";
 import type * as modules from "../modules.js";
 import type * as notes from "../notes.js";
 import type * as notifications from "../notifications.js";
-import type * as storage from "../storage.js";
 import type * as uploads from "../uploads.js";
 import type * as users from "../users.js";
 import type * as utils from "../utils.js";
+import type * as websites_youtube from "../websites/youtube.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -41,10 +41,10 @@ declare const fullApi: ApiFromModules<{
   modules: typeof modules;
   notes: typeof notes;
   notifications: typeof notifications;
-  storage: typeof storage;
   uploads: typeof uploads;
   users: typeof users;
   utils: typeof utils;
+  "websites/youtube": typeof websites_youtube;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

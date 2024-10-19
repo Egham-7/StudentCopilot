@@ -26,10 +26,10 @@ export default function DashboardLayout() {
   };
 
   return (
-    <div className="flex w-screen h-screen">
+    <div className="flex w-full ">
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
-        <SidebarBody className="flex flex-col justify-between h-full">
-          <div className="flex-grow">
+        <SidebarBody className="flex flex-col justify-between md:h-full">
+          <div>
             <SidebarLink
               link={{
                 label: "Home",
@@ -63,20 +63,11 @@ export default function DashboardLayout() {
           </div>
         </SidebarBody>
       </Sidebar>
-      <div className="flex flex-col w-full">
-        <div className="flex justify-between items-center p-4 md:hidden">
-          <Button
-            onClick={handleUpgrade}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <IconCrown size={20} className="mr-2" />
-            Upgrade to Pro
-          </Button>
+      <div className="flex flex-col w-full h-full">
+        <div className="flex justify-end items-center p-4 md:hidden">
           <UserButton />
         </div>
-        <div className="flex-grow overflow-auto">
-          <Outlet />
-        </div>
+        <Outlet />
       </div>
     </div>
   );
