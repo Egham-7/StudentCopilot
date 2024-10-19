@@ -29,7 +29,8 @@ export default function ModulePage() {
 
 
   return (
-    <div className="container relative mx-auto p-3 md:p-6 space-y-8">
+    <div className="w-full h-screen relative mx-auto p-3 md:p-6 space-y-8">
+
       <ModuleHeader moduleUser={moduleUser} />
 
       <div className="space-y-6">

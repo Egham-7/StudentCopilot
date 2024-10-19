@@ -47,7 +47,7 @@ export default defineSchema({
     completed: v.boolean(),
     lectureTranscription: v.array(v.id("_storage")),
     lectureTranscriptionEmbedding: v.array(v.float64()),
-    fileType: v.union(v.literal("pdf"), v.literal("audio"), v.literal("video")),
+    fileType: v.union(v.literal("pdf"), v.literal("audio"), v.literal("video"), v.literal("website")),
     image: v.optional(v.id("_storage")),
   })
     .index("by_moduleId", ["moduleId"])

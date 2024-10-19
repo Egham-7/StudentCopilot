@@ -1,13 +1,16 @@
-import  { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { File, FileAudio, FileVideo, FileSpreadsheet, Play, Pause, BookOpen } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
 import { DialogTitle, DialogTrigger } from '@radix-ui/react-dialog'
+import { FaGlobe } from "react-icons/fa";
 
+import Microlink from '@microlink/react'
+import { toast } from '@/components/ui/use-toast'
 interface LecturePlayerProps {
   fileUrl: string | null
-  fileType: 'audio' | 'video' | 'pdf'
+  fileType: 'audio' | 'video' | 'pdf' | 'website'
   title: string
 }
 
@@ -15,6 +18,7 @@ const iconMap = {
   audio: FileAudio,
   video: FileVideo,
   pdf: FileSpreadsheet,
+  website: FaGlobe
 }
 
 export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlayerProps) {
@@ -23,6 +27,32 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
   const [duration, setDuration] = useState(0)
   const audioRef = useRef<HTMLAudioElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [websiteUrl, setWebsiteUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchWebsiteUrl = async () => {
+      if (fileType === 'website' && fileUrl) {
+        try {
+          const response = await fetch(fileUrl);
+          if (!response.ok) {
+            throw new Error('Failed to fetch website URL');
+          }
+          const text = await response.text();
+          setWebsiteUrl(text.trim());
+        } catch (error) {
+          console.error('Error fetching website URL:', error);
+          toast({
+            title: "Failed to fetch website URL",
+            description: "Please wait and try again",
+          });
+        }
+      }
+    };
+
+    fetchWebsiteUrl();
+  }, [fileType, fileUrl]);
+
+
 
   const getMediaRef = useCallback(() => {
     return fileType === 'audio' ? audioRef.current : videoRef.current;
@@ -67,7 +97,7 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
     if (media) {
       media.addEventListener('timeupdate', handleTimeUpdate)
       media.addEventListener('loadedmetadata', handleLoadedMetadata)
-      
+
       if (media.readyState >= 2) {
         setDuration(media.duration)
         setCurrentTime(media.currentTime)
@@ -100,6 +130,15 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
             title={`PDF viewer for ${title}`}
           />
         )
+      case 'website':
+
+        return websiteUrl ? (
+          <Microlink
+            url={websiteUrl}
+          />
+        ) : (
+          <div>Loading website...</div>
+        )
       default:
         return null
     }
@@ -127,7 +166,7 @@ export default function LecturePlayer({ fileUrl, fileType, title }: LecturePlaye
           </DialogTitle>
         </DialogHeader>
         {renderMediaPlayer()}
-        {fileType !== 'pdf' && (
+        {fileType === "video" || fileType === "audio" && (
           <div className="mt-4">
             <div className="flex justify-between text-sm text-gray-500 mb-2">
               <span>{formatTime(currentTime)}</span>
