@@ -86,6 +86,11 @@ function Node({
             marginLeft: "8px",
             textDecoration: "none",
             color: "inherit",
+            whiteSpace: "nowrap", // Prevent the text from wrapping
+            overflow: "hidden", // Hide the overflowed text
+            textOverflow: "ellipsis", // Display ellipses if the text is too long
+            maxWidth: "150px",
+            display: "inline-block", // Ensure ellipsis works properly
           }}
         >
           {node.data.name}
