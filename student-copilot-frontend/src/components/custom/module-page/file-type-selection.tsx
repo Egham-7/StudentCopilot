@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { FileText, FileAudio, FileVideo } from 'lucide-react';
-import { IconGlobe } from '@tabler/icons-react';
+import { FaGlobe } from "react-icons/fa";
 
 interface FileTypeSelectionProps {
   onSelect: (type: 'pdf' | 'audio' | 'video' | 'website') => void;
@@ -51,7 +51,8 @@ const FileTypeSelection: React.FC<FileTypeSelectionProps> = ({ onSelect }) => {
           onClick={() => onSelect('website')}
         >
 
-          <IconGlobe className='w-8 h-8' />
+          <FaGlobe className='w-8 h-8' />
+
           <span>Website</span>
         </Button>
 

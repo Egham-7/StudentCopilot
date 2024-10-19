@@ -237,7 +237,7 @@ export const useLectureUpload = () => {
 
       return await uploader.upload(values, moduleId, setUploadProgress);
     } catch (err: any) {
-      showErrorToast("Failed to get transcription");
+      showErrorToast("Failed to get transcription for this video.");
     }
 
     return false;

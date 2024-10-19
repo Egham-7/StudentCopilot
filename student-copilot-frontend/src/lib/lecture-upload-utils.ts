@@ -4,7 +4,7 @@ export type UploadProgressSetter = (progress: number) => void;
 
 
 
-export const CHUNK_SIZE = 500;
+export const CHUNK_SIZE = 200;
 
 
 export const chunkAndProcess = async <T, R>(

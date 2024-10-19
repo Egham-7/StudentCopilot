@@ -40,7 +40,7 @@ export type LecturesData = {
   completed: boolean;
   lectureTranscription: Id<"_storage">[];
   lectureTranscriptionEmbedding: number[];
-  fileType: "audio" | "video" | "pdf";
+  fileType: "audio" | "video" | "pdf" | "website";
   image: string | undefined | null;
 
 }

@@ -4,7 +4,7 @@ import { useAction, useMutation } from 'convex/react';
 import { Id } from 'convex/_generated/dataModel';
 import { z } from 'zod';
 import { formSchema } from '@/lib/ui_utils';
-import { UploadProgressSetter, CHUNK_SIZE, extractYouTubeId, chunkAndProcess } from '@/lib/lecture-upload-utils';
+import { UploadProgressSetter, CHUNK_SIZE, chunkAndProcess } from '@/lib/lecture-upload-utils';
 
 export type UploadFunction = (
   values: z.infer<typeof formSchema>,
@@ -20,7 +20,6 @@ export type WebsiteUploader = {
 
 export const useWebsiteUploaders = () => {
   const storeLecture = useMutation(api.lectures.store);
-  const getYoutubeVideo = useAction(api.websites.youtube.getYoutubeVideoTranscription);
   const getWebsiteText = useAction(api.websites.youtube.getWebsiteTranscription);
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
   const generateUploadUrl = useMutation(api.uploads.generateUploadUrl);
@@ -110,22 +109,12 @@ export const useWebsiteUploaders = () => {
   };
 
   const uploaders = useMemo(() => [
-    createUploader(
-      (url) => url.includes('youtube.com') || url.includes('youtu.be'),
-      (link) => getYoutubeVideo({ link }),
-      async (link) => {
-        const videoId = extractYouTubeId(link);
-        const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/0.jpg`;
-        const thumbnailResponse = await fetch(thumbnailUrl);
-        const thumbnailBlob = await thumbnailResponse.blob();
-        return new File([thumbnailBlob], 'thumbnail.jpg', { type: 'image/jpeg' });
-      }
-    ),
+
     createUploader(
       () => true,
       (link) => getWebsiteText({ link })
     )
-  ], [generateUploadUrl, storeLecture, getYoutubeVideo, getWebsiteText]);
+  ], [generateUploadUrl, storeLecture, getWebsiteText]);
 
   const getUploader = (url: string): WebsiteUploader =>
     uploaders.find(uploader => uploader.canHandle(url)) || uploaders[uploaders.length - 1];
