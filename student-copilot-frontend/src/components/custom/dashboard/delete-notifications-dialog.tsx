@@ -57,7 +57,7 @@ const DeleteNotificationsDialog = () => {
             onClick={onDelete}
             className="w-full sm:w-auto"
           >
-            Delete Lecture
+            Delete all notifications
           </Button>
         </DialogClose>
       </DialogFooter>
