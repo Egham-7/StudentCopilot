@@ -20,8 +20,7 @@ export default function DashboardLayout() {
     return <LoadingPage />;
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/" />;
+  if (!isAuthenticated && !isLoading) {
   }
 
   const handleUpgrade = () => {
