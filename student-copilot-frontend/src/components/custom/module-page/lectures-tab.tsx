@@ -51,9 +51,9 @@ export default function LecturesTab({ moduleId, lectures, selectedLectures, setS
                 <Check className="w-4 h-4" />
               </div>
             )}
-            <CardHeader className="flex justify-between items-center flex-row">
-              <CardTitle>{lecture.title}</CardTitle>
-              <div className="space-x-4 w-full flex items-end justify-center">
+            <CardHeader className="flex justify-between items-center flex-row text-center">
+              <CardTitle className="truncate">{lecture.title}</CardTitle>
+              <div className="space-x-2 w-full flex items-center justify-end ">
 
                 <LecturePlayer fileType={lecture.fileType} fileUrl={lecture.contentUrl} title={lecture.title} />
                 <DeleteLectureDialog lectureId={lecture._id} />

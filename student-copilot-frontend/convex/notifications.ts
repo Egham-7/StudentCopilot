@@ -28,6 +28,35 @@ export const store = internalMutation({
   },
 });
 
+export const destroy = mutation({
+  handler: async (ctx, _args) => {
+
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Called storeUser without authentication present");
+    }
+
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!existingUser) {
+      throw new Error("User cannot be null.");
+    }
+
+
+    const userNotifications = await ctx.db
+      .query("notifications")
+      .withIndex("by_userId", (q) => q.eq("userId", existingUser.clerkId))
+      .collect();
+
+    for (const notification of userNotifications) {
+      await ctx.db.delete(notification._id);
+    }
+  }
+});
+
 
 
 // Get notifications for a specific user

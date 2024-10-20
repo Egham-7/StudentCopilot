@@ -18,7 +18,7 @@ interface SidebarContextProps {
 }
 
 const SidebarContext = createContext<SidebarContextProps | undefined>(
-  undefined
+  undefined,
 );
 
 export const useSidebar = () => {
@@ -60,7 +60,7 @@ export const Sidebar: React.FC<{
 };
 
 export const SidebarBody: React.FC<React.ComponentProps<typeof motion.div>> = (
-  props
+  props,
 ) => {
   return (
     <>
@@ -81,10 +81,10 @@ export const DesktopSidebar: React.FC<
     <motion.div
       className={cn(
         "h-full px-4 py-4 hidden md:flex md:flex-col bg-secondary text-secondary-foreground w-[300px] flex-shrink-0",
-        className
+        className,
       )}
       animate={{
-        width: animate ? (open ? "300px" : "100px") : "300px",
+        width: animate ? (open ? "300px" : "60px") : "300px",
       }}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
@@ -105,7 +105,7 @@ export const MobileSidebar: React.FC<React.ComponentProps<"div">> = ({
   return (
     <div
       className={cn(
-        "absolute h-10 px-4 py-8 flex flex-row md:hidden items-center justify-between bg-background text-secondary-foreground w-full"
+        "absolute h-10 px-4 py-8 flex flex-row md:hidden items-center justify-between bg-background text-secondary-foreground w-full",
       )}
       {...props}
     >
@@ -127,7 +127,7 @@ export const MobileSidebar: React.FC<React.ComponentProps<"div">> = ({
             }}
             className={cn(
               "fixed h-full w-full inset-0 bg-background text-foreground p-10 z-[100] flex flex-col justify-between",
-              className
+              className,
             )}
           >
             <div
@@ -155,7 +155,7 @@ export const SidebarLink: React.FC<{
       to={link.href}
       className={cn(
         "flex items-center justify-start gap-2 group/sidebar py-2",
-        className
+        className,
       )}
     >
       {link.icon}

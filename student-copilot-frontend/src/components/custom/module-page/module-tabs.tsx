@@ -89,12 +89,10 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
 
   return (
     <Tabs defaultValue="lectures" onValueChange={setActiveTab} className="space-y-4">
-      <div className="flex flex-col justify-between items-start   md:flex-row md:items-center">
-        <TabsList>
+      <div className="flex  gap-4 whitespace-nowrap justify-between items-center md:flex-row md:items-center">
+        <TabsList >
           <TabsTrigger value="lectures">Lectures</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
-          <TabsTrigger value="discussions">Discussions</TabsTrigger>
         </TabsList>
         {selectedLectures.length > 0 && activeTab === "lectures" && (
           <div className="flex space-x-2">

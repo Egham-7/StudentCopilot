@@ -1,21 +1,28 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Id } from 'convex/_generated/dataModel';
-import AnimatedCircularProgressBar from '@/components/magicui/animated-circular-progress-bar';
-import { formSchema } from '@/lib/ui_utils';
-import * as z from 'zod';
-import { useLectureUpload } from '@/hooks/use-lecture-upload';
-import { IconAsterisk, IconAsteriskSimple } from '@tabler/icons-react';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Id } from "convex/_generated/dataModel";
+import AnimatedCircularProgressBar from "@/components/magicui/animated-circular-progress-bar";
+import { formSchema } from "@/lib/ui_utils";
+import * as z from "zod";
+import { useLectureUpload } from "@/hooks/use-lecture-upload";
+import { IconAsterisk, IconAsteriskSimple } from "@tabler/icons-react";
 
 interface LectureUploadFormProps {
   moduleId: Id<"modules">;
-  fileType: 'pdf' | 'audio' | 'video' | 'website';
+  fileType: "pdf" | "audio" | "video" | "website";
   onBack: () => void;
   onComplete: () => void;
 }
@@ -27,32 +34,36 @@ const fileTypeConfig = {
   website: { accept: undefined, label: "Website Link" },
 };
 
-const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileType, onBack, onComplete }) => {
+const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
+  moduleId,
+  fileType,
+  onBack,
+  onComplete,
+}) => {
   const { isLoading, uploadProgress, uploadLecture } = useLectureUpload();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: '',
-      description: '',
+      title: "",
+      description: "",
       moduleId: moduleId,
-      type: fileType === 'website' ? 'website' : 'file',
-      link: ''
-    }
+      type: fileType === "website" ? "website" : "file",
+      link: "",
+    },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     let success;
-    if (values.type === 'website') {
-      success = await uploadLecture(values, moduleId, 'website');
-    } else if (values.type === 'file' && values.file) {
+    if (values.type === "website") {
+      success = await uploadLecture(values, moduleId, "website");
+    } else if (values.type === "file" && values.file) {
       success = await uploadLecture(values, moduleId, fileType);
     } else {
       throw new Error("Invalid form data");
     }
 
     if (success) {
-
       onComplete();
       form.reset();
     } else {
@@ -73,7 +84,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
       default:
         return "File";
     }
-  }
+  };
 
   return (
     <>
@@ -88,12 +99,10 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <div className='flex gap-x-1'>
+                  <div className="flex gap-x-1">
                     <FormLabel>Title</FormLabel>
 
-
-                    <IconAsterisk className='w-3 h-3 text-destructive' />
-
+                    <IconAsterisk className="w-3 h-3 text-destructive" />
                   </div>
                   <FormControl>
                     <Input placeholder="Lecture title" {...field} />
@@ -107,12 +116,10 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <div className='flex gap-x-1'>
-                    <FormLabel>
-                      Description
-                    </FormLabel>
+                  <div className="flex gap-x-1">
+                    <FormLabel>Description</FormLabel>
 
-                    <IconAsteriskSimple className='w-3 h-3 text-destructive' />
+                    <IconAsteriskSimple className="w-3 h-3 text-destructive" />
                   </div>
                   <FormControl>
                     <Textarea placeholder="Lecture description" {...field} />
@@ -122,33 +129,36 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
               )}
             />
 
-            {fileType === 'website' ? (
+            {fileType === "website" ? (
               <FormField
                 control={form.control}
                 name="link"
                 render={({ field }) => (
                   <FormItem>
-                    <div className='flex gap-x-1'>
+                    <div className="flex gap-x-1">
                       <FormLabel>Website Link</FormLabel>
-                      <IconAsterisk className='w-3 h-3 text-destructive' />
+                      <IconAsterisk className="w-3 h-3 text-destructive" />
                     </div>
                     <FormControl>
-                      <Input type="url" placeholder="https://example.com" {...field} />
+                      <Input
+                        type="url"
+                        placeholder="https://example.com"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             ) : (
-
               <FormField
                 control={form.control}
                 name="file"
                 render={({ field }) => (
-                  <FormItem>
-                    <div className='flex gap-x-1'>
+                  <FormItem className="hover:cursor-pointer">
+                    <div className="flex gap-x-1">
                       <FormLabel>File</FormLabel>
-                      <IconAsterisk className='w-3 h-3 text-destructive' />
+                      <IconAsterisk className="w-3 h-3 text-destructive" />
                     </div>
                     <FormControl>
                       <Input
@@ -161,9 +171,6 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
                   </FormItem>
                 )}
               />
-
-
-
             )}
             <div className="flex justify-between">
               <Button type="button" variant="outline" onClick={onBack}>
@@ -192,4 +199,3 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
 };
 
 export default LectureUploadForm;
-
