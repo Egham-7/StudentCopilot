@@ -1,4 +1,4 @@
-import { internalMutation, mutation, query } from "./_generated/server"
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 // Store a new notification
@@ -10,11 +10,9 @@ export const store = internalMutation({
     relatedId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-
     if (args.userId == null) {
       throw new Error("User ID is null.");
     }
-
 
     const notificationId = await ctx.db.insert("notifications", {
       userId: args.userId,
@@ -30,7 +28,6 @@ export const store = internalMutation({
 
 export const destroy = mutation({
   handler: async (ctx, _args) => {
-
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Called storeUser without authentication present");
@@ -45,7 +42,6 @@ export const destroy = mutation({
       throw new Error("User cannot be null.");
     }
 
-
     const userNotifications = await ctx.db
       .query("notifications")
       .withIndex("by_userId", (q) => q.eq("userId", existingUser.clerkId))
@@ -54,10 +50,17 @@ export const destroy = mutation({
     for (const notification of userNotifications) {
       await ctx.db.delete(notification._id);
     }
-  }
+  },
 });
 
-
+export const deleteNotification = mutation({
+  args: {
+    notificationId: v.id("notifications"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.notificationId);
+  },
+});
 
 // Get notifications for a specific user
 export const getUserNotifications = query({
@@ -69,7 +72,6 @@ export const getUserNotifications = query({
     if (!identity) {
       throw new Error("Authentication required");
     }
-
 
     const notifications = await ctx.db
       .query("notifications")
