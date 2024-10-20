@@ -16,11 +16,11 @@ export default function DashboardLayout() {
   const { isLoading, isAuthenticated } = useConvexAuth();
   const navigate = useNavigate();
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading) {
     return <LoadingPage />;
   }
 
-  if (isAuthenticated === null) {
+  if (!isAuthenticated) {
     return <Navigate to="/" />;
   }
 
