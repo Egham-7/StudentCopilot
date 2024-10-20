@@ -24,16 +24,12 @@ import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api.js";
 import { Trash2 } from "lucide-react";
 
-interface DeleteNotificationsDialogProps {
-}
-
-const DeleteNotificationsDialog: React.FC<DeleteNotificationsDialogProps> = () => {
+const DeleteNotificationsDialog = () => {
   const isMobile = useMediaQuery("(max-width: 640px)");
 
   const deleteAllNotifications = useMutation(api.notifications.destroy);
 
   const onDelete = async () => {
-
     await deleteAllNotifications({});
   };
 
@@ -69,10 +65,7 @@ const DeleteNotificationsDialog: React.FC<DeleteNotificationsDialogProps> = () =
   );
 
   const triggerButton = (
-    <Button
-      aria-label="Delete all notifications"
-      variant="ghost"
-    >
+    <Button aria-label="Delete all notifications" variant="ghost">
       <Trash2 className="h-5 w-5 text-destructive" />
     </Button>
   );
@@ -91,7 +84,6 @@ const DeleteNotificationsDialog: React.FC<DeleteNotificationsDialogProps> = () =
             </DrawerDescription>
           </DrawerHeader>
           <DrawerFooter className="flex flex-col space-y-2 pt-6">
-
             <DrawerClose asChild>
               <Button
                 type="button"
@@ -124,4 +116,3 @@ const DeleteNotificationsDialog: React.FC<DeleteNotificationsDialogProps> = () =
 };
 
 export default DeleteNotificationsDialog;
-

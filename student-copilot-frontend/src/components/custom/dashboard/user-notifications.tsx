@@ -32,7 +32,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           variant={"ghost"}
           className="text-destructive"
         >
-          <Trash2IconclassName="w-6 h-6" />
+          <Trash2Icon className="w-6 h-6" />
         </Button>
       </div>
       <div className="flex justify-between mt-2 text-sm text-muted-foreground">
