@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useConvexAuth } from "convex/react";
 import { UserButton } from "@clerk/clerk-react";
 import { IconHome, IconSettings, IconCrown } from "@tabler/icons-react";
@@ -21,6 +21,7 @@ export default function DashboardLayout() {
   }
 
   if (!isAuthenticated && !isLoading) {
+    console.log("Not authenticated");
   }
 
   const handleUpgrade = () => {
