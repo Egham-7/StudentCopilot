@@ -18,6 +18,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api.js";
 import ModuleCard from "@/components/custom/dashboard/module-card.js";
 import { UserNotifications } from "@/components/custom/dashboard/user-notifications.js";
+import DeleteNotificationsDialog from "@/components/custom/dashboard/delete-notifications-dialog.js";
 
 const filterConfig = [
   { key: "department", label: "Department" },
@@ -99,8 +100,10 @@ const DashboardPage: React.FC = () => {
         </header>
 
         <Card>
-          <CardHeader>
+          <CardHeader className=" flex-row justify-between items-center">
             <CardTitle>Recent Notifications</CardTitle>
+
+            <DeleteNotificationsDialog />
           </CardHeader>
           <CardContent className="h-96 overflow-scroll md:h-full">
             <UserNotifications />

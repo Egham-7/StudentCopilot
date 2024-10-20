@@ -48,9 +48,6 @@ export default function SearchBar({ type, moduleId, onSearchResults }: SearchBar
             query: searchTerm
           });
 
-          console.log("Search Results: ", searchResults);
-
-
           if (searchResults.length > 0) {
             const maxScoreResult = searchResults.reduce((max, current) =>
               current._score > max._score ? current : max

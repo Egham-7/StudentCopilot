@@ -12,8 +12,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ModuleFormValues } from './add-module-card';
-
+import { MultiSelect } from '@/components/ui/multi-select';
 import { Button } from '@/components/ui/button';
+import { IconAsterisk } from '@tabler/icons-react';
 
 
 interface ModuleFormProps {
@@ -31,7 +32,11 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({ form, onSubmit, classNam
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Module Name</FormLabel>
+              <FormLabel className='flex gap-2'>
+
+                Module Name
+                <IconAsterisk className='w-3 h-3 text-destructive' />
+              </FormLabel>
               <FormControl>
                 <Input placeholder="Introduction to Computer Science" {...field} />
               </FormControl>
@@ -44,7 +49,11 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({ form, onSubmit, classNam
           name="department"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Department</FormLabel>
+              <FormLabel className='flex gap-2'>
+                Department
+                <IconAsterisk className='w-3 h-3 text-destructive' />
+
+              </FormLabel>
               <FormControl>
                 <Input placeholder="Computer Science" {...field} />
               </FormControl>
@@ -138,40 +147,44 @@ export const ModuleForm: React.FC<ModuleFormProps> = ({ form, onSubmit, classNam
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="prerequisites"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Prerequisites (comma-separated)</FormLabel>
+              <FormLabel>Prerequisites</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="Math 101, CS 100"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value.split(',').map(item => item.trim()))}
+                <MultiSelect
+                  selected={field.value ?? []}
+                  onChange={field.onChange}
+                  placeholder="Type a prerequisite and press Enter"
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="instructors"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Instructors (comma-separated)</FormLabel>
+              <FormLabel>Instructors</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="Dr. Smith, Prof. Johnson"
-                  value={field.value.join(', ')}
-                  onChange={(e) => field.onChange(e.target.value.split(',').map(item => item.trim()))}
+                <MultiSelect
+                  selected={field.value ?? []}
+                  onChange={field.onChange}
+                  placeholder="Type an instructor and press Enter"
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+
 
         <div className="mt-4">
           <Button type='submit'>
