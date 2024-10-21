@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Tree, NodeRendererProps } from "react-arborist";
-import { PiStackFill, PiBookOpenTextFill } from "react-icons/pi";
+import { PiStackFill, PiBookOpenTextFill, PiNoteFill } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -9,6 +9,7 @@ interface TreeNode {
   id: string;
   name: string;
   children?: TreeNode[];
+  isModule?: boolean;
 }
 
 export default function TreeView({
@@ -24,11 +25,16 @@ export default function TreeView({
       const formattedData: TreeNode[] = modules.map((module) => ({
         id: module._id,
         name: module.name,
+        isModule: true,
         children: isSidebarOpen
           ? [
               {
                 id: `${module._id}-lectures`,
                 name: "Lectures",
+              },
+              {
+                id: `${module._id}-notes`,
+                name: "Notes",
               },
             ]
           : [],
@@ -36,6 +42,11 @@ export default function TreeView({
       setTreeData(formattedData);
     }
   }, [modules, isSidebarOpen]);
+
+  const isModuleNode = (nodes: TreeNode[], id: string): boolean => {
+    const node = findNode(nodes, id);
+    return node?.isModule ?? false;
+  };
 
   const onMove = ({
     dragIds,
@@ -51,6 +62,24 @@ export default function TreeView({
       const nodesToMove = dragIds
         .map((id) => findNode(newData, id))
         .filter(Boolean) as TreeNode[];
+
+      // Check if any of the nodes to move are "Lectures" or "Notes"
+      const hasLecturesOrNotes = nodesToMove.some(
+        (node) => node.name === "Lectures" || node.name === "Notes",
+      );
+
+      // If moving "Lectures" or "Notes", ensure they stay within their parent module
+      if (hasLecturesOrNotes) {
+        const originalParentId = nodesToMove[0].id.split("-")[0];
+        if (parentId !== originalParentId) {
+          return prevData; // Cancel the move if trying to move outside the parent module
+        }
+      }
+
+      // If moving to a non-module parent (except for Lectures/Notes within their module), cancel the move
+      if (parentId && !isModuleNode(newData, parentId) && !hasLecturesOrNotes) {
+        return prevData;
+      }
 
       // Remove nodes from their original positions
       dragIds.forEach((id) => removeNode(newData, id));
@@ -119,10 +148,25 @@ function Node({
   isSidebarOpen,
 }: NodeRendererProps<TreeNode> & { isSidebarOpen: boolean }) {
   const isLecture = node.data.name === "Lectures";
-  const icon = isLecture ? <PiBookOpenTextFill /> : <PiStackFill />;
-  const linkTo = isLecture
-    ? `/dashboard/lectures/${node.parent?.id}`
-    : `/dashboard/module/${node.id}`;
+  const isNotes = node.data.name === "Notes";
+
+  let icon;
+  if (isLecture) {
+    icon = <PiBookOpenTextFill />;
+  } else if (isNotes) {
+    icon = <PiNoteFill />;
+  } else {
+    icon = <PiStackFill />;
+  }
+
+  let linkTo;
+  if (isLecture) {
+    linkTo = `/dashboard/lectures/${node.parent?.id}`;
+  } else if (isNotes) {
+    linkTo = `/dashboard/notes/${node.parent?.id}`;
+  } else {
+    linkTo = `/dashboard/module/${node.id}`;
+  }
 
   return (
     <div
@@ -130,7 +174,7 @@ function Node({
         "flex items-center p-2 rounded-md transition-colors duration-200",
         {
           "hover:bg-gray-100": isSidebarOpen,
-          "pl-8": isLecture,
+          "pl-8": isLecture || isNotes,
         },
       )}
       ref={dragHandle}
