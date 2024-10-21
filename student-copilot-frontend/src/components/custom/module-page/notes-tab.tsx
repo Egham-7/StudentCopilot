@@ -36,7 +36,7 @@ export default function NotesTab({ notes }: NotesTabProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const navigateToNote = (noteId: string) => {
-    navigate(`/dashboard/notes/${noteId}`);
+    navigate(`/dashboard/note/${noteId}`);
   };
 
   const deleteNote = useMutation(api.notes.deleteNote);
