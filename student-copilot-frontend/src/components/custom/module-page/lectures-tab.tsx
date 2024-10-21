@@ -15,6 +15,7 @@ import UploadLectureDialog from "./upload-lecture-dialog";
 import DeleteLectureDialog from "./delete-lecture-dialog";
 import LecturePlayer from "./lecture-player";
 import { LecturesData } from "@/lib/ui_utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type LecturesTabProps = {
   moduleId: Id<"modules">;
@@ -60,11 +61,13 @@ export default function LecturesTab({
             key={lecture._id}
             className={`relative ${selectedLectures.includes(lecture._id) ? "border-primary border-2" : ""}`}
           >
-            {selectedLectures.includes(lecture._id) && (
-              <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
-                <Check className="w-4 h-4" />
-              </div>
-            )}
+            <div className="p-3">
+              <Checkbox
+                checked={selectedLectures.includes(lecture._id)}
+                onCheckedChange={() => handleSelectLecture(lecture._id)}
+                className="absolute top-2 right-2 w-6 h-6 rounded-full active:text-primary"
+              />
+            </div>
             <CardHeader className="flex justify-between items-center flex-row text-center">
               <CardTitle className="truncate">{lecture.title}</CardTitle>
               <div className="space-x-2 w-full flex items-center justify-end ">
@@ -79,8 +82,8 @@ export default function LecturesTab({
               </div>
             </CardHeader>
             <CardContent
-              onClick={() => handleSelectLecture(lecture._id)}
               className="hover:cursor-pointer"
+              onClick={() => handleSelectLecture(lecture._id)}
             >
               <p className="text-muted-foreground">
                 {lecture.description ?? ""}

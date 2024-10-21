@@ -149,12 +149,8 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
     ],
   );
 
-  if (lectures === undefined || module === undefined) return <LoadingPage />;
-  if (lectures === null || module === null) return <ErrorPage />;
-
   return (
     <Popover>
-
       <PopoverTrigger asChild>
         <Button
           className="

@@ -239,7 +239,6 @@ export default function LecturePlayer({
             onClick={() => {
               markLectureComplete({ id, completed: !isCompleted });
             }}
-            disabled={isCompleted}
             className="w-full"
           >
             {isCompleted ? "Completed" : "Mark as Completed"}

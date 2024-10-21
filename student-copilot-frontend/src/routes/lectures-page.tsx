@@ -14,7 +14,7 @@ import {
   ChevronRight,
   Users,
   Book,
-  CheckCircle,
+  Check,
 } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -103,7 +103,9 @@ export default function LecturesPage() {
                 <CardTitle className="flex items-center justify-between text-xl">
                   {lecture.title}
                   {lecture.completed && (
-                    <CheckCircle className="text-green-500 h-5 w-5" />
+                    <div className="bg-primary text-primary-foreground rounded-full p-1">
+                      <Check className="w-4 h-4" />
+                    </div>
                   )}
                 </CardTitle>
                 <CardDescription className="text-sm">
