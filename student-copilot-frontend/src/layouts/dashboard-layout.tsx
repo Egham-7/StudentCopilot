@@ -41,6 +41,8 @@ export default function DashboardLayout() {
               }}
             />
 
+            <Separator />
+
             <SidebarLink
               link={{
                 label: "Home",
@@ -48,13 +50,11 @@ export default function DashboardLayout() {
                 icon: <IconHome size={24} />,
               }}
             />
-
-            <Separator />
-
             <TreeView isSidebarOpen={sidebarOpen} />
           </div>
 
-          <div className="space-y-4">
+          {/* Fixed bottom section */}
+          <div className="sticky bottom-0 flex-shrink-0 p-4 border-t">
             <SidebarLink
               link={{
                 label: "Settings",
