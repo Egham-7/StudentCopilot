@@ -53,28 +53,27 @@ export default function DashboardLayout() {
             <TreeView isSidebarOpen={sidebarOpen} />
           </div>
 
-          {/* Fixed bottom section */}
-          <div className="sticky bottom-0 flex-shrink-0 p-4 border-t">
+          <Separator />
+
+          <div className="hidden md:flex  md:justify-start md:items-between md:w-full md:gap-4">
             <SidebarLink
               link={{
                 label: "Settings",
-                href: "/settings",
+                href: "/dashboard/home",
                 icon: <IconSettings size={24} />,
               }}
             />
-            <div className="flex items-center gap-2">
-              <UserButton />
-              {sidebarOpen && (
-                <Button
-                  onClick={handleUpgrade}
-                  className="flex-grow text-xs"
-                  size="sm"
-                >
-                  <IconCrown size={20} className="mr-1" />
-                  Upgrade to Pro
-                </Button>
-              )}
-            </div>
+            <UserButton />
+
+            {sidebarOpen && (
+              <Button
+                onClick={handleUpgrade}
+                className=" bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <IconCrown size={20} className="mr-2" />
+                Upgrade to Pro
+              </Button>
+            )}
           </div>
         </SidebarBody>
       </Sidebar>

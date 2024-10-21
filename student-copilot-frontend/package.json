@@ -19,6 +19,7 @@
     "@langchain/openai": "^0.3.9",
     "@microlink/react": "^5.5.22",
     "@radix-ui/react-avatar": "^1.1.1",
+    "@radix-ui/react-checkbox": "^1.1.2",
     "@radix-ui/react-collapsible": "^1.1.1",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-dropdown-menu": "^2.1.2",
