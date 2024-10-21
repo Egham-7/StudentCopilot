@@ -56,6 +56,13 @@ export default function DashboardLayout() {
           <Separator />
 
           <div className="hidden md:flex  md:justify-start md:items-between md:w-full md:gap-4">
+            <SidebarLink
+              link={{
+                label: "Settings",
+                href: "/dashboard/home",
+                icon: <IconSettings size={24} />,
+              }}
+            />
             <UserButton />
 
             {sidebarOpen && (
