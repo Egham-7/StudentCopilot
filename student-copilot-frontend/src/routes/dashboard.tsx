@@ -42,13 +42,13 @@ const DashboardPage: React.FC = () => {
           "All",
           ...new Set(
             modules.map((module) =>
-              String(module[filter.key as keyof Doc<"modules">])
-            )
+              String(module[filter.key as keyof Doc<"modules">]),
+            ),
           ),
         ];
         return acc;
       },
-      {} as Record<string, string[]>
+      {} as Record<string, string[]>,
     );
   }, [modules]);
 
