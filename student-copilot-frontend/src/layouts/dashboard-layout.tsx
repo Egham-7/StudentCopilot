@@ -31,8 +31,10 @@ export default function DashboardLayout() {
   return (
     <div className="flex w-full">
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
+        {/* Sidebar layout with scrollable top and sticky bottom */}
         <SidebarBody className="flex flex-col justify-between h-full">
-          <div className="space-y-4">
+          {/* Scrollable section */}
+          <div className="flex-grow overflow-y-auto space-y-4">
             <SidebarLink
               link={{
                 label: "",
@@ -53,27 +55,30 @@ export default function DashboardLayout() {
             <TreeView isSidebarOpen={sidebarOpen} />
           </div>
 
-          <Separator />
+          {/* Sticky bottom section */}
+          <div className="flex-shrink-0 sticky bottom-0">
+            <Separator />
 
-          {sidebarOpen && (
-            <Button
-              onClick={handleUpgrade}
-              className=" bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <IconCrown size={20} className="mr-2" />
-              Upgrade to Pro
-            </Button>
-          )}
+            {sidebarOpen && (
+              <Button
+                onClick={handleUpgrade}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 w-full mb-4"
+              >
+                <IconCrown size={20} className="mr-2" />
+                Upgrade to Pro
+              </Button>
+            )}
 
-          <div className="hidden md:flex md:justify-between md:items-center md:w-full md:gap-4 md:mt-6">
-            <SidebarLink
-              link={{
-                label: "Settings",
-                href: "/dashboard/home",
-                icon: <IconSettings size={24} />,
-              }}
-            />
-            <UserButton />
+            <div className="flex justify-between items-center w-full gap-4">
+              <SidebarLink
+                link={{
+                  label: "Settings",
+                  href: "/dashboard/settings",
+                  icon: <IconSettings size={24} />,
+                }}
+              />
+              <UserButton />
+            </div>
           </div>
         </SidebarBody>
       </Sidebar>
