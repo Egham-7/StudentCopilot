@@ -16,6 +16,7 @@ import ModulePage from "./routes/module-page";
 import PricingPage from "./routes/upgrade-plan-page";
 import NotePage from "./routes/note-page";
 import LecturesPage from "./routes/lectures-page";
+import NotesPage from "./routes/notes-page";
 
 const router = createBrowserRouter([
   {
@@ -41,8 +42,9 @@ const router = createBrowserRouter([
             element: <ModulePage />,
           },
           { path: "upgrade-plan", element: <PricingPage /> },
-          { path: "notes/:noteId", element: <NotePage /> },
+          { path: "note/:noteId", element: <NotePage /> },
           { path: "lectures/:moduleId", element: <LecturesPage /> },
+          { path: "notes/:moduleId", element: <NotesPage /> },
         ],
       },
     ],
