@@ -39,10 +39,10 @@ const router = createBrowserRouter([
           {
             path: "module/:moduleId",
             element: <ModulePage />,
-            children: [{ path: "lectures", element: <LecturesPage /> }],
           },
           { path: "upgrade-plan", element: <PricingPage /> },
           { path: "notes/:noteId", element: <NotePage /> },
+          { path: "lectures/:moduleId", element: <LecturesPage /> },
         ],
       },
     ],
