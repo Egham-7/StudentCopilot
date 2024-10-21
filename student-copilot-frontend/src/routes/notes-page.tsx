@@ -75,7 +75,7 @@ export default function NotesPage() {
   );
 
   const goToNote = (noteId: string) => {
-    navigate(`/dashboard/${moduleId}/note/${noteId}`);
+    navigate(`/dashboard/note/${noteId}`);
   };
 
   if (!moduleId) {
