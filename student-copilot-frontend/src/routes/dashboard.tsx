@@ -18,6 +18,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api.js";
 import ModuleCard from "@/components/custom/dashboard/module-card.js";
 import { UserNotifications } from "@/components/custom/dashboard/user-notifications.js";
+import DeleteNotificationsDialog from "@/components/custom/dashboard/delete-notifications-dialog.js";
 
 const filterConfig = [
   { key: "department", label: "Department" },
@@ -41,13 +42,13 @@ const DashboardPage: React.FC = () => {
           "All",
           ...new Set(
             modules.map((module) =>
-              String(module[filter.key as keyof Doc<"modules">])
-            )
+              String(module[filter.key as keyof Doc<"modules">]),
+            ),
           ),
         ];
         return acc;
       },
-      {} as Record<string, string[]>
+      {} as Record<string, string[]>,
     );
   }, [modules]);
 

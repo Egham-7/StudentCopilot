@@ -41,6 +41,8 @@ export default function DashboardLayout() {
               }}
             />
 
+            <Separator />
+
             <SidebarLink
               link={{
                 label: "Home",
