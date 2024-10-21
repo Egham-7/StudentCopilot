@@ -22,21 +22,15 @@ import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api.js";
-import { Id } from "convex/_generated/dataModel";
 import { Trash2 } from "lucide-react";
 
-interface DeleteModuleDialogProps {
-  lectureId: Id<"lectures">;
-}
-
-const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({
-  lectureId,
-}) => {
+const DeleteNotificationsDialog = () => {
   const isMobile = useMediaQuery("(max-width: 640px)");
-  const deleteLecture = useMutation(api.lectures.deleteLecture);
+
+  const deleteAllNotifications = useMutation(api.notifications.destroy);
 
   const onDelete = async () => {
-    await deleteLecture({ id: lectureId });
+    await deleteAllNotifications({});
   };
 
   const content = (
@@ -47,7 +41,7 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({
         </DialogTitle>
         <DialogDescription className="text-muted-foreground">
           This action cannot be undone. This will permanently delete your
-          lecture and remove your data from our servers.
+          notifications and remove your data from our servers.
         </DialogDescription>
       </DialogHeader>
       <DialogFooter className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2 pt-6">
@@ -63,7 +57,7 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({
             onClick={onDelete}
             className="w-full sm:w-auto"
           >
-            Delete Lecture
+            Delete all notifications
           </Button>
         </DialogClose>
       </DialogFooter>
@@ -71,10 +65,7 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({
   );
 
   const triggerButton = (
-    <Button
-      aria-label="Delete module"
-      variant="ghost"
-    >
+    <Button aria-label="Delete all notifications" variant="ghost">
       <Trash2 className="h-5 w-5 text-destructive" />
     </Button>
   );
@@ -93,7 +84,6 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({
             </DrawerDescription>
           </DrawerHeader>
           <DrawerFooter className="flex flex-col space-y-2 pt-6">
-
             <DrawerClose asChild>
               <Button
                 type="button"
@@ -101,7 +91,7 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({
                 onClick={onDelete}
                 className="w-full"
               >
-                Delete Lecture
+                Delete all notifications
               </Button>
             </DrawerClose>
             <DrawerClose asChild>
@@ -125,4 +115,4 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({
   );
 };
 
-export default DeleteLectureDialog;
+export default DeleteNotificationsDialog;

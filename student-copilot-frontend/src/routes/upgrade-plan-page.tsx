@@ -15,7 +15,7 @@ export default function PricingPage() {
       price: 0,
       description: "For individual students",
       features: ["5 lectures per month", "Basic note-taking", "24/7 support", "1 mock exam per module"],
-      buttonText: "Get Started3",
+      buttonText: "Get Started",
     },
     {
       title: "Pro",

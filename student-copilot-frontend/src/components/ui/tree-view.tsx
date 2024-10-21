@@ -64,34 +64,16 @@ export default function TreeView({
 
 function Node({
   node,
-  style,
   dragHandle,
   isSidebarOpen,
 }: NodeRendererProps<TreeNode> & { isSidebarOpen: boolean }) {
   return (
-    <div
-      style={{
-        ...style,
-        display: "flex",
-        alignItems: "center",
-        paddingLeft: "8px",
-      }}
-      ref={dragHandle}
-    >
+    <div className="flex items-center p-2" ref={dragHandle}>
       <PiStackFill />
       {isSidebarOpen && (
         <Link
           to={`/dashboard/module/${node.id}`}
-          style={{
-            marginLeft: "8px",
-            textDecoration: "none",
-            color: "inherit",
-            whiteSpace: "nowrap", // Prevent the text from wrapping
-            overflow: "hidden", // Hide the overflowed text
-            textOverflow: "ellipsis", // Display ellipses if the text is too long
-            maxWidth: "150px",
-            display: "inline-block", // Ensure ellipsis works properly
-          }}
+          className="ml-8 truncate whitespace-nowrap overflow-hidden max-w-36 inline-block"
         >
           {node.data.name}
         </Link>

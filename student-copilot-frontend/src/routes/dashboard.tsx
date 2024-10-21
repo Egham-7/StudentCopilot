@@ -99,8 +99,10 @@ const DashboardPage: React.FC = () => {
         </header>
 
         <Card>
-          <CardHeader>
+          <CardHeader className=" flex-row justify-between items-center">
             <CardTitle>Recent Notifications</CardTitle>
+
+            <DeleteNotificationsDialog />
           </CardHeader>
           <CardContent className="h-96 overflow-scroll md:h-full">
             <UserNotifications />
