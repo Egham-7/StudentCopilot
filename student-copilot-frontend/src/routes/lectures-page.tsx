@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import LecturePlayer from "@/components/custom/module-page/lecture-player";
 import SearchBar from "@/components/custom/module-page/search-bar";
 import { SearchResults } from "@/lib/ui_utils";
+import UploadLectureDialog from "@/components/custom/module-page/upload-lecture-dialog";
 
 export default function LecturesPage() {
   const { moduleId } = useParams();
@@ -174,6 +175,8 @@ export default function LecturesPage() {
               </CardFooter>
             </Card>
           ))}
+
+          <UploadLectureDialog moduleId={moduleId as Id<"modules">} />
         </div>
 
         <div className="mt-12 flex justify-between items-center">

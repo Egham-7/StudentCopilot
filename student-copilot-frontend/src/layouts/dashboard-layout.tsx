@@ -55,7 +55,17 @@ export default function DashboardLayout() {
 
           <Separator />
 
-          <div className="hidden md:flex  md:justify-start md:items-between md:w-full md:gap-4">
+          {sidebarOpen && (
+            <Button
+              onClick={handleUpgrade}
+              className=" bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <IconCrown size={20} className="mr-2" />
+              Upgrade to Pro
+            </Button>
+          )}
+
+          <div className="hidden md:flex md:justify-between md:items-center md:w-full md:gap-4 md:mt-6">
             <SidebarLink
               link={{
                 label: "Settings",
@@ -64,16 +74,6 @@ export default function DashboardLayout() {
               }}
             />
             <UserButton />
-
-            {sidebarOpen && (
-              <Button
-                onClick={handleUpgrade}
-                className=" bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <IconCrown size={20} className="mr-2" />
-                Upgrade to Pro
-              </Button>
-            )}
           </div>
         </SidebarBody>
       </Sidebar>

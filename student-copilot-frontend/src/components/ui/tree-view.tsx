@@ -24,16 +24,18 @@ export default function TreeView({
       const formattedData: TreeNode[] = modules.map((module) => ({
         id: module._id,
         name: module.name,
-        children: [
-          {
-            id: `${module._id}-lectures`,
-            name: "Lectures",
-          },
-        ],
+        children: isSidebarOpen
+          ? [
+              {
+                id: `${module._id}-lectures`,
+                name: "Lectures",
+              },
+            ]
+          : [],
       }));
       setTreeData(formattedData);
     }
-  }, [modules]);
+  }, [modules, isSidebarOpen]);
 
   const onMove = ({
     dragIds,
