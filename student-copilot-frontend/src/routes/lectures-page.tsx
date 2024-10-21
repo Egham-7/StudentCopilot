@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,31 +25,60 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import LecturePlayer from "@/components/custom/module-page/lecture-player";
+import SearchBar from "@/components/custom/module-page/search-bar";
+import { SearchResults } from "@/lib/ui_utils";
+
 export default function LecturesPage() {
   const { moduleId } = useParams();
   const module = useQuery(
     api.modules.getById,
     moduleId ? { id: moduleId as Id<"modules"> } : "skip",
   );
-  const lectures =
-    useQuery(
-      api.lectures.getLecturesByModuleId,
-      moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip",
-    ) ?? [];
+
+  const lecturesQuery = useQuery(
+    api.lectures.getLecturesByModuleId,
+    moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip",
+  );
+
+  const lectures = useMemo(() => lecturesQuery ?? [], [lecturesQuery]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const lecturesPerPage = 6;
-  const totalPages = Math.ceil(lectures?.length / lecturesPerPage);
-  const indexOfLastLecture = currentPage * lecturesPerPage;
-  const indexOfFirstLecture = indexOfLastLecture - lecturesPerPage;
-  const currentLectures = lectures?.slice(
-    indexOfFirstLecture,
-    indexOfLastLecture,
+
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(
+    null,
   );
+
+  const filteredLectures = useMemo(() => {
+    if (searchResults && searchResults.lectures.length > 0) {
+      return lectures.filter((lecture) =>
+        searchResults.lectures.includes(lecture._id),
+      );
+    }
+    return lectures;
+  }, [lectures, searchResults]);
+
+  const totalPages = Math.ceil(filteredLectures.length / lecturesPerPage);
+
+  const currentLectures = useMemo(() => {
+    const indexOfLastLecture = currentPage * lecturesPerPage;
+    const indexOfFirstLecture = indexOfLastLecture - lecturesPerPage;
+    return filteredLectures.slice(indexOfFirstLecture, indexOfLastLecture);
+  }, [filteredLectures, currentPage, lecturesPerPage]);
 
   const nextPage = () =>
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+
+  const handleSearchResults = useCallback(
+    (type: "lectures" | "notes", results: SearchResults) => {
+      if (type === "lectures") {
+        setSearchResults(results);
+        setCurrentPage(1); // Reset to first page when search results change
+      }
+    },
+    [],
+  );
 
   if (!moduleId) {
     return <ErrorPage />;
@@ -93,8 +122,16 @@ export default function LecturesPage() {
           </p>
         </div>
 
+        <SearchBar
+          type="lectures"
+          moduleId={moduleId as Id<"modules">}
+          onSearchResults={(results) =>
+            handleSearchResults("lectures", results)
+          }
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {currentLectures?.map((lecture) => (
+          {currentLectures.map((lecture) => (
             <Card
               key={lecture._id}
               className="flex flex-col hover:shadow-lg transition-shadow duration-300"
