@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useConvexAuth } from "convex/react";
 import { UserButton } from "@clerk/clerk-react";
 import { IconHome, IconSettings } from "@tabler/icons-react";
@@ -13,7 +13,6 @@ import UpgradePlanModal from "@/components/custom/dashboard/upgrade-plan-modal";
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isLoading, isAuthenticated } = useConvexAuth();
-  const navigate = useNavigate();
 
   if (isLoading) {
     return <LoadingPage />;
@@ -22,10 +21,6 @@ export default function DashboardLayout() {
   if (!isAuthenticated && !isLoading) {
     console.log("Not authenticated");
   }
-
-  const handleUpgrade = () => {
-    navigate("/dashboard/upgrade-plan");
-  };
 
   return (
     <div className="flex w-full">
