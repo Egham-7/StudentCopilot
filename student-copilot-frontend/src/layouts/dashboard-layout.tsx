@@ -2,14 +2,13 @@ import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useConvexAuth } from "convex/react";
 import { UserButton } from "@clerk/clerk-react";
-import { IconHome, IconSettings, IconCrown } from "@tabler/icons-react";
-
+import { IconHome, IconSettings } from "@tabler/icons-react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/custom/sidebar";
 import LoadingPage from "@/components/custom/loading";
 import Logo from "@/components/custom/logo";
-import { Button } from "@/components/ui/button";
 import TreeView from "@/components/ui/tree-view";
 import { Separator } from "@/components/ui/separator";
+import UpgradePlanModal from "@/components/custom/dashboard/upgrade-plan-modal";
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -57,16 +56,12 @@ export default function DashboardLayout() {
 
           {/* Sticky bottom section */}
           <div className="flex-shrink-0 sticky bottom-0">
-            <Separator />
+            <Separator className="mb-2" />
 
             {sidebarOpen && (
-              <Button
-                onClick={handleUpgrade}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 w-full mb-4"
-              >
-                <IconCrown size={20} className="mr-2" />
-                Upgrade to Pro
-              </Button>
+              <div className="w-full p-2">
+                <UpgradePlanModal />
+              </div>
             )}
 
             <div className="flex justify-between items-center w-full gap-4">

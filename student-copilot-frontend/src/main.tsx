@@ -13,7 +13,6 @@ import OnboardingFormPage from "./routes/onboarding-form";
 import FormLayout from "./layouts/form-layout";
 import DashboardPage from "./routes/dashboard";
 import ModulePage from "./routes/module-page";
-import PricingPage from "./routes/upgrade-plan-page";
 import NotePage from "./routes/note-page";
 import LecturesPage from "./routes/lectures-page";
 import NotesPage from "./routes/notes-page";
@@ -41,7 +40,6 @@ const router = createBrowserRouter([
             path: "module/:moduleId",
             element: <ModulePage />,
           },
-          { path: "upgrade-plan", element: <PricingPage /> },
           { path: "note/:noteId", element: <NotePage /> },
           { path: "lectures/:moduleId", element: <LecturesPage /> },
           { path: "notes/:moduleId", element: <NotesPage /> },
