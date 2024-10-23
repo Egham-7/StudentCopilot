@@ -9,20 +9,19 @@ import { Id } from "convex/_generated/dataModel";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import ReactMarkdown from "react-markdown";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Components } from "react-markdown";
-import 'katex/dist/katex.min.css';
-import rehypeKatex from 'rehype-katex';
-import remarkMath from 'remark-math';
-import { InlineMath, BlockMath } from 'react-katex';
-
+import "katex/dist/katex.min.css";
+import rehypeKatex from "rehype-katex";
+import remarkMath from "remark-math";
+import { InlineMath, BlockMath } from "react-katex";
+import NoteEditor from "@/components/custom/notes-page/note-editor";
 
 interface ExtendedComponents extends Components {
   math: React.ComponentType<{ value: string }>;
   inlineMath: React.ComponentType<{ value: string }>;
 }
-
 
 interface Note {
   _id: Id<"notes">;
@@ -57,9 +56,6 @@ export default function NotePage() {
     fetchNote();
   }, [noteId, getNoteById]);
 
-
-
-
   const handleSave = useCallback(async () => {
     if (currentNote) {
       // Implement save logic here
@@ -92,8 +88,15 @@ export default function NotePage() {
   }
 
   const components: ExtendedComponents = {
-    code({ className, children, ...props }: { className?: string, children?: React.ReactNode }) {
-      const match = /language-(\w+)/.exec(className || '');
+    code({
+      className,
+      children,
+      ...props
+    }: {
+      className?: string;
+      children?: React.ReactNode;
+    }) {
+      const match = /language-(\w+)/.exec(className || "");
       return match ? (
         <SyntaxHighlighter
           {...props}
@@ -101,12 +104,12 @@ export default function NotePage() {
           style={vscDarkPlus}
           PreTag="div"
           customStyle={{
-            margin: '1em 0',
-            borderRadius: '5px',
-            padding: '1em',
+            margin: "1em 0",
+            borderRadius: "5px",
+            padding: "1em",
           }}
         >
-          {String(children).replace(/\n$/, '')}
+          {String(children).replace(/\n$/, "")}
         </SyntaxHighlighter>
       ) : (
         <code className={className} {...props}>
@@ -115,9 +118,8 @@ export default function NotePage() {
       );
     },
     math: ({ value }) => <BlockMath math={value} />,
-    inlineMath: ({ value }) => <InlineMath math={value} />
+    inlineMath: ({ value }) => <InlineMath math={value} />,
   };
-
 
   return (
     <main className="flex-1 overflow-hidden flex flex-col">
@@ -127,12 +129,27 @@ export default function NotePage() {
           <span>Note for Module {currentNote.moduleId}</span>
         </div>
         <div>
-          <Button variant="outline" size="sm" onClick={toggleEditMode} className="mr-2">
-            {isEditing ? <Save className="h-4 w-4 mr-2" /> : <Edit className="h-4 w-4 mr-2" />}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleEditMode}
+            className="mr-2"
+          >
+            {isEditing ? (
+              <Save className="h-4 w-4 mr-2" />
+            ) : (
+              <Edit className="h-4 w-4 mr-2" />
+            )}
             {isEditing ? "Save" : "Edit"}
           </Button>
         </div>
       </header>
+      <div>
+        <h1>
+          Hello
+          <NoteEditor />
+        </h1>
+      </div>
       <div className="p-4 flex-grow overflow-auto h-screen">
         {isEditing ? (
           <Textarea
@@ -150,11 +167,9 @@ export default function NotePage() {
             >
               {currentNote.content}
             </ReactMarkdown>
-
           </div>
         )}
       </div>
     </main>
   );
 }
-
