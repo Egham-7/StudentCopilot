@@ -19,7 +19,10 @@ export default defineSchema({
       v.literal("Masters"),
       v.literal("PhD"),
     ),
-  }).index("by_clerkId", ["clerkId"]),
+    stripeCustomerId: v.optional(v.string()),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_stripeCustomerId", ["stripeCustomerId"]),
 
   modules: defineTable({
     name: v.string(),
@@ -47,7 +50,12 @@ export default defineSchema({
     completed: v.boolean(),
     lectureTranscription: v.array(v.id("_storage")),
     lectureTranscriptionEmbedding: v.array(v.float64()),
-    fileType: v.union(v.literal("pdf"), v.literal("audio"), v.literal("video"), v.literal("website")),
+    fileType: v.union(
+      v.literal("pdf"),
+      v.literal("audio"),
+      v.literal("video"),
+      v.literal("website"),
+    ),
     image: v.optional(v.id("_storage")),
   })
     .index("by_moduleId", ["moduleId"])
@@ -90,4 +98,20 @@ export default defineSchema({
   })
     .index("byModuleId", ["moduleId"])
     .index("bySessionAndModule", ["sessionId", "moduleId"]),
+
+  subscriptions: defineTable({
+    userId: v.id("users"),
+    stripeCustomerId: v.string(),
+    stripeSubscriptionId: v.string(),
+    plan: v.union(
+      v.literal("pro"),
+      v.literal("enterprise"),
+      v.literal("premium"),
+    ),
+    planPeriod: v.union(v.literal("monthly"), v.literal("annual")),
+    status: v.string(),
+    currentPeriodEnd: v.number(), // UNIX timestamp
+  })
+    .index("by_userId", ["userId"])
+    .index("by_stripeCustomerId", ["stripeCustomerId"]),
 });

@@ -17,10 +17,13 @@ import type {
 } from "convex/server";
 import type * as ai from "../ai.js";
 import type * as aiChats from "../aiChats.js";
+import type * as http from "../http.js";
 import type * as lectures from "../lectures.js";
 import type * as modules from "../modules.js";
 import type * as notes from "../notes.js";
 import type * as notifications from "../notifications.js";
+import type * as stripe from "../stripe.js";
+import type * as stripeSubscriptions from "../stripeSubscriptions.js";
 import type * as uploads from "../uploads.js";
 import type * as users from "../users.js";
 import type * as utils from "../utils.js";
@@ -37,10 +40,13 @@ import type * as websites_youtube from "../websites/youtube.js";
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   aiChats: typeof aiChats;
+  http: typeof http;
   lectures: typeof lectures;
   modules: typeof modules;
   notes: typeof notes;
   notifications: typeof notifications;
+  stripe: typeof stripe;
+  stripeSubscriptions: typeof stripeSubscriptions;
   uploads: typeof uploads;
   users: typeof users;
   utils: typeof utils;
