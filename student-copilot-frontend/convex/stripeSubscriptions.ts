@@ -7,7 +7,6 @@ import {
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { Doc } from "./_generated/dataModel";
-import Stripe from "stripe";
 
 export const getSubscription = internalQuery({
   args: {
