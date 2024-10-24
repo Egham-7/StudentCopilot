@@ -5,7 +5,8 @@ import Stripe from "stripe";
 import { internalAction, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getPriceId } from "./utils";
-
+import { Doc } from "./_generated/dataModel";
+import { api } from "./_generated/api";
 const SECONDS_TO_MILLISECONDS = 1000;
 
 const FLOAT_TO_INT = 100;
@@ -28,29 +29,12 @@ export const createSubscriptionSession = action({
     const user = await ctx.runQuery(internal.users.getUserInfoInternal, {
       clerkId: identity.subject,
     });
-    console.log(user);
 
-    if (user === null) {
+    if (!user) {
       throw new Error("User not found");
     }
 
-    let customerId = user.stripeCustomerId;
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: identity.email,
-        name: identity.name,
-        metadata: { convexUserId: user._id },
-      });
-      customerId = customer.id;
-      await ctx.runMutation(internal.users.storeInternal, {
-        stripeCustomerId: customerId,
-        noteTakingStyle: user.noteTakingStyle,
-        learningStyle: user.learningStyle,
-        course: user.course,
-        levelOfStudy: user.levelOfStudy,
-        clerkId: user.clerkId,
-      });
-    }
+    const customerId = user.stripeCustomerId;
 
     const priceId = getPriceId(plan, planPeriod);
 
@@ -76,7 +60,7 @@ export const createSubscriptionSession = action({
           trial_period_days: 14,
         },
         payment_method_collection: "always",
-        success_url: `${domain}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${domain}/dashboard/home`,
         cancel_url: `${domain}/dashboard/home`,
       });
 
@@ -146,7 +130,8 @@ export const handleSubscriptionWebhook = internalAction({
           status: subscription.status,
           currentPeriodEnd: subscription.current_period_end,
           plan: subscription.items.data[0].price.nickname?.toLowerCase() as
-            | "pro"
+            | "basic"
+            | "premium"
             | "enterprise",
           planPeriod:
             subscription.items.data[0].price.recurring?.interval === "year"
@@ -165,6 +150,14 @@ export const handleSubscriptionWebhook = internalAction({
         );
         break;
 
+      case "product.updated":
+      case "product.deleted": {
+        // Clear all plans and repopulate
+        await ctx.runMutation(internal.stripePlans.clearPlans, {});
+        await ctx.runAction(api.stripe.getPlans, {});
+        break;
+      }
+
       default:
         console.warn(`Unhandled event type ${event.type}`);
     }
@@ -173,8 +166,82 @@ export const handleSubscriptionWebhook = internalAction({
   },
 });
 
+export const handleFreeSubscription = internalAction({
+  args: {
+    email: v.string(),
+    name: v.string(),
+    userId: v.id("users"),
+    clerkId: v.string(),
+    noteTakingStyle: v.string(),
+    learningStyle: v.union(
+      v.literal("auditory"),
+      v.literal("visual"),
+      v.literal("kinesthetic"),
+      v.literal("analytical"),
+    ),
+    course: v.string(),
+    levelOfStudy: v.union(
+      v.literal("Bachelors"),
+      v.literal("Associate"),
+      v.literal("Masters"),
+      v.literal("PhD"),
+    ),
+  },
+  handler: async (
+    ctx,
+    {
+      email,
+      name,
+      userId,
+      clerkId,
+      noteTakingStyle,
+      learningStyle,
+      course,
+      levelOfStudy,
+    },
+  ) => {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2024-09-30.acacia",
+    });
+
+    const customer = await stripe.customers.create({
+      email: email,
+      name: name,
+      metadata: { convexUserId: userId },
+    });
+
+    const stripeCustomerId = customer.id;
+
+    await ctx.runMutation(internal.users.storeInternal, {
+      noteTakingStyle,
+      learningStyle,
+      course,
+      levelOfStudy,
+      stripeCustomerId,
+      clerkId,
+    });
+
+    await ctx.runMutation(internal.stripeSubscriptions.updateSubscription, {
+      customerId: stripeCustomerId,
+      plan: "free",
+      status: "active",
+      clerkId,
+      currentPeriodEnd: Date.now() / 1000 + 60 * 60 * 24 * 365,
+    });
+  },
+});
+
 export const getPlans = action({
-  handler: async () => {
+  handler: async (ctx) => {
+    const existingPlans: Doc<"plans">[] = await ctx.runQuery(
+      internal.stripePlans.getPlans,
+      {},
+    );
+
+    if (existingPlans.length > 0) {
+      return existingPlans;
+    }
+
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
       apiVersion: "2024-09-30.acacia",
     });
@@ -204,33 +271,40 @@ export const getPlans = action({
       );
       const annualPrice = prices.find((p) => p.recurring?.interval === "year");
 
-      const features = product.metadata.features
-        ? JSON.parse(product.metadata.features)
-        : [];
+      const features = (product.marketing_features || []).map(
+        (feature: Stripe.Product.MarketingFeature) => feature.name ?? "",
+      );
 
       return {
         id: product.id,
         title: product.name,
-        description: product.description,
+        description: product.description ?? undefined,
         prices: {
           monthly: monthlyPrice
             ? {
-                id: monthlyPrice.id,
+                priceId: monthlyPrice.id,
                 amount: monthlyPrice.unit_amount! / FLOAT_TO_INT,
               }
-            : null,
+            : undefined,
           annual: annualPrice
             ? {
-                id: annualPrice.id,
+                priceId: annualPrice.id,
                 amount: annualPrice.unit_amount! / FLOAT_TO_INT,
               }
-            : null,
+            : undefined,
         },
         features: features,
         buttonText: product.metadata.buttonText || "Choose Plan",
       };
     });
 
+    await Promise.all(
+      plans.map(async (plan) => {
+        await ctx.runMutation(internal.stripePlans.storePlan, {
+          plan,
+        });
+      }),
+    );
     return plans;
   },
 });
