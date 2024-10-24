@@ -101,16 +101,27 @@ export default defineSchema({
 
   subscriptions: defineTable({
     userId: v.id("users"),
-    stripeCustomerId: v.string(),
-    stripeSubscriptionId: v.string(),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
     plan: v.union(
       v.literal("pro"),
       v.literal("enterprise"),
       v.literal("premium"),
+      v.literal("free"),
     ),
-    planPeriod: v.union(v.literal("monthly"), v.literal("annual")),
-    status: v.string(),
-    currentPeriodEnd: v.number(), // UNIX timestamp
+    planPeriod: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
+    status: v.optional(v.string()),
+    currentPeriodEnd: v.optional(v.number()),
+    usageLimits: v.object({
+      maxModules: v.number(),
+      maxLectures: v.number(),
+      maxStorage: v.number(), // in bytes
+    }),
+    currentUsage: v.object({
+      modules: v.number(),
+      lectures: v.number(),
+      storage: v.number(), // in bytes
+    }),
   })
     .index("by_userId", ["userId"])
     .index("by_stripeCustomerId", ["stripeCustomerId"]),

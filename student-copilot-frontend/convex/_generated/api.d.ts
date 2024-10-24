@@ -25,6 +25,7 @@ import type * as notifications from "../notifications.js";
 import type * as stripe from "../stripe.js";
 import type * as stripeSubscriptions from "../stripeSubscriptions.js";
 import type * as uploads from "../uploads.js";
+import type * as usageLimits from "../usageLimits.js";
 import type * as users from "../users.js";
 import type * as utils from "../utils.js";
 import type * as websites_youtube from "../websites/youtube.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   stripe: typeof stripe;
   stripeSubscriptions: typeof stripeSubscriptions;
   uploads: typeof uploads;
+  usageLimits: typeof usageLimits;
   users: typeof users;
   utils: typeof utils;
   "websites/youtube": typeof websites_youtube;

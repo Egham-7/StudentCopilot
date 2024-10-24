@@ -28,29 +28,12 @@ export const createSubscriptionSession = action({
     const user = await ctx.runQuery(internal.users.getUserInfoInternal, {
       clerkId: identity.subject,
     });
-    console.log(user);
 
-    if (user === null) {
+    if (!user) {
       throw new Error("User not found");
     }
 
-    let customerId = user.stripeCustomerId;
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: identity.email,
-        name: identity.name,
-        metadata: { convexUserId: user._id },
-      });
-      customerId = customer.id;
-      await ctx.runMutation(internal.users.storeInternal, {
-        stripeCustomerId: customerId,
-        noteTakingStyle: user.noteTakingStyle,
-        learningStyle: user.learningStyle,
-        course: user.course,
-        levelOfStudy: user.levelOfStudy,
-        clerkId: user.clerkId,
-      });
-    }
+    const customerId = user.stripeCustomerId;
 
     const priceId = getPriceId(plan, planPeriod);
 
@@ -76,7 +59,7 @@ export const createSubscriptionSession = action({
           trial_period_days: 14,
         },
         payment_method_collection: "always",
-        success_url: `${domain}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${domain}/dashboard/home`,
         cancel_url: `${domain}/dashboard/home`,
       });
 
@@ -173,6 +156,71 @@ export const handleSubscriptionWebhook = internalAction({
   },
 });
 
+export const handleFreeSubscription = internalAction({
+  args: {
+    email: v.string(),
+    name: v.string(),
+    userId: v.id("users"),
+    clerkId: v.string(),
+    noteTakingStyle: v.string(),
+    learningStyle: v.union(
+      v.literal("auditory"),
+      v.literal("visual"),
+      v.literal("kinesthetic"),
+      v.literal("analytical"),
+    ),
+    course: v.string(),
+    levelOfStudy: v.union(
+      v.literal("Bachelors"),
+      v.literal("Associate"),
+      v.literal("Masters"),
+      v.literal("PhD"),
+    ),
+  },
+  handler: async (
+    ctx,
+    {
+      email,
+      name,
+      userId,
+      clerkId,
+      noteTakingStyle,
+      learningStyle,
+      course,
+      levelOfStudy,
+    },
+  ) => {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2024-09-30.acacia",
+    });
+
+    const customer = await stripe.customers.create({
+      email: email,
+      name: name,
+      metadata: { convexUserId: userId },
+    });
+
+    const stripeCustomerId = customer.id;
+
+    await ctx.runMutation(internal.users.storeInternal, {
+      noteTakingStyle,
+      learningStyle,
+      course,
+      levelOfStudy,
+      stripeCustomerId,
+      clerkId,
+    });
+
+    await ctx.runMutation(internal.stripeSubscriptions.updateSubscription, {
+      customerId: stripeCustomerId,
+      plan: "free",
+      status: "active",
+      clerkId,
+      currentPeriodEnd: Date.now() / 1000 + 60 * 60 * 24 * 365,
+    });
+  },
+});
+
 export const getPlans = action({
   handler: async () => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -204,10 +252,6 @@ export const getPlans = action({
       );
       const annualPrice = prices.find((p) => p.recurring?.interval === "year");
 
-      const features = product.metadata.features
-        ? JSON.parse(product.metadata.features)
-        : [];
-
       return {
         id: product.id,
         title: product.name,
@@ -226,11 +270,10 @@ export const getPlans = action({
               }
             : null,
         },
-        features: features,
+        features: product.marketing_features,
         buttonText: product.metadata.buttonText || "Choose Plan",
       };
     });
-
     return plans;
   },
 });
