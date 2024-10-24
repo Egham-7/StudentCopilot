@@ -104,9 +104,9 @@ export default defineSchema({
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     plan: v.union(
-      v.literal("pro"),
       v.literal("enterprise"),
       v.literal("premium"),
+      v.literal("basic"),
       v.literal("free"),
     ),
     planPeriod: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
@@ -125,4 +125,26 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_stripeCustomerId", ["stripeCustomerId"]),
+
+  plans: defineTable({
+    stripeId: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    prices: v.object({
+      monthly: v.optional(
+        v.object({
+          priceId: v.string(),
+          amount: v.number(),
+        }),
+      ),
+      annual: v.optional(
+        v.object({
+          priceId: v.string(),
+          amount: v.number(),
+        }),
+      ),
+    }),
+    features: v.optional(v.array(v.string())),
+    buttonText: v.string(),
+  }).index("byStripeProductId", ["stripeId"]),
 });

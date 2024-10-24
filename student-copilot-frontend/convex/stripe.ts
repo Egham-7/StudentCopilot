@@ -5,7 +5,8 @@ import Stripe from "stripe";
 import { internalAction, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getPriceId } from "./utils";
-
+import { Doc } from "./_generated/dataModel";
+import { api } from "./_generated/api";
 const SECONDS_TO_MILLISECONDS = 1000;
 
 const FLOAT_TO_INT = 100;
@@ -129,7 +130,8 @@ export const handleSubscriptionWebhook = internalAction({
           status: subscription.status,
           currentPeriodEnd: subscription.current_period_end,
           plan: subscription.items.data[0].price.nickname?.toLowerCase() as
-            | "pro"
+            | "basic"
+            | "premium"
             | "enterprise",
           planPeriod:
             subscription.items.data[0].price.recurring?.interval === "year"
@@ -147,6 +149,14 @@ export const handleSubscriptionWebhook = internalAction({
           },
         );
         break;
+
+      case "product.updated":
+      case "product.deleted": {
+        // Clear all plans and repopulate
+        await ctx.runMutation(internal.stripePlans.clearPlans, {});
+        await ctx.runAction(api.stripe.getPlans, {});
+        break;
+      }
 
       default:
         console.warn(`Unhandled event type ${event.type}`);
@@ -222,7 +232,16 @@ export const handleFreeSubscription = internalAction({
 });
 
 export const getPlans = action({
-  handler: async () => {
+  handler: async (ctx) => {
+    const existingPlans: Doc<"plans">[] = await ctx.runQuery(
+      internal.stripePlans.getPlans,
+      {},
+    );
+
+    if (existingPlans.length > 0) {
+      return existingPlans;
+    }
+
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
       apiVersion: "2024-09-30.acacia",
     });
@@ -252,28 +271,40 @@ export const getPlans = action({
       );
       const annualPrice = prices.find((p) => p.recurring?.interval === "year");
 
+      const features = (product.marketing_features || []).map(
+        (feature: Stripe.Product.MarketingFeature) => feature.name ?? "",
+      );
+
       return {
         id: product.id,
         title: product.name,
-        description: product.description,
+        description: product.description ?? undefined,
         prices: {
           monthly: monthlyPrice
             ? {
-                id: monthlyPrice.id,
+                priceId: monthlyPrice.id,
                 amount: monthlyPrice.unit_amount! / FLOAT_TO_INT,
               }
-            : null,
+            : undefined,
           annual: annualPrice
             ? {
-                id: annualPrice.id,
+                priceId: annualPrice.id,
                 amount: annualPrice.unit_amount! / FLOAT_TO_INT,
               }
-            : null,
+            : undefined,
         },
-        features: product.marketing_features,
+        features: features,
         buttonText: product.metadata.buttonText || "Choose Plan",
       };
     });
+
+    await Promise.all(
+      plans.map(async (plan) => {
+        await ctx.runMutation(internal.stripePlans.storePlan, {
+          plan,
+        });
+      }),
+    );
     return plans;
   },
 });

@@ -23,6 +23,7 @@ import type * as modules from "../modules.js";
 import type * as notes from "../notes.js";
 import type * as notifications from "../notifications.js";
 import type * as stripe from "../stripe.js";
+import type * as stripePlans from "../stripePlans.js";
 import type * as stripeSubscriptions from "../stripeSubscriptions.js";
 import type * as uploads from "../uploads.js";
 import type * as usageLimits from "../usageLimits.js";
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   notes: typeof notes;
   notifications: typeof notifications;
   stripe: typeof stripe;
+  stripePlans: typeof stripePlans;
   stripeSubscriptions: typeof stripeSubscriptions;
   uploads: typeof uploads;
   usageLimits: typeof usageLimits;

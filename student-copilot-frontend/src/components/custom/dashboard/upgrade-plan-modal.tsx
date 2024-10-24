@@ -21,17 +21,13 @@ import { Doc } from "convex/_generated/dataModel";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface PlanFeature {
-  name: string;
-}
-
 interface PlanPrice {
   monthly: {
-    id: string;
+    priceId: string;
     amount: number;
   } | null;
   annual: {
-    id: string;
+    priceId: string;
     amount: number;
   } | null;
 }
@@ -40,7 +36,7 @@ interface Plan {
   id: string;
   title: string;
   description: string | null;
-  features: PlanFeature[];
+  features: string[];
   prices: PlanPrice;
   buttonText: string;
 }
@@ -266,7 +262,7 @@ export const PriceDisplay = ({ plan, isAnnual }: PriceDisplayProps) => {
 };
 
 interface FeaturesListProps {
-  features: { name: string }[];
+  features: string[];
   isPro: boolean;
 }
 
@@ -281,7 +277,7 @@ const FeaturesList = ({ features, isPro }: FeaturesListProps) => {
               isPro ? "text-primary" : "text-foreground",
             )}
           />
-          <span className="text-sm text-muted-foreground">{feature.name}</span>
+          <span className="text-sm text-muted-foreground">{feature}</span>
         </li>
       ))}
     </ul>

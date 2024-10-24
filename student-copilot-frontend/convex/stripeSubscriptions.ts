@@ -63,7 +63,7 @@ export const updateSubscription = internalMutation({
     currentPeriodEnd: v.number(),
     plan: v.union(
       v.literal("free"),
-      v.literal("pro"),
+      v.literal("basic"),
       v.literal("premium"),
       v.literal("enterprise"),
     ),
