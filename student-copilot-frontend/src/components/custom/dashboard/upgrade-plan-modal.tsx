@@ -1,22 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -25,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Check, X, Scale } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -33,62 +15,133 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { useToast } from "@/components/ui/use-toast";
 import { useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import MobileDrawer from "../mobile-drawer";
+import DesktopDialog from "../desktop-dialog";
+import { Doc } from "convex/_generated/dataModel";
+import { Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export type PlanFeature = {
-  name: string;
-  included: boolean;
-};
-
-export type PlanPrice = {
+interface PlanPrice {
   monthly: {
-    id: string;
+    priceId: string;
     amount: number;
   } | null;
   annual: {
-    id: string;
+    priceId: string;
     amount: number;
   } | null;
-};
+}
 
-export type Plan = {
+interface Plan {
   id: string;
   title: string;
   description: string | null;
-  features: PlanFeature[];
+  features: string[];
   prices: PlanPrice;
   buttonText: string;
+}
+
+const PricingCard = ({
+  plan,
+  isAnnual,
+  subscription,
+  hoveredPlan,
+  onPlanSelect,
+  onHover,
+}: {
+  plan: Plan;
+  isAnnual: boolean;
+  subscription: Doc<"subscriptions"> | undefined | null;
+  hoveredPlan: string | null;
+  onPlanSelect: (planId: string) => void;
+  onHover: (planId: string | null) => void;
+}) => {
+  const isPremium = plan.title.toLowerCase() === "premium";
+  const isCurrentPlan =
+    subscription?.status === "active" &&
+    subscription?.plan === plan.title.toLowerCase();
+  const isHovered = hoveredPlan === plan.id;
+  const isBasic = plan.title.toLowerCase() === "basic";
+
+  return (
+    <Card
+      className={cn(
+        "flex flex-col bg-card text-card-foreground relative transition-all duration-300 hover:shadow-lg",
+        isPremium || (isBasic && "border-primary shadow-lg md:scale-105"),
+      )}
+    >
+      {isPremium && (
+        <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground">
+          Most Popular
+        </Badge>
+      )}
+      <CardHeader>
+        <CardTitle
+          className={cn(
+            "text-2xl font-bold",
+            isPremium || (isBasic && "text-primary"),
+          )}
+        >
+          {plan.title}
+        </CardTitle>
+        <CardDescription className="text-muted-foreground">
+          {plan.description}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <PriceDisplay plan={plan} isAnnual={isAnnual} />
+        <FeaturesList
+          features={plan.features}
+          isPro={plan.title.toLowerCase() === "pro"}
+        />
+      </CardContent>
+      <CardFooter>
+        <PlanButton
+          plan={plan}
+          isCurrentPlan={isCurrentPlan}
+          isHovered={isHovered}
+          onPlanSelect={onPlanSelect}
+          onHover={onHover}
+        />
+      </CardFooter>
+    </Card>
+  );
 };
 
 const UpgradePlanModal = () => {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [isAnnual, setIsAnnual] = useState(false);
+  const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
+  const [plans, setPlans] = useState<Plan[] | null>(null);
+
   const { subscription, startSubscription, cancelSubscription } =
     useSubscription();
   const plansQuery = useAction(api.stripe.getPlans);
-  const [plans, setPlans] = useState<Plan[] | null>(null);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    async function fetchPlans() {
-      try {
-        const fetchedPlans = await plansQuery({});
-        setPlans(fetchedPlans as Plan[]);
-      } catch (error) {
-        console.error("Error fetching plans:", error);
-      }
+  // Memoize fetch plans function
+  const fetchPlans = useCallback(async () => {
+    try {
+      const fetchedPlans = await plansQuery({});
+      setPlans(fetchedPlans as Plan[]);
+    } catch (error) {
+      console.error("Error fetching plans:", error);
     }
-
-    fetchPlans();
   }, [plansQuery]);
 
-  const { toast } = useToast();
-  const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
+  useEffect(() => {
+    fetchPlans();
+  }, [fetchPlans]);
 
-  const handleUpgrade = (plan: string) => {
-    const planPeriod = isAnnual ? "annual" : "monthly";
-    startSubscription(plan, planPeriod);
-  };
+  const handleUpgrade = useCallback(
+    (planId: string) => {
+      const planPeriod = isAnnual ? "annual" : "monthly";
+      startSubscription(planId, planPeriod);
+    },
+    [isAnnual, startSubscription],
+  );
 
-  const handleCancelSubscription = () => {
+  const handleCancelSubscription = useCallback(() => {
     if (!subscription) {
       toast({
         title: "No active subscription",
@@ -97,196 +150,177 @@ const UpgradePlanModal = () => {
       return;
     }
     cancelSubscription(subscription._id);
-  };
+  }, [subscription, cancelSubscription, toast]);
 
-  const content = (
-    <div className="w-full max-w-5xl mx-auto">
-      <div className="flex justify-center items-center mb-10">
-        <span
-          className={cn(
-            "mr-3 transition-colors duration-200",
-            isAnnual
-              ? "text-muted-foreground"
-              : "text-foreground font-semibold",
-          )}
-        >
-          Monthly
-        </span>
-        <Switch
-          checked={isAnnual}
-          onCheckedChange={setIsAnnual}
-          aria-label="Toggle annual billing"
-        />
-        <span
-          className={cn(
-            "ml-3 transition-colors duration-200",
-            isAnnual
-              ? "text-foreground font-semibold"
-              : "text-muted-foreground",
-          )}
-        >
-          Annual (Save 15%)
-        </span>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {plans?.map((plan) => (
-          <Card
-            key={plan.id}
-            className={cn(
-              "flex flex-col bg-card text-card-foreground relative transition-all duration-300 hover:shadow-lg",
-              plan.title.toLowerCase() === "pro" &&
-                "border-primary shadow-lg md:scale-105",
-            )}
-          >
-            {plan.title.toLowerCase() === "pro" && (
-              <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground">
-                Most Popular
-              </Badge>
-            )}
-            <CardHeader>
-              <CardTitle
-                className={cn(
-                  "text-2xl font-bold",
-                  plan.title.toLowerCase() === "pro" && "text-primary",
-                )}
-              >
-                {plan.title}
-              </CardTitle>
-              <CardDescription className="text-muted-foreground">
-                {plan.description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <p
-                className={cn(
-                  "text-4xl font-bold mb-6",
-                  plan.title.toLowerCase() === "pro"
-                    ? "text-primary"
-                    : "text-foreground",
-                )}
-              >
-                $
-                {isAnnual
-                  ? plan.prices.annual?.amount
-                  : plan.prices.monthly?.amount}
-                <span className="text-lg font-normal text-muted-foreground">
-                  /{isAnnual ? "year" : "month"}
-                </span>
-              </p>
-              <ul className="space-y-3">
-                {plan.features.map((feature: PlanFeature) => (
-                  <li key={feature.name} className="flex items-center">
-                    {feature.included ? (
-                      <Check
-                        className={cn(
-                          "mr-2 h-5 w-5",
-                          plan.title.toLowerCase() === "pro"
-                            ? "text-primary"
-                            : "text-foreground",
-                        )}
-                      />
-                    ) : (
-                      <X className="mr-2 h-5 w-5 text-muted-foreground" />
-                    )}
-                    <span
-                      className={cn(
-                        "text-sm",
-                        feature.included
-                          ? "text-foreground"
-                          : "text-muted-foreground line-through",
-                      )}
-                    >
-                      {feature.name}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button
-                className={cn(
-                  "w-full text-lg py-6",
-                  plan.title.toLowerCase() === "pro"
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/90",
-                  subscription?.status === "active" &&
-                    subscription?.plan === plan.title.toLowerCase() &&
-                    hoveredPlan === plan.id &&
-                    "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-                )}
-                onClick={() =>
-                  subscription?.status === "active" &&
-                  subscription?.plan === plan.title.toLowerCase()
-                    ? handleCancelSubscription()
-                    : handleUpgrade(plan.id)
-                }
-                onMouseEnter={() => setHoveredPlan(plan.id)}
-                onMouseLeave={() => setHoveredPlan(null)}
-                disabled={
-                  subscription?.status === "active" &&
-                  subscription?.plan === plan.title.toLowerCase() &&
-                  hoveredPlan !== plan.id
-                }
-              >
-                {subscription?.status === "active" &&
-                subscription?.plan === plan.title.toLowerCase()
-                  ? hoveredPlan === plan.id
-                    ? "Cancel Plan"
-                    : "Current Plan"
-                  : plan.buttonText}
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </div>
+  const handlePlanSelection = useCallback(
+    (planId: string) => {
+      if (
+        subscription?.status === "active" &&
+        subscription?.plan ===
+          plans?.find((p) => p.id === planId)?.title.toLowerCase()
+      ) {
+        handleCancelSubscription();
+      } else {
+        handleUpgrade(planId);
+      }
+    },
+    [subscription, plans, handleCancelSubscription, handleUpgrade],
   );
 
-  const triggerButton = (
-    <Button
-      variant="outline"
-      className="text-lg py-6 px-8 bg-primary text-primary-foreground gap-x-2"
-    >
-      Compare Plans
-      <Scale className="w-4 h-4" />
-    </Button>
+  // Memoize content
+  const content = useMemo(
+    () => (
+      <div className="w-full max-w-5xl mx-auto">
+        <BillingToggle isAnnual={isAnnual} onToggle={setIsAnnual} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {plans?.map((plan) => (
+            <PricingCard
+              key={plan.id}
+              plan={plan}
+              isAnnual={isAnnual}
+              subscription={subscription}
+              hoveredPlan={hoveredPlan}
+              onPlanSelect={handlePlanSelection}
+              onHover={setHoveredPlan}
+            />
+          ))}
+        </div>
+      </div>
+    ),
+    [plans, isAnnual, subscription, hoveredPlan, handlePlanSelection],
   );
 
-  if (isMobile) {
-    return (
-      <Drawer>
-        <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
-        <DrawerContent className="px-4 py-8 bg-background">
-          <DrawerHeader className="text-center mb-6">
-            <DrawerTitle className="text-3xl font-bold text-foreground">
-              Upgrade Your Plan
-            </DrawerTitle>
-            <DrawerDescription className="text-muted-foreground mt-2">
-              Choose the plan that best fits your needs
-            </DrawerDescription>
-          </DrawerHeader>
-          {content}
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent className="max-w-[80vw] max-h-[90vh] overflow-y-auto bg-background p-8">
-        <DialogHeader className="mb-8">
-          <DialogTitle className="text-3xl font-bold text-center text-foreground">
-            Upgrade Your Plan
-          </DialogTitle>
-          <DialogDescription className="text-center text-muted-foreground mt-2">
-            Choose the plan that best fits your needs
-          </DialogDescription>
-        </DialogHeader>
-        {content}
-      </DialogContent>
-    </Dialog>
+  return isMobile ? (
+    <MobileDrawer content={content} triggerText="Compare Plans" />
+  ) : (
+    <DesktopDialog content={content} triggerText="Compare Plans" />
   );
 };
 
 export default UpgradePlanModal;
+
+interface BillingToggleProps {
+  isAnnual: boolean;
+  onToggle: (value: boolean) => void;
+}
+
+const BillingToggle = ({ isAnnual, onToggle }: BillingToggleProps) => {
+  return (
+    <div className="flex justify-center items-center mb-10">
+      <span
+        className={cn(
+          "mr-3 transition-colors duration-200",
+          isAnnual ? "text-muted-foreground" : "text-foreground font-semibold",
+        )}
+      >
+        Monthly
+      </span>
+      <Switch
+        checked={isAnnual}
+        onCheckedChange={onToggle}
+        aria-label="Toggle annual billing"
+      />
+      <span
+        className={cn(
+          "ml-3 transition-colors duration-200",
+          isAnnual ? "text-foreground font-semibold" : "text-muted-foreground",
+        )}
+      >
+        Annual (Save 15%)
+      </span>
+    </div>
+  );
+};
+
+interface PriceDisplayProps {
+  plan: Plan;
+  isAnnual: boolean;
+}
+
+export const PriceDisplay = ({ plan, isAnnual }: PriceDisplayProps) => {
+  const amount = isAnnual
+    ? plan.prices.annual?.amount
+    : plan.prices.monthly?.amount;
+  const period = isAnnual ? "year" : "month";
+
+  return (
+    <p
+      className={cn(
+        "text-4xl font-bold mb-6",
+        plan.title.toLowerCase() === "premium" ||
+          plan.title.toLowerCase() === "basic"
+          ? "text-primary"
+          : "text-foreground",
+      )}
+    >
+      ${amount}
+      <span className="text-lg font-normal text-muted-foreground">
+        /{period}
+      </span>
+    </p>
+  );
+};
+
+interface FeaturesListProps {
+  features: string[];
+  isPro: boolean;
+}
+
+const FeaturesList = ({ features, isPro }: FeaturesListProps) => {
+  return (
+    <ul className="space-y-3">
+      {features.map((feature, index) => (
+        <li key={index} className="flex items-center gap-2">
+          <Check
+            className={cn(
+              "h-4 w-4",
+              isPro ? "text-primary" : "text-foreground",
+            )}
+          />
+          <span className="text-sm text-muted-foreground">{feature}</span>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+interface PlanButtonProps {
+  plan: Plan;
+  isCurrentPlan: boolean;
+  isHovered: boolean;
+  onPlanSelect: (planId: string) => void;
+  onHover: (planId: string | null) => void;
+}
+
+const PlanButton = ({
+  plan,
+  isCurrentPlan,
+  isHovered,
+  onPlanSelect,
+  onHover,
+}: PlanButtonProps) => {
+  const isPremium = plan.title.toLowerCase() === "premium";
+
+  const isBasic = plan.title.toLowerCase() === "basic";
+
+  const isFree = plan.title.toLowerCase() === "free";
+
+  return (
+    <Button
+      className={cn(
+        "w-full transition-all duration-300",
+        isPremium || (isBasic && "bg-primary hover:bg-primary/90"),
+        isFree && "bg-foreground hover:bg-foreground/90",
+      )}
+      onMouseEnter={() => onHover(plan.id)}
+      onMouseLeave={() => onHover(null)}
+      onClick={() => onPlanSelect(plan.id)}
+    >
+      {isCurrentPlan
+        ? isHovered && plan.title.toLowerCase() !== "free"
+          ? "Cancel Plan"
+          : "Current Plan"
+        : plan.buttonText}
+    </Button>
+  );
+};

@@ -1,3 +1,4 @@
+import { internal } from "./_generated/api";
 import {
   internalMutation,
   internalQuery,
@@ -51,6 +52,29 @@ export const store = mutation({
       ...args,
     });
 
+    let user;
+
+    if (!existingUser) {
+      user = await ctx.db.get(userId);
+    } else {
+      user = existingUser;
+    }
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.scheduler.runAfter(0, internal.stripe.handleFreeSubscription, {
+      clerkId: identity.subject,
+      userId: user._id,
+      email: identity.email ?? "N/A",
+      name: user.name ?? "Unknown",
+      noteTakingStyle: user.noteTakingStyle,
+      learningStyle: user.learningStyle,
+      course: user.course,
+      levelOfStudy: user.levelOfStudy,
+    });
+
     return userId;
   },
 });
@@ -94,7 +118,7 @@ export const storeInternal = internalMutation({
       v.literal("PhD"),
     ),
     stripeCustomerId: v.string(),
-    clerkId: v.string(),
+    clerkId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     let existingUser = await ctx.db
@@ -107,7 +131,7 @@ export const storeInternal = internalMutation({
     if (!existingUser) {
       existingUser = await ctx.db
         .query("users")
-        .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId!))
         .first();
     }
 

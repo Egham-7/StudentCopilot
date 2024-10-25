@@ -57,12 +57,18 @@ export const getSubscriptionClient = query({
 
 export const updateSubscription = internalMutation({
   args: {
-    subscriptionId: v.string(),
+    subscriptionId: v.optional(v.string()),
     customerId: v.string(),
     status: v.string(),
     currentPeriodEnd: v.number(),
-    plan: v.union(v.literal("pro"), v.literal("enterprise")),
-    planPeriod: v.union(v.literal("monthly"), v.literal("annual")),
+    plan: v.union(
+      v.literal("free"),
+      v.literal("basic"),
+      v.literal("premium"),
+      v.literal("enterprise"),
+    ),
+    planPeriod: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
+    clerkId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Find the user by Stripe customer ID
@@ -72,8 +78,7 @@ export const updateSubscription = internalMutation({
       .first();
 
     if (!user) {
-      console.error(`User not found for customerId: ${args.customerId}`);
-      return;
+      throw new Error(`User not found for customerId: ${args.customerId}`);
     }
 
     // Update or insert the subscription
@@ -82,20 +87,24 @@ export const updateSubscription = internalMutation({
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .first();
 
+    const usageLimits = getPlanLimits(args.plan);
+
     const subscriptionData = {
       userId: user._id,
       stripeCustomerId: args.customerId,
       stripeSubscriptionId: args.subscriptionId,
-      plan: args.plan ?? "monthly",
+      plan: args.plan,
       status: args.status,
       currentPeriodEnd: args.currentPeriodEnd,
-      planPeriod: args.planPeriod ?? "pro",
+      planPeriod: args.planPeriod,
+      usageLimits,
+      currentUsage: { modules: 0, lectures: 0, storage: 0 },
     };
 
     if (existingSubscription) {
-      await ctx.db.patch(existingSubscription._id, { ...subscriptionData });
+      await ctx.db.patch(existingSubscription._id, subscriptionData);
     } else {
-      await ctx.db.insert("subscriptions", { ...subscriptionData });
+      await ctx.db.insert("subscriptions", subscriptionData);
     }
 
     await ctx.runMutation(internal.notifications.store, {
@@ -137,8 +146,31 @@ export const deleteSubscription = mutation({
       throw new Error("Unauthorized");
     }
 
+    // Downgrade the user's plan at the end of the billing period
+
+    const customerId = subscription.stripeCustomerId;
+
+    const currentPeriodEnd = subscription.currentPeriodEnd;
+
+    if (!customerId || !currentPeriodEnd) {
+      throw new Error("customerId or currentPeriodEnd is missing");
+    }
+
+    const periodEnd = new Date(currentPeriodEnd * 1000);
+
+    await ctx.scheduler.runAt(
+      periodEnd,
+      internal.stripeSubscriptions.updateSubscription,
+      {
+        subscriptionId,
+        plan: "free",
+        customerId,
+        currentPeriodEnd,
+        status: "active",
+      },
+    );
     // Call the internal action to cancel the subscription with Stripe
-    await ctx.scheduler.runAfter(0, internal.stripe.cancelSubscription, {
+    await ctx.scheduler.runAt(periodEnd, internal.stripe.cancelSubscription, {
       subscriptionId,
       userId: user._id,
     });
@@ -167,3 +199,25 @@ export const deleteSubscriptionData = internalMutation({
     await ctx.db.delete(subscription._id);
   },
 });
+
+function getPlanLimits(plan: string) {
+  switch (plan) {
+    case "free":
+      return { maxModules: 3, maxLectures: 10, maxStorage: 100 * 1024 * 1024 }; // 100 MB
+    case "premium":
+      return {
+        maxModules: 10,
+        maxLectures: 50,
+        maxStorage: 1024 * 1024 * 1024,
+      }; // 1 GB
+    case "enterprise":
+    case "pro":
+      return {
+        maxModules: Infinity,
+        maxLectures: Infinity,
+        maxStorage: Infinity,
+      };
+    default:
+      throw new Error("Invalid plan");
+  }
+}

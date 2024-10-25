@@ -101,17 +101,50 @@ export default defineSchema({
 
   subscriptions: defineTable({
     userId: v.id("users"),
-    stripeCustomerId: v.string(),
-    stripeSubscriptionId: v.string(),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
     plan: v.union(
-      v.literal("pro"),
       v.literal("enterprise"),
       v.literal("premium"),
+      v.literal("basic"),
+      v.literal("free"),
     ),
-    planPeriod: v.union(v.literal("monthly"), v.literal("annual")),
-    status: v.string(),
-    currentPeriodEnd: v.number(), // UNIX timestamp
+    planPeriod: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
+    status: v.optional(v.string()),
+    currentPeriodEnd: v.optional(v.number()),
+    usageLimits: v.object({
+      maxModules: v.number(),
+      maxLectures: v.number(),
+      maxStorage: v.number(), // in bytes
+    }),
+    currentUsage: v.object({
+      modules: v.number(),
+      lectures: v.number(),
+      storage: v.number(), // in bytes
+    }),
   })
     .index("by_userId", ["userId"])
     .index("by_stripeCustomerId", ["stripeCustomerId"]),
+
+  plans: defineTable({
+    stripeId: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    prices: v.object({
+      monthly: v.optional(
+        v.object({
+          priceId: v.string(),
+          amount: v.number(),
+        }),
+      ),
+      annual: v.optional(
+        v.object({
+          priceId: v.string(),
+          amount: v.number(),
+        }),
+      ),
+    }),
+    features: v.optional(v.array(v.string())),
+    buttonText: v.string(),
+  }).index("byStripeProductId", ["stripeId"]),
 });
