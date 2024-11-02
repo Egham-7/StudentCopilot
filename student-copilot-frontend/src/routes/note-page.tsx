@@ -1,21 +1,20 @@
-import React, { useState, useEffect, useCallback } from "react";
+import LoadingPage from "@/components/custom/loading";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronRight, Save, Edit } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useParams } from "react-router-dom";
-import LoadingPage from "@/components/custom/loading";
 import { Id } from "convex/_generated/dataModel";
 import { useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import ReactMarkdown from "react-markdown";
+import 'katex/dist/katex.min.css';
+import { ChevronRight, Edit, Save } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import { BlockMath, InlineMath } from 'react-katex';
+import ReactMarkdown, { Components } from "react-markdown";
+import { useParams } from "react-router-dom";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Components } from "react-markdown";
-import 'katex/dist/katex.min.css';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
-import { InlineMath, BlockMath } from 'react-katex';
+import { api } from "../../convex/_generated/api";
 
 
 interface ExtendedComponents extends Components {
@@ -38,7 +37,7 @@ export default function NotePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const debouncedNote = useDebounce<string>(currentNote?.content ?? "", 500);
-  const getNoteById = useAction(api.notes.getNoteById);
+  const getNoteById = useAction(api.noteAction.getNoteById);
 
   useEffect(() => {
     const fetchNote = async () => {
