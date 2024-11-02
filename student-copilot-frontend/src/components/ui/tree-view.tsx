@@ -28,15 +28,15 @@ export default function TreeView({
         isModule: true,
         children: isSidebarOpen
           ? [
-              {
-                id: `${module._id}-lectures`,
-                name: "Lectures",
-              },
-              {
-                id: `${module._id}-notes`,
-                name: "Notes",
-              },
-            ]
+            {
+              id: `${module._id}-lectures`,
+              name: "Lectures",
+            },
+            {
+              id: `${module._id}-notes`,
+              name: "Notes",
+            },
+          ]
           : [],
       }));
       setTreeData(formattedData);
@@ -123,7 +123,7 @@ export default function TreeView({
   };
 
   return (
-    <div className="flex-grow overflow-auto">
+    <div className="flex-grow overflow-hidden">
       <Tree
         data={treeData}
         onMove={onMove}
@@ -141,7 +141,6 @@ export default function TreeView({
     </div>
   );
 }
-
 function Node({
   node,
   dragHandle,
@@ -152,11 +151,11 @@ function Node({
 
   let icon;
   if (isLecture) {
-    icon = <PiBookOpenTextFill />;
+    icon = <PiBookOpenTextFill className="text-primary" />;
   } else if (isNotes) {
-    icon = <PiNoteFill />;
+    icon = <PiNoteFill className="text-primary" />;
   } else {
-    icon = <PiStackFill />;
+    icon = <PiStackFill className="text-primary" />;
   }
 
   let linkTo;
@@ -173,9 +172,9 @@ function Node({
       className={cn(
         "flex items-center p-2 rounded-md transition-colors duration-200",
         {
-          "hover:bg-gray-100": isSidebarOpen,
+          "hover:bg-accent": isSidebarOpen,
           "pl-8": isLecture || isNotes,
-        },
+        }
       )}
       ref={dragHandle}
     >
@@ -183,7 +182,7 @@ function Node({
       {isSidebarOpen && (
         <Link
           to={linkTo}
-          className="ml-3 truncate whitespace-nowrap overflow-hidden max-w-[200px] inline-block text-sm"
+          className="ml-3 truncate whitespace-nowrap overflow-hidden max-w-[200px] inline-block text-sm text-foreground hover:text-primary"
         >
           {node.data.name}
         </Link>

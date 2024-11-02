@@ -157,7 +157,7 @@ const UpgradePlanModal = () => {
       if (
         subscription?.status === "active" &&
         subscription?.plan ===
-          plans?.find((p) => p.id === planId)?.title.toLowerCase()
+        plans?.find((p) => p.id === planId)?.title.toLowerCase()
       ) {
         handleCancelSubscription();
       } else {
@@ -310,7 +310,7 @@ const PlanButton = ({
       className={cn(
         "w-full transition-all duration-300",
         isPremium || (isBasic && "bg-primary hover:bg-primary/90"),
-        isFree && "bg-foreground hover:bg-foreground/90",
+        isFree && "bg-secondary",
       )}
       onMouseEnter={() => onHover(plan.id)}
       onMouseLeave={() => onHover(null)}

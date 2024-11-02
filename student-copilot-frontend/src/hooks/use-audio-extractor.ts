@@ -8,45 +8,18 @@ const useAudioExtractor = () => {
       audioContextRef.current = new AudioContext();
     }
 
-    const audioContext = audioContextRef.current;
-    const video = document.createElement('video');
-    video.src = URL.createObjectURL(videoFile);
+    // Use Web Workers for audio processing
+    const worker = new Worker('/audio-worker.js');
 
-    await new Promise(resolve => {
-      video.onloadedmetadata = resolve;
+    return new Promise((resolve, reject) => {
+      worker.onmessage = (e) => {
+        resolve(e.data.audioBuffer);
+        worker.terminate();
+      };
+
+      worker.onerror = reject;
+      worker.postMessage({ videoFile });
     });
-
-    const source = audioContext.createMediaElementSource(video);
-    const destination = audioContext.createMediaStreamDestination();
-    source.connect(destination);
-
-    video.play();
-
-    const mediaRecorder = new MediaRecorder(destination.stream);
-    const audioChunks: Blob[] = [];
-
-    mediaRecorder.ondataavailable = (event) => {
-      audioChunks.push(event.data);
-    };
-
-    mediaRecorder.start();
-
-    await new Promise(resolve => {
-      video.onended = resolve;
-    });
-
-    mediaRecorder.stop();
-
-    await new Promise(resolve => {
-      mediaRecorder.onstop = resolve;
-    });
-
-    const audioBlob = new Blob(audioChunks, { type: 'audio/webm; codecs=opus' });
-    const arrayBuffer = await audioBlob.arrayBuffer();
-
-    URL.revokeObjectURL(video.src);
-
-    return arrayBuffer;
   }, []);
 
   return { extractAudioFromVideo };

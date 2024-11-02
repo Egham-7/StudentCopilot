@@ -50,16 +50,17 @@ export default function DashboardLayout() {
           </div>
 
           {/* Sticky bottom section */}
-          <div className="flex-shrink-0 sticky bottom-0">
+          <div className="flex-shrink-0 sticky bottom-0 ">
             <Separator className="mb-2" />
 
             {sidebarOpen && (
               <div className="w-full p-2">
                 <UpgradePlanModal />
+
               </div>
             )}
 
-            <div className="flex justify-between items-center w-full gap-4">
+            <div className="flex justify-between items-center w-full gap-4 p-2">
               <SidebarLink
                 link={{
                   label: "Settings",
@@ -73,7 +74,7 @@ export default function DashboardLayout() {
         </SidebarBody>
       </Sidebar>
 
-      <div className="flex flex-col flex-grow">
+      <div className="flex flex-col flex-grow ">
         <div className="flex justify-end items-center p-4 md:hidden">
           <UserButton />
         </div>
