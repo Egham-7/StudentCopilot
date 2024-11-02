@@ -197,7 +197,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
           </form>
         </Form>
       ) : (
-        <div className="mt-4 flex flex-col items-center">
+        <div className="mt-4 flex flex-col items-center gap-4">
           <AnimatedCircularProgressBar
             max={100}
             min={0}
