@@ -11,9 +11,12 @@ export const chunkAndProcess = async <T, R>(
   data: T,
   chunkSize: number,
   processChunk: (chunk: T, index: number, setProgress: UploadProgressSetter, totalChunks: number) => Promise<R>,
-  setUploadProgress: UploadProgressSetter
+  setUploadProgress: UploadProgressSetter,
+  maxConcurrent = 3
 ): Promise<R[]> => {
   let chunks: T[];
+
+  // Create chunks based on data type
   if (data instanceof ArrayBuffer) {
     chunks = [];
     for (let i = 0; i < data.byteLength; i += chunkSize) {
@@ -31,9 +34,22 @@ export const chunkAndProcess = async <T, R>(
   }
 
   const totalChunks = chunks.length;
-  const results = await Promise.all(chunks.map((chunk, index) =>
-    processChunk(chunk, index, setUploadProgress, totalChunks)
-  ));
+  const results: R[] = [];
+
+  // Process chunks in parallel batches
+  for (let i = 0; i < chunks.length; i += maxConcurrent) {
+    const batch = chunks.slice(i, i + maxConcurrent);
+    const batchPromises = batch.map((chunk, idx) =>
+      processChunk(chunk, i + idx, setUploadProgress, totalChunks)
+    );
+
+    const batchResults = await Promise.all(batchPromises);
+    results.push(...batchResults);
+
+    // Update progress after each batch
+    const progress = Math.min(100, Math.floor(((i + batch.length) / totalChunks) * 100));
+    setUploadProgress(progress);
+  }
 
   return results;
 };

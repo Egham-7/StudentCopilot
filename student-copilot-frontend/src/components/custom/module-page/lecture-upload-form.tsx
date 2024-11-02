@@ -19,6 +19,9 @@ import { formSchema } from "@/lib/ui_utils";
 import * as z from "zod";
 import { useLectureUpload } from "@/hooks/use-lecture-upload";
 import { IconAsterisk, IconAsteriskSimple } from "@tabler/icons-react";
+import { useBackgroundUpload } from "@/hooks/use-background-lecture-upload";
+import { toast } from "@/components/ui/use-toast";
+
 
 interface LectureUploadFormProps {
   moduleId: Id<"modules">;
@@ -41,6 +44,8 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
   onComplete,
 }) => {
   const { isLoading, uploadProgress, uploadLecture } = useLectureUpload();
+  const { startBackgroundUpload } = useBackgroundUpload();
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,6 +57,17 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
       link: "",
     },
   });
+
+  const handleBackgroundUpload = async (values: z.infer<typeof formSchema>) => {
+    await startBackgroundUpload(values, moduleId, fileType);
+
+    toast({
+      title: "Upload started in background",
+      description: "You can close this window and the upload will continue.",
+    });
+
+    onComplete();
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     let success;
@@ -192,6 +208,11 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
           <p className="mt-2 text-sm text-gray-500">
             Uploading: {uploadProgress}%
           </p>
+
+          <Button onClick={() => form.handleSubmit(handleBackgroundUpload)()}
+          >
+            Upload in the background
+          </Button>
         </div>
       )}
     </>

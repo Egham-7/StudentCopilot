@@ -19,6 +19,7 @@ import { api } from "../../convex/_generated/api.js";
 import ModuleCard from "@/components/custom/dashboard/module-card.js";
 import { UserNotifications } from "@/components/custom/dashboard/user-notifications.js";
 import DeleteNotificationsDialog from "@/components/custom/dashboard/delete-notifications-dialog.js";
+import { ModeToggle } from "@/components/ui/mode-toggle.js";
 
 const filterConfig = [
   { key: "department", label: "Department" },
@@ -88,9 +89,13 @@ const DashboardPage: React.FC = () => {
     <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       <div className="mx-auto max-w-6xl space-y-6 sm:space-y-8">
         <header className="space-y-2 text-center sm:text-left">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground mb-20">
-            Welcome {userInfo?.name}
-          </h1>
+          <div className="flex items-start justify-between text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground mb-20">
+              Welcome {userInfo?.name}
+            </h1>
+
+            <ModeToggle />
+          </div>
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
             Student Dashboard
           </h2>

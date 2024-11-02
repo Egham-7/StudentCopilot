@@ -28,15 +28,15 @@ export default function TreeView({
         isModule: true,
         children: isSidebarOpen
           ? [
-              {
-                id: `${module._id}-lectures`,
-                name: "Lectures",
-              },
-              {
-                id: `${module._id}-notes`,
-                name: "Notes",
-              },
-            ]
+            {
+              id: `${module._id}-lectures`,
+              name: "Lectures",
+            },
+            {
+              id: `${module._id}-notes`,
+              name: "Notes",
+            },
+          ]
           : [],
       }));
       setTreeData(formattedData);
@@ -123,7 +123,7 @@ export default function TreeView({
   };
 
   return (
-    <div className="flex-grow overflow-auto">
+    <div className="flex-grow overflow-hidden">
       <Tree
         data={treeData}
         onMove={onMove}

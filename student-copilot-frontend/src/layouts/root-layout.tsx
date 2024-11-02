@@ -3,7 +3,7 @@ import { ClerkProvider, useAuth } from '@clerk/clerk-react';
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Toaster } from "@/components/ui/toaster"
-
+import { ThemeProvider } from '@/components/providers/theme-provider';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 if (!PUBLISHABLE_KEY) {
@@ -25,8 +25,10 @@ export default function RootLayout() {
       signInForceRedirectUrl={import.meta.env.VITE_CLERK_SIGN_IN_FORCE_REDIRECT_URL}
     >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-        <Outlet />
-        <Toaster />
+        <ThemeProvider defaultTheme='system' storageKey='vite-ui-theme'>
+          <Outlet />
+          <Toaster />
+        </ThemeProvider>
       </ConvexProviderWithClerk>
     </ClerkProvider>
   );
