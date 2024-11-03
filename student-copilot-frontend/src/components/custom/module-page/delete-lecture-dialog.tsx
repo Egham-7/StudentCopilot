@@ -72,8 +72,8 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({
 
   const triggerButton = (
     <Button
-      className="p-2 bg-background hover:bg-muted transition-colors rounded-full shadow-md"
       aria-label="Delete module"
+      variant="ghost"
     >
       <Trash2 className="h-5 w-5 text-destructive" />
     </Button>
@@ -93,14 +93,17 @@ const DeleteLectureDialog: React.FC<DeleteModuleDialogProps> = ({
             </DrawerDescription>
           </DrawerHeader>
           <DrawerFooter className="flex flex-col space-y-2 pt-6">
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={onDelete}
-              className="w-full"
-            >
-              Delete Module
-            </Button>
+
+            <DrawerClose asChild>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={onDelete}
+                className="w-full"
+              >
+                Delete Lecture
+              </Button>
+            </DrawerClose>
             <DrawerClose asChild>
               <Button type="button" variant="outline" className="w-full">
                 Cancel

@@ -1,4 +1,10 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BookOpen, TrashIcon } from "lucide-react";
@@ -17,11 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 
 type NotesTabProps = {
   notes: Doc<"notes">[] | undefined;
@@ -34,7 +36,7 @@ export default function NotesTab({ notes }: NotesTabProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const navigateToNote = (noteId: string) => {
-    navigate(`/dashboard/notes/${noteId}`);
+    navigate(`/dashboard/note/${noteId}`);
   };
 
   const deleteNote = useMutation(api.notes.deleteNote);
@@ -67,10 +69,12 @@ export default function NotesTab({ notes }: NotesTabProps) {
     </>
   );
 
+  const visibleNotes = notes?.slice(0, 6);
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {notes?.map((note, index) => (
+        {visibleNotes?.map((note, index) => (
           <Card key={note._id} className="relative">
             <CardHeader className="flex justify-between items-center flex-row">
               <CardTitle>Note {index + 1}</CardTitle>
@@ -84,7 +88,10 @@ export default function NotesTab({ notes }: NotesTabProps) {
                   View
                 </Button>
                 {isDesktop ? (
-                  <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+                  <Dialog
+                    open={openDeleteDialog}
+                    onOpenChange={setOpenDeleteDialog}
+                  >
                     <DialogTrigger asChild>
                       <Button
                         size="sm"
@@ -101,7 +108,10 @@ export default function NotesTab({ notes }: NotesTabProps) {
                     </DialogContent>
                   </Dialog>
                 ) : (
-                  <Drawer open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+                  <Drawer
+                    open={openDeleteDialog}
+                    onOpenChange={setOpenDeleteDialog}
+                  >
                     <DrawerTrigger asChild>
                       <Button
                         size="sm"
@@ -149,4 +159,3 @@ export default function NotesTab({ notes }: NotesTabProps) {
     </>
   );
 }
-

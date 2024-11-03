@@ -1,7 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { FileText, Loader2 } from "lucide-react";
 import { Id, Doc } from "convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -11,8 +16,6 @@ import SearchBar from "./search-bar";
 import LecturesTab from "./lectures-tab";
 import NotesTab from "./notes-tab";
 import { SearchResults, LecturesData } from "@/lib/ui_utils";
-import { useNavigate } from "react-router-dom";
-
 
 type ModuleTabsProps = {
   moduleId: Id<"modules">;
@@ -22,17 +25,18 @@ type ModuleTabsProps = {
   setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
 };
 
-
-export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures, setSelectedLectures }: ModuleTabsProps) {
+export default function ModuleTabs({
+  moduleId,
+  lectures,
+  notes,
+  selectedLectures,
+  setSelectedLectures,
+}: ModuleTabsProps) {
   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
   const [activeTab, setActiveTab] = useState("lectures");
 
-
   const [filteredLectures, setFilteredLectures] = useState(lectures);
   const [filteredNotes, setFilteredNotes] = useState(notes);
-  const navigate = useNavigate();
-
-
 
   useEffect(() => {
     setFilteredLectures(lectures);
@@ -42,14 +46,6 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
     setFilteredNotes(notes);
   }, [notes]);
 
-
-
-  const handleRouteToChat = () => {
-    const selectedLecturesString = selectedLectures.join(",")
-    navigate(`/dashboard/chat/lectures/${selectedLecturesString}`)
-  }
-
-
   const generateNotes = useMutation(api.notes.storeClient);
 
   const handleGenerateNotes = async () => {
@@ -57,17 +53,19 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
     try {
       await generateNotes({
         lectureIds: selectedLectures,
-        moduleId
+        moduleId,
       });
       toast({
         title: "Generated notes successfully.",
-        description: "We are just generating your notes! We will let you know when it's done."
+        description:
+          "We are just generating your notes! We will let you know when it's done.",
       });
     } catch (error) {
       console.error("Failed to generate notes:", error);
       toast({
         title: "Failed to generate notes",
-        description: "An error occurred while generating notes. Please try again.",
+        description:
+          "An error occurred while generating notes. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -76,25 +74,31 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
     }
   };
 
-  const handleSearchResults = useCallback((type: 'lectures' | 'notes', results: SearchResults) => {
-    if (type === 'lectures') {
-      setFilteredLectures(lectures?.filter(lecture => results.lectures.includes(lecture._id)));
-    } else if (type === 'notes') {
-      setFilteredNotes(notes?.filter(note => results.notes.includes(note._id)));
-    }
-  }, [lectures, notes]);
-
-
-
+  const handleSearchResults = useCallback(
+    (type: "lectures" | "notes", results: SearchResults) => {
+      if (type === "lectures") {
+        setFilteredLectures(
+          lectures?.filter((lecture) => results.lectures.includes(lecture._id)),
+        );
+      } else if (type === "notes") {
+        setFilteredNotes(
+          notes?.filter((note) => results.notes.includes(note._id)),
+        );
+      }
+    },
+    [lectures, notes],
+  );
 
   return (
-    <Tabs defaultValue="lectures" onValueChange={setActiveTab} className="space-y-4">
-      <div className="flex flex-col justify-between items-start   md:flex-row md:items-center">
+    <Tabs
+      defaultValue="lectures"
+      onValueChange={setActiveTab}
+      className="space-y-4"
+    >
+      <div className="flex  gap-4 whitespace-nowrap justify-between items-center md:flex-row md:items-center">
         <TabsList>
           <TabsTrigger value="lectures">Lectures</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
-          <TabsTrigger value="discussions">Discussions</TabsTrigger>
         </TabsList>
         {selectedLectures.length > 0 && activeTab === "lectures" && (
           <div className="flex space-x-2">
@@ -116,14 +120,6 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
                     </>
                   )}
                 </DropdownMenuItem>
-
-                <DropdownMenuItem onClick={handleRouteToChat}>
-                  {selectedLectures.length > 1 ? (
-                    <p>Chat to lectures</p>
-                  ) : (
-                    <p>Chat to lecture</p>
-                  )}
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -131,7 +127,13 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
       </div>
 
       <TabsContent value="lectures">
-        <SearchBar type="lectures" moduleId={moduleId} onSearchResults={(results) => handleSearchResults('lectures', results)} />
+        <SearchBar
+          type="lectures"
+          moduleId={moduleId}
+          onSearchResults={(results) =>
+            handleSearchResults("lectures", results)
+          }
+        />
 
         <LecturesTab
           moduleId={moduleId}
@@ -142,7 +144,11 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
       </TabsContent>
 
       <TabsContent value="notes">
-        <SearchBar type="notes" moduleId={moduleId} onSearchResults={() => setFilteredNotes} />
+        <SearchBar
+          type="notes"
+          moduleId={moduleId}
+          onSearchResults={() => setFilteredNotes}
+        />
         <NotesTab notes={filteredNotes} />
       </TabsContent>
 
@@ -151,4 +157,3 @@ export default function ModuleTabs({ moduleId, lectures, notes, selectedLectures
     </Tabs>
   );
 }
-

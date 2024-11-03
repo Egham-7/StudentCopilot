@@ -19,7 +19,10 @@ export default defineSchema({
       v.literal("Masters"),
       v.literal("PhD"),
     ),
-  }).index("by_clerkId", ["clerkId"]),
+    stripeCustomerId: v.optional(v.string()),
+  })
+    .index("by_clerkId", ["clerkId"])
+    .index("by_stripeCustomerId", ["stripeCustomerId"]),
 
   modules: defineTable({
     name: v.string(),
@@ -47,7 +50,12 @@ export default defineSchema({
     completed: v.boolean(),
     lectureTranscription: v.array(v.id("_storage")),
     lectureTranscriptionEmbedding: v.array(v.float64()),
-    fileType: v.union(v.literal("pdf"), v.literal("audio"), v.literal("video")),
+    fileType: v.union(
+      v.literal("pdf"),
+      v.literal("audio"),
+      v.literal("video"),
+      v.literal("website"),
+    ),
     image: v.optional(v.id("_storage")),
   })
     .index("by_moduleId", ["moduleId"])
@@ -90,4 +98,53 @@ export default defineSchema({
   })
     .index("byModuleId", ["moduleId"])
     .index("bySessionAndModule", ["sessionId", "moduleId"]),
+
+  subscriptions: defineTable({
+    userId: v.id("users"),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    plan: v.union(
+      v.literal("enterprise"),
+      v.literal("premium"),
+      v.literal("basic"),
+      v.literal("free"),
+    ),
+    planPeriod: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
+    status: v.optional(v.string()),
+    currentPeriodEnd: v.optional(v.number()),
+    usageLimits: v.object({
+      maxModules: v.number(),
+      maxLectures: v.number(),
+      maxStorage: v.number(), // in bytes
+    }),
+    currentUsage: v.object({
+      modules: v.number(),
+      lectures: v.number(),
+      storage: v.number(), // in bytes
+    }),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_stripeCustomerId", ["stripeCustomerId"]),
+
+  plans: defineTable({
+    stripeId: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    prices: v.object({
+      monthly: v.optional(
+        v.object({
+          priceId: v.string(),
+          amount: v.number(),
+        }),
+      ),
+      annual: v.optional(
+        v.object({
+          priceId: v.string(),
+          amount: v.number(),
+        }),
+      ),
+    }),
+    features: v.optional(v.array(v.string())),
+    buttonText: v.string(),
+  }).index("byStripeProductId", ["stripeId"]),
 });

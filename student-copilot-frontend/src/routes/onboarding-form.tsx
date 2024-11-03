@@ -1,27 +1,48 @@
-import { useState } from 'react'
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { UserCircle, Briefcase, Palette, Code, Check, List, Network, LayoutPanelTop, PenTool, Eye, Ear, Hand, Brain } from 'lucide-react'
-import { useMutation } from 'convex/react'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  UserCircle,
+  Briefcase,
+  Palette,
+  Code,
+  Check,
+  List,
+  Network,
+  LayoutPanelTop,
+  PenTool,
+  Eye,
+  Ear,
+  Hand,
+  Brain,
+} from "lucide-react";
+import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
-import { useToast } from "@/components/ui/use-toast"
-import { Navigate, useNavigate } from 'react-router-dom'
-import { cn } from '@/lib/utils'
+import { useToast } from "@/components/ui/use-toast";
+import { Navigate, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 const formSchema = z.object({
-  course: z.string().min(10, {
+  course: z.string().min(4, {
     message: "Course must be at least 10 characters long.",
   }),
   levelOfStudy: z.enum(["Associate", "Bachelors", "Masters", "PhD"]),
   noteTakingStyle: z.enum(["bullet", "mindmap", "cornell", "sketch"]),
-  learningStyle: z.enum(["visual", "auditory", "kinesthetic", "analytical"])
-})
+  learningStyle: z.enum(["visual", "auditory", "kinesthetic", "analytical"]),
+});
 
 const noteTakingStyles = [
   {
@@ -48,7 +69,7 @@ const noteTakingStyles = [
     description: "Combine drawings and text for visual learning",
     icon: PenTool,
   },
-]
+];
 
 const learningStyles = [
   {
@@ -75,37 +96,36 @@ const learningStyles = [
     description: "You enjoy logic, reasoning, and systems thinking",
     icon: Brain,
   },
-]
+];
 
 const levelOfStudyOptions = [
   { value: "Associate", icon: Palette, label: "Associate" },
   { value: "Bachelors", icon: Code, label: "Bachelors" },
   { value: "Masters", icon: Briefcase, label: "Masters" },
   { value: "PhD", icon: UserCircle, label: "PhD" },
-]
+];
 
 type FormField = keyof z.infer<typeof formSchema>;
 
 export default function OnboardingFormPage() {
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(1);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       course: "",
       levelOfStudy: "Bachelors",
       noteTakingStyle: "bullet",
-      learningStyle: "analytical"
+      learningStyle: "analytical",
     },
-  })
-  const { toast } = useToast()
+  });
+  const { toast } = useToast();
   const { user } = useUser();
   const navigate = useNavigate();
-
 
   const storeUser = useMutation(api.users.store);
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' && step < 4) {
+    if (event.key === "Enter" && step < 4) {
       event.preventDefault();
       nextStep();
     }
@@ -119,90 +139,86 @@ export default function OnboardingFormPage() {
     }
   };
 
-
-
-  const prevStep = () => setStep(step - 1)
+  const prevStep = () => setStep(step - 1);
 
   if (!user) {
-
-    return <Navigate to="/" replace />
+    return <Navigate to="/" replace />;
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
+    console.log(values);
     try {
-
       const databaseUser = {
-        ...values
+        ...values,
       };
 
       console.log("Database User: ", databaseUser);
 
       const id = await storeUser(databaseUser);
 
-
       if (!id) {
         toast({
           title: "Failed to get your info!",
           description: "Please ensure all info is correct and try again.",
-        })
+        });
 
-        return
+        return;
       }
 
       console.log("User ID: ", id);
 
-      navigate('/dashboard/home', { replace: true });
-
-
-
+      navigate("/dashboard/home", { replace: true });
     } catch (error: unknown) {
-
       console.error("Error storing user:", error);
       toast({
         title: "An error occurred",
         description: "Please try again later.",
       });
-
-
-
     }
   }
 
   function getFieldsForStep(step: number): FormField[] {
     switch (step) {
       case 1:
-        return ["course"]
+        return ["course"];
       case 2:
-        return ["levelOfStudy"]
+        return ["levelOfStudy"];
       case 3:
-        return ["noteTakingStyle"]
+        return ["noteTakingStyle"];
       case 4:
-        return ["learningStyle"]
+        return ["learningStyle"];
       default:
-        return []
+        return [];
     }
   }
 
   return (
     <Card className="w-full max-w-sm mx-auto">
       <CardHeader>
-        <CardTitle className="text-xl sm:text-2xl font-bold text-center">Onboarding</CardTitle>
+        <CardTitle className="text-xl sm:text-2xl font-bold text-center">
+          Onboarding
+        </CardTitle>
         <div className="flex justify-between mt-2">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className={`w-1/4 h-2 rounded ${i <= step ? 'bg-primary' : 'bg-gray-200'}`}
+              className={`w-1/4 h-2 rounded ${i <= step ? "bg-primary" : "bg-gray-200"}`}
             />
           ))}
         </div>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" onKeyDown={handleKeyDown}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4"
+            onKeyDown={handleKeyDown}
+          >
             {step === 1 && (
               <div className="space-y-4">
-                <h3 className="text-base sm:text-lg font-semibold">Welcome! Let's get started.</h3>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Welcome! Let's get started.
+                </h3>
                 <FormField
                   control={form.control}
                   name="course"
@@ -210,19 +226,26 @@ export default function OnboardingFormPage() {
                     <FormItem>
                       <FormLabel>What course are you taking?</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter the course you are taking" {...field} />
+                        <Input
+                          placeholder="Enter the course you are taking"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="button" onClick={nextStep} className="w-full">Next</Button>
+                <Button type="button" onClick={nextStep} className="w-full">
+                  Next
+                </Button>
               </div>
             )}
 
             {step === 2 && (
               <div className="space-y-4">
-                <h3 className="text-base sm:text-lg font-semibold">What best describes your level of study?</h3>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  What best describes your level of study?
+                </h3>
                 <FormField
                   control={form.control}
                   name="levelOfStudy"
@@ -234,22 +257,31 @@ export default function OnboardingFormPage() {
                           value={field.value}
                           className="grid grid-cols-2 gap-2 sm:gap-4"
                         >
-                          {levelOfStudyOptions.map(({ value, icon: Icon, label }) => (
-                            <FormItem key={value}>
-                              <FormLabel className={cn(
-                                "flex flex-col items-center space-y-2 cursor-pointer p-4 rounded-lg transition-colors",
-                                field.value === value
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-background hover:bg-muted"
-                              )}>
-                                <FormControl>
-                                  <RadioGroupItem value={value} className="sr-only" />
-                                </FormControl>
-                                <Icon size={36} />
-                                <span className="text-sm sm:text-base">{label}</span>
-                              </FormLabel>
-                            </FormItem>
-                          ))}
+                          {levelOfStudyOptions.map(
+                            ({ value, icon: Icon, label }) => (
+                              <FormItem key={value}>
+                                <FormLabel
+                                  className={cn(
+                                    "flex flex-col items-center space-y-2 cursor-pointer p-4 rounded-lg transition-colors",
+                                    field.value === value
+                                      ? "bg-primary text-primary-foreground"
+                                      : "bg-background hover:bg-muted",
+                                  )}
+                                >
+                                  <FormControl>
+                                    <RadioGroupItem
+                                      value={value}
+                                      className="sr-only"
+                                    />
+                                  </FormControl>
+                                  <Icon size={36} />
+                                  <span className="text-sm sm:text-base">
+                                    {label}
+                                  </span>
+                                </FormLabel>
+                              </FormItem>
+                            ),
+                          )}
                         </RadioGroup>
                       </FormControl>
                       <FormMessage />
@@ -257,17 +289,21 @@ export default function OnboardingFormPage() {
                   )}
                 />
                 <div className="flex justify-between">
-                  <Button type="button" onClick={prevStep} variant="outline">Back</Button>
-                  <Button type="button" onClick={nextStep}>Next</Button>
+                  <Button type="button" onClick={prevStep} variant="outline">
+                    Back
+                  </Button>
+                  <Button type="button" onClick={nextStep}>
+                    Next
+                  </Button>
                 </div>
               </div>
             )}
 
-
-
             {step === 3 && (
               <div className="space-y-4">
-                <h3 className="text-base sm:text-lg font-semibold">Choose your preferred note-taking style:</h3>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Choose your preferred note-taking style:
+                </h3>
                 <FormField
                   control={form.control}
                   name="noteTakingStyle"
@@ -283,26 +319,41 @@ export default function OnboardingFormPage() {
                             <FormItem key={style.id}>
                               <FormLabel className="cursor-pointer">
                                 <FormControl>
-                                  <RadioGroupItem value={style.id} className="sr-only" />
+                                  <RadioGroupItem
+                                    value={style.id}
+                                    className="sr-only"
+                                  />
                                 </FormControl>
-                                <Card className={cn(
-                                  "relative overflow-hidden border-2 transition-all",
-                                  field.value === style.id
-                                    ? "border-primary shadow-lg bg-primary/5"
-                                    : "hover:border-primary/50"
-                                )}>
+                                <Card
+                                  className={cn(
+                                    "relative overflow-hidden border-2 transition-all",
+                                    field.value === style.id
+                                      ? "border-primary shadow-lg bg-primary/5"
+                                      : "hover:border-primary/50",
+                                  )}
+                                >
                                   <CardContent className="flex flex-row sm:flex-col items-center max-h-sm p-6 md:p-3 md:max-h-md">
-                                    <div className={cn(
-                                      "w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-0 sm:mb-4 mr-4 sm:mr-0",
-                                      field.value === style.id ? "bg-primary" : "bg-primary/10"
-                                    )}>
-                                      <style.icon className={cn(
-                                        "w-6 h-6 sm:w-8 sm:h-8",
-                                        field.value === style.id ? "text-primary-foreground" : "text-primary"
-                                      )} />
+                                    <div
+                                      className={cn(
+                                        "w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-0 sm:mb-4 mr-4 sm:mr-0",
+                                        field.value === style.id
+                                          ? "bg-primary"
+                                          : "bg-primary/10",
+                                      )}
+                                    >
+                                      <style.icon
+                                        className={cn(
+                                          "w-6 h-6 sm:w-8 sm:h-8",
+                                          field.value === style.id
+                                            ? "text-primary-foreground"
+                                            : "text-primary",
+                                        )}
+                                      />
                                     </div>
                                     <div className="flex-1">
-                                      <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2">{style.title}</h3>
+                                      <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2">
+                                        {style.title}
+                                      </h3>
                                       <p className="text-muted-foreground text-xs sm:text-sm">
                                         {style.description}
                                       </p>
@@ -324,18 +375,21 @@ export default function OnboardingFormPage() {
                   )}
                 />
                 <div className="flex justify-between">
-                  <Button type="button" onClick={prevStep} variant="outline">Back</Button>
-                  <Button type="button" onClick={nextStep}>Next</Button>
+                  <Button type="button" onClick={prevStep} variant="outline">
+                    Back
+                  </Button>
+                  <Button type="button" onClick={nextStep}>
+                    Next
+                  </Button>
                 </div>
               </div>
             )}
 
-
-
-
             {step === 4 && (
-              <div className='space-y-4'>
-                <h3 className="text-base sm:text-lg font-semibold">What's your primary learning style?</h3>
+              <div className="space-y-4">
+                <h3 className="text-base sm:text-lg font-semibold">
+                  What's your primary learning style?
+                </h3>
                 <FormField
                   control={form.control}
                   name="learningStyle"
@@ -351,26 +405,41 @@ export default function OnboardingFormPage() {
                             <FormItem key={style.id}>
                               <FormLabel className="cursor-pointer [&:has([data-state=checked])>div]:border-primary [&:has([data-state=checked])>div]:shadow-lg">
                                 <FormControl>
-                                  <RadioGroupItem value={style.id} className="sr-only" />
+                                  <RadioGroupItem
+                                    value={style.id}
+                                    className="sr-only"
+                                  />
                                 </FormControl>
-                                <Card className={cn(
-                                  "relative overflow-hidden border-2 transition-all",
-                                  field.value === style.id
-                                    ? "border-primary shadow-lg bg-primary/5"
-                                    : "hover:border-primary/50"
-                                )}>
+                                <Card
+                                  className={cn(
+                                    "relative overflow-hidden border-2 transition-all",
+                                    field.value === style.id
+                                      ? "border-primary shadow-lg bg-primary/5"
+                                      : "hover:border-primary/50",
+                                  )}
+                                >
                                   <CardContent className="flex flex-row sm:flex-col items-center p-6 max-h-sm md:p-3 md:max-h-md">
-                                    <div className={cn(
-                                      "w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-0 sm:mb-4 mr-4 sm:mr-0",
-                                      field.value === style.id ? "bg-primary" : "bg-primary/10"
-                                    )}>
-                                      <style.icon className={cn(
-                                        "w-6 h-6 sm:w-8 sm:h-8",
-                                        field.value === style.id ? "text-primary-foreground" : "text-primary"
-                                      )} />
+                                    <div
+                                      className={cn(
+                                        "w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-0 sm:mb-4 mr-4 sm:mr-0",
+                                        field.value === style.id
+                                          ? "bg-primary"
+                                          : "bg-primary/10",
+                                      )}
+                                    >
+                                      <style.icon
+                                        className={cn(
+                                          "w-6 h-6 sm:w-8 sm:h-8",
+                                          field.value === style.id
+                                            ? "text-primary-foreground"
+                                            : "text-primary",
+                                        )}
+                                      />
                                     </div>
                                     <div className="flex-1">
-                                      <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2">{style.title}</h3>
+                                      <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2">
+                                        {style.title}
+                                      </h3>
                                       <p className="text-muted-foreground text-xs sm:text-sm">
                                         {style.description}
                                       </p>
@@ -393,7 +462,9 @@ export default function OnboardingFormPage() {
                   )}
                 />
                 <div className="flex justify-between">
-                  <Button type="button" onClick={prevStep} variant="outline">Back</Button>
+                  <Button type="button" onClick={prevStep} variant="outline">
+                    Back
+                  </Button>
                   <Button type="submit">Submit</Button>
                 </div>
               </div>
@@ -402,6 +473,5 @@ export default function OnboardingFormPage() {
         </Form>
       </CardContent>
     </Card>
-  )
+  );
 }
-

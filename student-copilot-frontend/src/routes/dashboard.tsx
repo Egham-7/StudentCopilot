@@ -1,6 +1,12 @@
 import React, { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Filter } from "lucide-react";
 import { Doc } from "../../convex/_generated/dataModel";
@@ -9,10 +15,11 @@ import LoadingPage from "@/components/custom/loading";
 import ErrorPage from "@/components/custom/error-page";
 import AddModuleCard from "@/components/custom/dashboard/add-module-card";
 import { useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api.js"
+import { api } from "../../convex/_generated/api.js";
 import ModuleCard from "@/components/custom/dashboard/module-card.js";
 import { UserNotifications } from "@/components/custom/dashboard/user-notifications.js";
-
+import DeleteNotificationsDialog from "@/components/custom/dashboard/delete-notifications-dialog.js";
+import { ModeToggle } from "@/components/ui/mode-toggle.js";
 
 const filterConfig = [
   { key: "department", label: "Department" },
@@ -25,27 +32,39 @@ const DashboardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
   const { isLoading, error, userInfo } = useUserInfo();
-  const modules = useQuery(api.modules.queryByUserId)
-
-
-
+  const modules = useQuery(api.modules.queryByUserId);
 
   const filterOptions = useMemo(() => {
     if (!modules) return {};
 
-    return filterConfig.reduce((acc, filter) => {
-      acc[filter.key] = ["All", ...new Set(modules.map((module) => String(module[filter.key as keyof Doc<"modules">])))];
-      return acc;
-    }, {} as Record<string, string[]>);
+    return filterConfig.reduce(
+      (acc, filter) => {
+        acc[filter.key] = [
+          "All",
+          ...new Set(
+            modules.map((module) =>
+              String(module[filter.key as keyof Doc<"modules">]),
+            ),
+          ),
+        ];
+        return acc;
+      },
+      {} as Record<string, string[]>,
+    );
   }, [modules]);
 
   const filteredModules = useMemo(() => {
     if (!modules) return [];
 
     return modules.filter((module) => {
-      const matchesSearch = module.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = module.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
       const matchesFilters = Object.entries(filters).every(([key, value]) => {
-        return value === "All" || String(module[key as keyof Doc<"modules">]) === value;
+        return (
+          value === "All" ||
+          String(module[key as keyof Doc<"modules">]) === value
+        );
       });
       return matchesSearch && matchesFilters;
     });
@@ -66,14 +85,17 @@ const DashboardPage: React.FC = () => {
     return <ErrorPage />;
   }
 
-
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
       <div className="mx-auto max-w-6xl space-y-6 sm:space-y-8">
         <header className="space-y-2 text-center sm:text-left">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground mb-20">
-            Welcome {userInfo?.name}
-          </h1>
+          <div className="flex items-start justify-between text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground mb-20">
+              Welcome {userInfo?.name}
+            </h1>
+
+            <ModeToggle />
+          </div>
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
             Student Dashboard
           </h2>
@@ -83,8 +105,10 @@ const DashboardPage: React.FC = () => {
         </header>
 
         <Card>
-          <CardHeader>
+          <CardHeader className=" flex-row justify-between items-center">
             <CardTitle>Recent Notifications</CardTitle>
+
+            <DeleteNotificationsDialog />
           </CardHeader>
           <CardContent className="h-96 overflow-scroll md:h-full">
             <UserNotifications />
@@ -111,14 +135,22 @@ const DashboardPage: React.FC = () => {
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 {filterConfig.map((filter) => (
                   <div key={filter.key} className="flex flex-col gap-1">
-                    <label htmlFor={filter.key} className="text-sm font-medium text-foreground">
+                    <label
+                      htmlFor={filter.key}
+                      className="text-sm font-medium text-foreground"
+                    >
                       {filter.label}
                     </label>
                     <Select
                       value={filters[filter.key] || "All"}
-                      onValueChange={(value) => handleFilterChange(filter.key, value)}
+                      onValueChange={(value) =>
+                        handleFilterChange(filter.key, value)
+                      }
                     >
-                      <SelectTrigger id={filter.key} className="bg-background text-foreground">
+                      <SelectTrigger
+                        id={filter.key}
+                        className="bg-background text-foreground"
+                      >
                         <SelectValue placeholder={`Select ${filter.label}`} />
                       </SelectTrigger>
                       <SelectContent>
@@ -138,14 +170,10 @@ const DashboardPage: React.FC = () => {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredModules.map((module) => (
-            <ModuleCard
-              key={module._id}
-              module={module}
-            />
+            <ModuleCard key={module._id} module={module} />
           ))}
 
           <AddModuleCard />
-
         </div>
         {filteredModules.length === 0 && (
           <Card>
@@ -156,14 +184,9 @@ const DashboardPage: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
-
-
-
       </div>
     </div>
   );
 };
-
 
 export default DashboardPage;

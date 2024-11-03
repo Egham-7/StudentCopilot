@@ -1,27 +1,30 @@
-import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
 import { v } from "convex/values";
-
 
 export const store = mutation({
   args: {
-
     noteTakingStyle: v.string(),
     learningStyle: v.union(
       v.literal("auditory"),
       v.literal("visual"),
       v.literal("kinesthetic"),
-      v.literal("analytical")
+      v.literal("analytical"),
     ),
     course: v.string(),
     levelOfStudy: v.union(
       v.literal("Bachelors"),
       v.literal("Associate"),
       v.literal("Masters"),
-      v.literal("PhD")
+      v.literal("PhD"),
     ),
   },
   handler: async (ctx, args) => {
-
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Called storeUser without authentication present");
@@ -49,17 +52,36 @@ export const store = mutation({
       ...args,
     });
 
+    let user;
+
+    if (!existingUser) {
+      user = await ctx.db.get(userId);
+    } else {
+      user = existingUser;
+    }
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.scheduler.runAfter(0, internal.stripe.handleFreeSubscription, {
+      clerkId: identity.subject,
+      userId: user._id,
+      email: identity.email ?? "N/A",
+      name: user.name ?? "Unknown",
+      noteTakingStyle: user.noteTakingStyle,
+      learningStyle: user.learningStyle,
+      course: user.course,
+      levelOfStudy: user.levelOfStudy,
+    });
+
     return userId;
-  }
-
-})
-
+  },
+});
 
 export const getUserInfo = query({
-  args: {
-  },
+  args: {},
   handler: async (ctx) => {
-
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
@@ -68,16 +90,72 @@ export const getUserInfo = query({
 
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", q => q.eq("clerkId", identity.subject))
-      .first()
-
-
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .first();
 
     if (!user) {
-      throw new Error("User not found!")
+      throw new Error("User not found!");
     }
 
     return user;
+  },
+});
 
-  }
-})
+export const storeInternal = internalMutation({
+  args: {
+    noteTakingStyle: v.string(),
+    learningStyle: v.union(
+      v.literal("auditory"),
+      v.literal("visual"),
+      v.literal("kinesthetic"),
+      v.literal("analytical"),
+    ),
+    course: v.string(),
+    levelOfStudy: v.union(
+      v.literal("Bachelors"),
+      v.literal("Associate"),
+      v.literal("Masters"),
+      v.literal("PhD"),
+    ),
+    stripeCustomerId: v.string(),
+    clerkId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    let existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_stripeCustomerId", (q) =>
+        q.eq("stripeCustomerId", args.stripeCustomerId),
+      )
+      .first();
+
+    if (!existingUser) {
+      existingUser = await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId!))
+        .first();
+    }
+
+    if (!existingUser) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(existingUser._id, {
+      ...args,
+      stripeCustomerId: args.stripeCustomerId,
+    });
+  },
+});
+
+export const getUserInfoInternal = internalQuery({
+  args: {
+    clerkId: v.string(),
+  },
+  handler: async (ctx, { clerkId }) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
+      .first();
+
+    return user;
+  },
+});

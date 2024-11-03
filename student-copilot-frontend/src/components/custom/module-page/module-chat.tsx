@@ -5,8 +5,6 @@ import { LecturesData } from "@/lib/ui_utils";
 import { Popover } from "@/components/ui/popover";
 import { PopoverContent, PopoverTrigger } from "@radix-ui/react-popover";
 import { Doc, Id } from "convex/_generated/dataModel";
-import LoadingPage from "@/components/custom/loading";
-import ErrorPage from "@/components/custom/error-page";
 import { v4 as uuidv4 } from "uuid";
 import ChatDialog from "./chat-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -149,12 +147,8 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
     ],
   );
 
-  if (lectures === undefined || module === undefined) return <LoadingPage />;
-  if (lectures === null || module === null) return <ErrorPage />;
-
   return (
     <Popover>
-
       <PopoverTrigger asChild>
         <Button
           className="

@@ -1,85 +1,111 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Id } from 'convex/_generated/dataModel';
-import { useToast } from '@/components/ui/use-toast';
-import AnimatedCircularProgressBar from '@/components/magicui/animated-circular-progress-bar';
-import { formSchema } from '@/lib/ui_utils';
-import * as z from 'zod';
-import { useLectureUpload } from '@/hooks/use-lecture-upload';
-
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Id } from "convex/_generated/dataModel";
+import AnimatedCircularProgressBar from "@/components/magicui/animated-circular-progress-bar";
+import { formSchema } from "@/lib/ui_utils";
+import * as z from "zod";
+import { useLectureUpload } from "@/hooks/use-lecture-upload";
+import { IconAsterisk, IconAsteriskSimple } from "@tabler/icons-react";
+import { useBackgroundUpload } from "@/hooks/use-background-lecture-upload";
+import { toast } from "@/components/ui/use-toast";
 
 
 interface LectureUploadFormProps {
   moduleId: Id<"modules">;
-  fileType: 'pdf' | 'audio' | 'video';
+  fileType: "pdf" | "audio" | "video" | "website";
   onBack: () => void;
   onComplete: () => void;
 }
 
-const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileType, onBack, onComplete }) => {
-  const { toast } = useToast();
+const fileTypeConfig = {
+  pdf: { accept: ".pdf", label: "PDF" },
+  audio: { accept: "audio/*", label: "Audio" },
+  video: { accept: "video/*", label: "Video" },
+  website: { accept: undefined, label: "Website Link" },
+};
+
+const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
+  moduleId,
+  fileType,
+  onBack,
+  onComplete,
+}) => {
   const { isLoading, uploadProgress, uploadLecture } = useLectureUpload();
+  const { startBackgroundUpload } = useBackgroundUpload();
 
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: '',
-      description: '',
+      title: "",
+      description: "",
       moduleId: moduleId,
-    }
+      type: fileType === "website" ? "website" : "file",
+      link: "",
+    },
   });
 
+  const handleBackgroundUpload = async (values: z.infer<typeof formSchema>) => {
+    await startBackgroundUpload(values, moduleId, fileType);
+
+    toast({
+      title: "Upload started in background",
+      description: "You can close this window and the upload will continue.",
+    });
+
+    onComplete();
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-
-    const file = values.file;
-
-
-
-
-    const fileType = file.type === "application/pdf" ? "pdf" :
-      file.type.startsWith("audio/") ? "audio" :
-        file.type.startsWith("video/") ? "video" :
-          "unknown";
-
-    if (fileType === "unknown") {
-      toast({
-        title: "Invalid file type.",
-        description: "Please upload either a audio, pdf or video file."
-      })
-
-      return;
+    let success;
+    if (values.type === "website") {
+      success = await uploadLecture(values, moduleId, "website");
+    } else if (values.type === "file" && values.file) {
+      success = await uploadLecture(values, moduleId, fileType);
+    } else {
+      throw new Error("Invalid form data");
     }
 
-    const success = await uploadLecture(values, moduleId, fileType);
-
     if (success) {
-      toast({
-        title: "Lecture uploaded successfully.",
-        description: "Your lecture has been added to the module.",
-      });
-
       onComplete();
       form.reset();
     } else {
-      toast({
-        title: "Lecture upload failed.",
-        description: "Please wait for some time and try again."
-      })
+      throw new Error("Upload failed");
     }
-  }
+  };
 
+  const renderFileType = (fileType: string) => {
+    switch (fileType) {
+      case "pdf":
+        return "PDF";
+      case "audio":
+        return "Audio";
+      case "video":
+        return "Video";
+      case "website":
+        return "Website";
+      default:
+        return "File";
+    }
+  };
 
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Upload {fileType === 'pdf' ? 'PDF' : fileType === 'audio' ? 'Audio' : 'Video'}</DialogTitle>
+        <DialogTitle>Upload {renderFileType(fileType)}</DialogTitle>
       </DialogHeader>
       {!isLoading ? (
         <Form {...form}>
@@ -89,7 +115,11 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <div className="flex gap-x-1">
+                    <FormLabel>Title</FormLabel>
+
+                    <IconAsterisk className="w-3 h-3 text-destructive" />
+                  </div>
                   <FormControl>
                     <Input placeholder="Lecture title" {...field} />
                   </FormControl>
@@ -102,7 +132,11 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <div className="flex gap-x-1">
+                    <FormLabel>Description</FormLabel>
+
+                    <IconAsteriskSimple className="w-3 h-3 text-destructive" />
+                  </div>
                   <FormControl>
                     <Textarea placeholder="Lecture description" {...field} />
                   </FormControl>
@@ -110,23 +144,50 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="file"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>File</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="file"
-                      accept={fileType === 'pdf' ? ".pdf" : fileType === "audio" ? "audio/*" : "video/*"}
-                      onChange={(e) => field.onChange(e.target.files?.[0])}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+            {fileType === "website" ? (
+              <FormField
+                control={form.control}
+                name="link"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex gap-x-1">
+                      <FormLabel>Website Link</FormLabel>
+                      <IconAsterisk className="w-3 h-3 text-destructive" />
+                    </div>
+                    <FormControl>
+                      <Input
+                        type="url"
+                        placeholder="https://example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <FormField
+                control={form.control}
+                name="file"
+                render={({ field }) => (
+                  <FormItem className="hover:cursor-pointer">
+                    <div className="flex gap-x-1">
+                      <FormLabel>File</FormLabel>
+                      <IconAsterisk className="w-3 h-3 text-destructive" />
+                    </div>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        accept={fileTypeConfig[fileType].accept}
+                        onChange={(e) => field.onChange(e.target.files?.[0])}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <div className="flex justify-between">
               <Button type="button" variant="outline" onClick={onBack}>
                 Back
@@ -136,7 +197,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
           </form>
         </Form>
       ) : (
-        <div className="mt-4 flex flex-col items-center">
+        <div className="mt-4 flex flex-col items-center gap-4">
           <AnimatedCircularProgressBar
             max={100}
             min={0}
@@ -147,6 +208,11 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
           <p className="mt-2 text-sm text-gray-500">
             Uploading: {uploadProgress}%
           </p>
+
+          <Button onClick={() => form.handleSubmit(handleBackgroundUpload)()}
+          >
+            Upload in the background
+          </Button>
         </div>
       )}
     </>
@@ -154,4 +220,3 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({ moduleId, fileTyp
 };
 
 export default LectureUploadForm;
-

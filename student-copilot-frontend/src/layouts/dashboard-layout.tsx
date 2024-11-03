@@ -1,89 +1,85 @@
-import { Outlet, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Sidebar, SidebarBody, SidebarLink } from "@/components/custom/sidebar";
-import { IconHome, IconSettings, IconCrown } from '@tabler/icons-react';
-import { UserButton } from "@clerk/clerk-react";
+import { Outlet } from "react-router-dom";
 import { useConvexAuth } from "convex/react";
-import LoadingPage from "../components/custom/loading";
-import { Button } from "@/components/ui/button";
+import { UserButton } from "@clerk/clerk-react";
+import { IconHome, IconSettings } from "@tabler/icons-react";
+import { Sidebar, SidebarBody, SidebarLink } from "@/components/custom/sidebar";
+import LoadingPage from "@/components/custom/loading";
+import Logo from "@/components/custom/logo";
+import TreeView from "@/components/ui/tree-view";
+import { Separator } from "@/components/ui/separator";
+import UpgradePlanModal from "@/components/custom/dashboard/upgrade-plan-modal";
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isLoading, isAuthenticated } = useConvexAuth();
-  const navigate = useNavigate();
 
   if (isLoading) {
-    return <LoadingPage />
+    return <LoadingPage />;
   }
 
-  if (!isAuthenticated) {
-    console.log("Do something.");
+  if (!isAuthenticated && !isLoading) {
+    console.log("Not authenticated");
   }
-
-  const handleUpgrade = () => {
-    navigate("/dashboard/upgrade-plan");
-  };
 
   return (
-    <div className="flex w-screen h-screen">
+    <div className="flex w-full">
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
+        {/* Sidebar layout with scrollable top and sticky bottom */}
         <SidebarBody className="flex flex-col justify-between h-full">
-          <div className="flex-grow">
+          {/* Scrollable section */}
+          <div className="flex-grow overflow-y-auto space-y-4">
+            <SidebarLink
+              link={{
+                label: "",
+                href: "/dashboard/home",
+                icon: <Logo size="lg" />,
+              }}
+            />
+
+            <Separator />
+
             <SidebarLink
               link={{
                 label: "Home",
                 href: "/dashboard/home",
-                icon: <IconHome size={24} />
+                icon: <IconHome size={24} />,
               }}
             />
-            <SidebarLink
-              link={{
-                label: "Settings",
-                href: "/settings",
-                icon: <IconSettings size={24} />
-              }}
-            />
-
+            <TreeView isSidebarOpen={sidebarOpen} />
           </div>
 
-
-          <div className="hidden md:flex  md:justify-start md:items-between md:w-full md:gap-4">
-            <UserButton />
-
-
+          {/* Sticky bottom section */}
+          <div className="flex-shrink-0 sticky bottom-0 ">
+            <Separator className="mb-2" />
 
             {sidebarOpen && (
+              <div className="w-full p-2">
+                <UpgradePlanModal />
 
-              <Button
-                onClick={handleUpgrade}
-                className=" bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <IconCrown size={20} className="mr-2" />
-                Upgrade to Pro
-              </Button>
-
-
-
+              </div>
             )}
+
+            <div className="flex justify-between items-center w-full gap-4 p-2">
+              <SidebarLink
+                link={{
+                  label: "Settings",
+                  href: "/dashboard/settings",
+                  icon: <IconSettings size={24} />,
+                }}
+              />
+              <UserButton />
+            </div>
           </div>
         </SidebarBody>
       </Sidebar>
-      <div className="flex flex-col w-full">
-        <div className="flex justify-between items-center p-4 md:hidden">
-          <Button
-            onClick={handleUpgrade}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <IconCrown size={20} className="mr-2" />
-            Upgrade to Pro
-          </Button>
+
+      <div className="flex flex-col flex-grow ">
+        <div className="flex justify-end items-center p-4 md:hidden">
           <UserButton />
         </div>
-        <div className="flex-grow overflow-auto">
-          <Outlet />
-        </div>
+        <Outlet />
       </div>
     </div>
-  )
+  );
 }
-
