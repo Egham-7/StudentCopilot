@@ -8,7 +8,7 @@ import { z } from 'zod';
 const GOOGLE_API_KEY = process.env.Google_API_KEY;
 const CX = process.env.CX;
 
-const NoteBlockType = z.enum([ 'header','image', 'paragraph'])
+const NoteBlockType = z.enum(['header', 'image', 'paragraph'])
 
 const ImageBlockData = z.object({
   url: z.string().url().describe("Here should be the URL for Image which best suit notes"),
@@ -29,51 +29,50 @@ const HeaderBlockData = z.object({
 })
 
 const NoteBlock = z.object({
-    type: z.enum(['header', 'paragraph','image']),
-    data: z.union([HeaderBlockData, ParagraphBlockData,ImageBlockData]),
+  type: z.enum(['header', 'paragraph', 'image']),
+  data: z.union([HeaderBlockData, ParagraphBlockData, ImageBlockData]),
 });
 
 
 const tempNoteBlock = z.object({
-    title: z.string(),
-    title_size: z.string(),
-    paragraph: z.string(),
-    image:z.string().optional(),
+  title: z.string(),
+  title_size: z.string(),
+  paragraph: z.string(),
+  image: z.string().optional(),
 })
-export type TempTNoteBlock= z.infer<typeof tempNoteBlock>
+export type TempTNoteBlock = z.infer<typeof tempNoteBlock>
 export type TNoteBlock = z.infer<typeof NoteBlock>
 export type TNoteBlockType = z.infer<typeof NoteBlockType>
 
-export { NoteBlock, NoteBlockType };
 
 const InputAnnotation = Annotation.Root({
-    ...MessagesAnnotation.spec,  // If `messages` is part of this spec, it should work
-    chunk: Annotation<string>,
-    noteTakingStyle: Annotation<string>,
-    learningStyle: Annotation<"visual" | "auditory" | "kinesthetic" | "analytical">,
-    levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
-    course: Annotation<string>,
-    notes: Annotation<[TNoteBlock]>,
-  });
-const OutputAnnotation=Annotation.Root ({
-    notes:Annotation<TNoteBlock>
+  ...MessagesAnnotation.spec,  // If `messages` is part of this spec, it should work
+  chunk: Annotation<string>,
+  noteTakingStyle: Annotation<string>,
+  learningStyle: Annotation<"visual" | "auditory" | "kinesthetic" | "analytical">,
+  levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
+  course: Annotation<string>,
+  notes: Annotation<string>,
+});
+const OutputAnnotation = Annotation.Root({
+  notes: Annotation<string>
 })
 
 // Helper to get an image link based on a query
 async function getImageLink(query: string): Promise<string> {
-    const url = `https://www.googleapis.com/customsearch/v1?q=${query}&cx=${CX}&key=${GOOGLE_API_KEY}&searchType=image&num=1`;
-    try {
-        const response = await axios.get(url);
-        const items = response.data.items;
-        return items && items.length > 0 ? items[0].link : 'No images found';
-    } catch (error) {
-        console.error('Error fetching image:', error);
-        throw error;
-    }
+  const url = `https://www.googleapis.com/customsearch/v1?q=${query}&cx=${CX}&key=${GOOGLE_API_KEY}&searchType=image&num=1`;
+  try {
+    const response = await axios.get(url);
+    const items = response.data.items;
+    return items && items.length > 0 ? items[0].link : 'No images found';
+  } catch (error) {
+    console.error('Error fetching image:', error);
+    throw error;
+  }
 }
 
-async function generateImageSearchQuery(_state: typeof InputAnnotation.State): Promise<{imageblock:TNoteBlock }> {
-    const prompt = `
+async function generateImageSearchQuery(_state: typeof InputAnnotation.State): Promise<{ imageblock: TNoteBlock }> {
+  const prompt = `
     Your task is to:
     1.Highlight Core Themes: Identify and focus on the main concepts and themes present in the note. Ensure that the image encapsulates these key ideas visually.
     2.Use Simple and Clear Visuals: Create or select images that use clear, simple designs and symbols to represent complex ideas. Avoid clutter to enhance understanding and retention.
@@ -84,28 +83,28 @@ async function generateImageSearchQuery(_state: typeof InputAnnotation.State): P
     Based on the following lecture : ${_state.chunk},
     generate the most relevant search query to find an accurate image that visually explains or represents the key concept of this content.
     Focus on the essential elements and context to ensure the search query retrieves the best possible image.`;
-    const llm = new ChatOpenAI({ model: "gpt-3.5-turbo", temperature: 0 });
-    const result = await llm.invoke(prompt);
-    const Link=await getImageLink(result.toString());
-    const imageblock: TNoteBlock = {
-        type: 'image', // Specify the type
-        data: {
-          url: Link, // Assign a specific URL here
-          caption: 'An example image',
-          withBorder: true,
-          withBackground: false,
-          stretched: true,
-        },
-      };
-    //const valid= NoteBlock.parse(result);
-    return {imageblock:imageblock};
+  const llm = new ChatOpenAI({ model: "gpt-3.5-turbo", temperature: 0 });
+  const result = await llm.invoke(prompt);
+  const Link = await getImageLink(result.toString());
+  const imageblock: TNoteBlock = {
+    type: 'image', // Specify the type
+    data: {
+      url: Link, // Assign a specific URL here
+      caption: 'An example image',
+      withBorder: true,
+      withBackground: false,
+      stretched: true,
+    },
+  };
+  //const valid= NoteBlock.parse(result);
+  return { imageblock: imageblock };
 }
 
 
 // Function to generate a structured Markdown note
-async function generateNote1(_state: typeof InputAnnotation.State): Promise<typeof OutputAnnotation.State > {
-    
-    const prompt = `Your task is to:
+async function generateNote1(_state: typeof InputAnnotation.State): Promise<typeof OutputAnnotation.State> {
+
+  const prompt = `Your task is to:
 
     1.Thorough Analysis: Carefully analyze the provided lecture chunk for its main ideas, key concepts, and supporting details.
     2.Comprehensive Summary: Create a detailed summary in Markdown format that aligns with the user’s specific note-taking and learning style.
@@ -131,7 +130,7 @@ async function generateNote1(_state: typeof InputAnnotation.State): Promise<type
     19.Utilize the following structure that includes all previously generated titles and images and the titles size so you can keep the flow.
     Please summarize the following lecture chunk into well-structured Markdown notes, tailored to the user's preferences:
 
-    ${_state.chunk}
+    ${_state.chunk as string}
 
     This context is relevant to:
 
@@ -139,43 +138,56 @@ async function generateNote1(_state: typeof InputAnnotation.State): Promise<type
         Learning style: ${_state.learningStyle}
         Level of study: ${_state.levelOfStudy}
         Course: ${_state.course}
-        previous_notes: ${_state.notes}
+        previous_notes: ${_state.notes as string}
 
     Important: Ensure that all titles are formatted correctly for a Markdown (.md) file.
     `;
-    const llm = new ChatOpenAI({ model: "gpt-3.5-turbo", temperature: 0 });
+  const llm = new ChatOpenAI({ model: "gpt-3.5-turbo", temperature: 0 });
 
-    const structuredLlm = llm.withStructuredOutput(NoteBlock);
+  // Define array type for structured output
+  const NoteBlockArray = z.array(NoteBlock);
 
-    const result = await structuredLlm.invoke(prompt);
-    
-    const valid= NoteBlock.parse(result);
+  const structuredLlm = llm.withStructuredOutput(NoteBlockArray);
 
-    return {notes:valid};
+  const result = await llm.invoke([
+    {
+      role: "system",
+      content: "You are a helpful assistant that creates well-structured markdown notes from lecture content."
+    },
+    {
+      role: "user",
+      content: prompt
     }
+  ]);
+
+  // Parse the array result
+
+  return { notes: result.content as string };
+}
 
 
-    
+
 // Graph construction and invocation
 
-export const graph= new StateGraph({
-    input:InputAnnotation,
-    output:OutputAnnotation
+export const graph = new StateGraph({
+  input: InputAnnotation,
+  output: OutputAnnotation
 })
-.addNode("generate_note", () => generateNote1)
-/*
-.addNode("image_tool", () => generateImageSearchQuery)
-.addConditionalEdges("__start__",async () => {
-    return info.learningStyle === "visual" ? "image_tool" : "generate_note";
-})
-.addEdge("image_tool", "generate_note")
-.addEdge("generate_note","__end__")
-*/
-.addEdge("__start__","generate_note")
-.compile();
+  .addNode("generate_note", generateNote1)
+  /*
+  .addNode("image_tool", () => generateImageSearchQuery)
+  .addConditionalEdges("__start__",async () => {
+      return info.learningStyle === "visual" ? "image_tool" : "generate_note";
+  })
+  .addEdge("image_tool", "generate_note")
+  .addEdge("generate_note","__end__")
+  */
+  .addEdge("__start__", "generate_note")
+  .addEdge("generate_note", "__end__")
+  .compile();
 
 
-  
+
 
 
 
