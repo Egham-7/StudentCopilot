@@ -4,13 +4,12 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import {
-  action,
-  internalAction,
+    action,
+    internalAction,
 } from "./_generated/server";
 import { generateEmbedding } from "./ai";
 import { graph } from "./aiAgent/noteAgent";
 import { exponentialBackoff } from "./utils";
-
 export const fetchAndProcessTranscriptions = internalAction({
   args: {
     lectureIds: v.array(v.id("lectures")),
@@ -98,30 +97,27 @@ export const generateNotes = internalAction({
       return exponentialBackoff(async () => {
         //Work11
 
-        //
+        
         const info = {
-          chunk: chunk,
-          noteTakingStyle: noteTakingStyle,
-          learningStyle: learningStyle,
-          course: course,
-          levelOfStudy: levelOfStudy,
-          notes: [],
-          messages: []
-        }
-        const result = await graph.invoke(info);
+            chunk: chunk,
+            noteTakingStyle: noteTakingStyle,
+            learningStyle: learningStyle,
+            levelOfStudy: levelOfStudy,
+            course: course,
+            messages: []
+        };
+
+        const result = await graph.invoke(info) ;
+        
+        console.log(result);
 
 
-        if (typeof result.notes !== 'string') {
-          throw new Error('Invalid notes format');
-        }
-
-
-        const noteChunkBlob = new Blob([result.notes], { type: "text/plain" })//"application/json";
+        const noteChunkBlob = new Blob([JSON.stringify(result)], { type: "application/json" })//"text/plain";
 
         const storageId = await ctx.storage.store(noteChunkBlob);
 
         // Generate embedding for the chunk
-        const embedding = await generateEmbedding(result.notes);
+        const embedding = await generateEmbedding(result.toString());
 
         return { storageId, embedding };
       });
@@ -136,7 +132,7 @@ export const generateNotes = internalAction({
       noteChunkIds.push(storageId);
       allEmbeddings.push(embedding);
     }
-
+    
     // Concatenate embeddings into a single 1536-dimensional vector
     const concatenatedEmbedding: number[] = [];
     for (let i = 0; i < 1536; i++) {
