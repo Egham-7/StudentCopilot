@@ -75,7 +75,7 @@ export const cancelSubscription = internalAction({
   },
   handler: async (ctx, { subscriptionId, userId }) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-09-30.acacia",
+      apiVersion: "2024-10-28.acacia",
     });
 
     try {
@@ -100,7 +100,7 @@ export const handleSubscriptionWebhook = internalAction({
   },
   handler: async (ctx, { signature, payload }) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-09-30.acacia",
+      apiVersion: "2024-10-28.acacia",
     });
 
     let event;
@@ -201,7 +201,7 @@ export const handleFreeSubscription = internalAction({
     },
   ) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-09-30.acacia",
+      apiVersion: "2024-10-28.acacia",
     });
 
     const customer = await stripe.customers.create({
@@ -243,7 +243,7 @@ export const getPlans = action({
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-09-30.acacia",
+      apiVersion: "2024-10-28.acacia",
     });
 
     const prices = await stripe.prices.list({
