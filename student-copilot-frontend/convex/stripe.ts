@@ -23,7 +23,7 @@ export const createSubscriptionSession = action({
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-09-30.acacia",
+      apiVersion: "2024-10-28.acacia",
     });
 
     const user = await ctx.runQuery(internal.users.getUserInfoInternal, {
@@ -282,15 +282,15 @@ export const getPlans = action({
         prices: {
           monthly: monthlyPrice
             ? {
-                priceId: monthlyPrice.id,
-                amount: monthlyPrice.unit_amount! / FLOAT_TO_INT,
-              }
+              priceId: monthlyPrice.id,
+              amount: monthlyPrice.unit_amount! / FLOAT_TO_INT,
+            }
             : undefined,
           annual: annualPrice
             ? {
-                priceId: annualPrice.id,
-                amount: annualPrice.unit_amount! / FLOAT_TO_INT,
-              }
+              priceId: annualPrice.id,
+              amount: annualPrice.unit_amount! / FLOAT_TO_INT,
+            }
             : undefined,
         },
         features: features,
