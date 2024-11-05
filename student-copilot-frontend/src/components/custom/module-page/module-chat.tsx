@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, forwardRef } from "react";
 import { MessageCircleIcon, PlusCircleIcon, TrashIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LecturesData } from "@/lib/ui_utils";
@@ -10,6 +10,31 @@ import ChatDialog from "./chat-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { Drawer, DrawerTrigger, DrawerContent } from "@/components/ui/drawer";
+
+
+const TriggerButton = forwardRef<HTMLButtonElement, React.ComponentPropsWithoutRef<typeof Button>>((props, ref) => (
+  <Button
+    ref={ref}
+    className="
+      rounded-full
+      fixed
+      bottom-2
+      right-6
+      shadow-lg
+      bg-primary
+      text-primary-foreground
+      hover:bg-primary/90
+    "
+    {...props}
+  >
+    <span className="hidden md:inline">Module Assistant</span>
+    <MessageCircleIcon className="h-6 w-6 ml-2" />
+  </Button>
+));
+
+TriggerButton.displayName = 'TriggerButton';
 
 interface SessionsListProps {
   sessions: Session[];
@@ -110,6 +135,9 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
     deleteChats({ moduleId: module?._id });
   }, [module?._id, deleteChats]);
 
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+
+
   const tabs = useMemo(
     () => [
       {
@@ -147,51 +175,55 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
     ],
   );
 
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          className="
-      rounded-full
-      fixed
-      bottom-6
-      right-6
-      shadow-lg
-      bg-primary
-      text-primary-foreground
-      hover:bg-primary/90
-    "
-        >
-          Module Assistant
-          <MessageCircleIcon className="h-6 w-6 ml-2" />
-        </Button>
-      </PopoverTrigger>
 
-      <PopoverContent className="w-96  min-w-[500px] mr-5 mb-5 bg-background border border-border rounded-md shadow-lg">
-        <Tabs
-          defaultValue={activeTab}
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList className="w-full bg-muted h-full">
-            {tabs.map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="flex-1 text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {tabs.map((tab) => (
-            <TabsContent key={tab.value} value={tab.value}>
-              {tab.content}
-            </TabsContent>
-          ))}
-        </Tabs>
-      </PopoverContent>
-    </Popover>
+  const ChatContent = () => (
+    <Tabs
+      defaultValue={activeTab}
+      value={activeTab}
+      onValueChange={setActiveTab}
+      className="w-full"
+    >
+      <TabsList className="w-full bg-muted h-full">
+        {tabs.map((tab) => (
+          <TabsTrigger
+            key={tab.value}
+            value={tab.value}
+            className="flex-1 text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground"
+          >
+            {tab.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {tabs.map((tab) => (
+        <TabsContent key={tab.value} value={tab.value}>
+          {tab.content}
+        </TabsContent>
+      ))}
+    </Tabs>
   );
+
+  if (isDesktop) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <TriggerButton />
+        </PopoverTrigger>
+        <PopoverContent className="w-[600px] mr-5 mb-5 bg-background border border-border rounded-md shadow-lg">
+          <ChatContent />
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return (
+    <Drawer>
+      <DrawerTrigger asChild>
+        <TriggerButton />
+      </DrawerTrigger>
+      <DrawerContent className="p-4">
+        <ChatContent />
+      </DrawerContent>
+    </Drawer>
+  );;
+
 }
