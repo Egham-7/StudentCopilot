@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter } from "lucide-react";
 import { Doc } from "../../convex/_generated/dataModel";
 import { useUserInfo } from "@/hooks/users";
@@ -17,9 +17,6 @@ import AddModuleCard from "@/components/custom/dashboard/add-module-card";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api.js";
 import ModuleCard from "@/components/custom/dashboard/module-card.js";
-import { UserNotifications } from "@/components/custom/dashboard/user-notifications.js";
-import DeleteNotificationsDialog from "@/components/custom/dashboard/delete-notifications-dialog.js";
-import { ModeToggle } from "@/components/ui/mode-toggle.js";
 
 const filterConfig = [
   { key: "department", label: "Department" },
