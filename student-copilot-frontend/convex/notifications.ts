@@ -99,10 +99,10 @@ export const getGlobalNotifications = query({
 });
 
 export const markAsRead = mutation({
-  args: {
-    notificationId: v.id("notifications"),
-  },
+  args: { notificationIds: v.array(v.id("notifications")) },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.notificationId, { isRead: true });
+    for (const notificationId of args.notificationIds) {
+      await ctx.db.patch(notificationId, { isRead: true });
+    }
   },
 });
