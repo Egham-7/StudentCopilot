@@ -29,7 +29,7 @@ const NotificationsDropDownMenu = () => {
   };
 
   return (
-    <DropdownMenu onOpenChange={handleOpenChange}>
+    <DropdownMenu onOpenChange={handleOpenChange} dir="rtl">
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <BellIcon className="w-5 h-5" />
