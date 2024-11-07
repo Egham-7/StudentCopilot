@@ -42,7 +42,6 @@ export const getLecturesByModuleId = query({
       lectures.map(async (lecture) => {
         const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
 
-
         const imageUrl =
           lecture.image !== undefined
             ? await ctx.storage.getUrl(lecture.image)
@@ -245,7 +244,12 @@ export const store = mutation({
     description: v.optional(v.string()),
     moduleId: v.id("modules"),
     completed: v.boolean(),
-    fileType: v.union(v.literal("pdf"), v.literal("audio"), v.literal("video"), v.literal("website")),
+    fileType: v.union(
+      v.literal("pdf"),
+      v.literal("audio"),
+      v.literal("video"),
+      v.literal("website"),
+    ),
     image: v.optional(v.id("_storage")),
   },
 
@@ -288,6 +292,12 @@ export const store = mutation({
       message: `New lecture "${args.title}" has been added to the module`,
       type: "new_lecture",
       relatedId: lectureId,
+    });
+
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId: identity.subject,
+      type: "lecture_created",
+      lectureId,
     });
   },
 });
@@ -379,8 +389,6 @@ export const transcribeAudio = action({
     }
   },
 });
-
-
 
 export const fetchTranscription = internalAction({
   args: {

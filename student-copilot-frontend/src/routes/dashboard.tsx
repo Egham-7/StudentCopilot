@@ -17,6 +17,7 @@ import AddModuleCard from "@/components/custom/dashboard/add-module-card";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api.js";
 import ModuleCard from "@/components/custom/dashboard/module-card.js";
+import ActivityTracker from "@/components/custom/dashboard/activity-tracker.js";
 
 const filterConfig = [
   { key: "department", label: "Department" },
@@ -98,6 +99,8 @@ const DashboardPage: React.FC = () => {
             Track your modules and academic progress
           </p>
         </header>
+
+        <ActivityTracker />
 
         <Card className="overflow-hidden bg-card text-card-foreground">
           <CardContent className="p-6 sm:p-8">
