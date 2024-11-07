@@ -52,6 +52,7 @@ export const store = internalAction({
     ),
     moduleId: v.optional(v.id("modules")),
     lectureId: v.optional(v.id("lectures")),
+    noteId: v.optional(v.id("notes")),
     metadata: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -72,6 +73,7 @@ export const add = internalMutation({
     ),
     moduleId: v.optional(v.id("modules")),
     lectureId: v.optional(v.id("lectures")),
+    noteId: v.optional(v.id("notes")),
     metadata: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

@@ -160,6 +160,7 @@ export default defineSchema({
     count: v.number(),
     moduleId: v.optional(v.id("modules")),
     lectureId: v.optional(v.id("lectures")),
+    noteId: v.optional(v.id("notes")),
     metadata: v.optional(v.string()),
   })
     .index("by_userId", ["userId"])

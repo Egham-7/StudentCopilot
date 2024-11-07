@@ -21,7 +21,7 @@ const activityTypes = {
 export default function ActivityTracker() {
   const currentYear = new Date().getFullYear();
 
-  const activities: Doc<"activities">[] = useQuery(
+  const activities: Doc<"activities">[] | undefined = useQuery(
     api.activities.getYearlyActivity,
     {
       year: currentYear,
