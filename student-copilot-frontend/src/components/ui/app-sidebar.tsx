@@ -36,8 +36,8 @@ export function AppSidebar() {
   const { open, openMobile } = useSidebar();
 
   return (
-    <Sidebar className="border-r border-border/50 shadow-sm scrollbar-thin scrollbar-track-background scrollbar-thumb-accent hover:scrollbar-thumb-accent/8">
-      <SidebarContent className="flex flex-col h-full scrollbar-thin scrollbar-track-background scrollbar-thumb-accent hover:scrollbar-thumb-accent/8">
+    <Sidebar className="border-r border-border/50 shadow-sm scrollbar scrollbar-thin scrollbar-track-background scrollbar-thumb-accent hover:scrollbar-thumb-accent/8">
+      <SidebarContent className="flex flex-col h-full scrollbar scrollbar-thin scrollbar-track-background scrollbar-thumb-accent hover:scrollbar-thumb-accent/8">
         {/* Logo Section */}
         <SidebarGroup className="p-4 ">
           <Link to="/dashboard/home" className="flex items-center space-x-2">
