@@ -240,6 +240,12 @@ export const storeNotes = internalMutation({
       createdAt: new Date().toISOString(),
       isRead: false,
     });
+
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId: moduleUser.userId,
+      type: "note_created",
+      noteId,
+    });
   },
 });
 
@@ -252,7 +258,6 @@ async function processChunk(
     course: string;
   },
 ): Promise<string> {
-
   return exponentialBackoff(async () => {
     const prompt: string = `
     Your task is to:
@@ -280,11 +285,11 @@ async function processChunk(
     const llm = new ChatOpenAI({ model: "gpt-3.5-turbo", temperature: 0 }); // Make sure you have your OpenAI API key set up
     const simpleChain = RunnableSequence.from([
       async (input: {
-        question: string,
+        question: string;
         noteTakingStyle: string;
         learningStyle: string;
         levelOfStudy: string;
-        course: string,
+        course: string;
       }) => ({
         context: `This is some example context related to:
         Note-taking style: ${input.noteTakingStyle}
@@ -301,12 +306,11 @@ async function processChunk(
       noteTakingStyle: userInfo.noteTakingStyle,
       learningStyle: userInfo.learningStyle,
       levelOfStudy: userInfo.levelOfStudy,
-      course: userInfo.course
+      course: userInfo.course,
     });
 
     return result.content as string;
   });
-
 }
 
 export const getNotesForModule = query({

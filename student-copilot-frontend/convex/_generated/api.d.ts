@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as activities from "../activities.js";
 import type * as ai from "../ai.js";
 import type * as aiChats from "../aiChats.js";
 import type * as http from "../http.js";
@@ -38,6 +39,7 @@ import type * as websites_youtube from "../websites/youtube.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  activities: typeof activities;
   ai: typeof ai;
   aiChats: typeof aiChats;
   http: typeof http;
