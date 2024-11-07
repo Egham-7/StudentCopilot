@@ -8,7 +8,8 @@ import {
     internalAction,
 } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph } from "./aiAgent/noteAgent";
+import { graph,TNoteBlock, getImageLink } from "./aiAgent/noteAgent";
+
 import { exponentialBackoff } from "./utils";
 export const fetchAndProcessTranscriptions = internalAction({
   args: {
@@ -92,27 +93,36 @@ export const generateNotes = internalAction({
     } = args;
 
     // Process chunks in parallel
+    let noteArray: TNoteBlock[] = []; // Empty array of a custom type
 
+    const Link = await getImageLink("Cat");
+    console.log(Link);
+    
     const chunkPromises = transcriptionChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
         //Work11
-
-        
         const info = {
             chunk: chunk,
             noteTakingStyle: noteTakingStyle,
             learningStyle: learningStyle,
             levelOfStudy: levelOfStudy,
             course: course,
-            messages: []
+            arrNote:noteArray,
+            
         };
-
+        const GOOGLE_API_KEY = process.env.Google_API_KEY;
+        const CX = process.env.CX;
         const result = await graph.invoke(info) ;
+        noteArray.push(result);
         
-        console.log(result);
+        const finalres = JSON.stringify({
+          type: 'note',
+          blocks: result.note
+        });
+        
+        
 
-
-        const noteChunkBlob = new Blob([JSON.stringify(result)], { type: "application/json" })//"text/plain";
+        const noteChunkBlob = new Blob([finalres], { type: "application/json" })//"text/plain";
 
         const storageId = await ctx.storage.store(noteChunkBlob);
 
