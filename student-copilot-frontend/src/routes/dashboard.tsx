@@ -84,7 +84,7 @@ const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="bg-background p-4 sm:p-6 md:p-8">
+    <div className="bg-background overflow-x-hidden p-4 sm:p-6 md:p-10">
       <div className="mx-auto max-w-6xl space-y-6 sm:space-y-8">
         <header className="space-y-2 text-center sm:text-left">
           <div className="flex items-start justify-center text-center md:justify-start">
