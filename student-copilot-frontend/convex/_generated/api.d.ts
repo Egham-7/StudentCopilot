@@ -29,6 +29,7 @@ import type * as usageLimits from "../usageLimits.js";
 import type * as users from "../users.js";
 import type * as utils from "../utils.js";
 import type * as websites_html from "../websites/html.js";
+import type * as websites_youtube from "../websites/youtube.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -55,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   users: typeof users;
   utils: typeof utils;
   "websites/html": typeof websites_html;
+  "websites/youtube": typeof websites_youtube;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
