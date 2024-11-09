@@ -15,13 +15,47 @@ import { Textarea } from "@/components/ui/textarea";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Id } from "convex/_generated/dataModel";
 import AnimatedCircularProgressBar from "@/components/magicui/animated-circular-progress-bar";
-import { formSchema } from "@/lib/ui_utils";
 import * as z from "zod";
 import { useLectureUpload } from "@/hooks/use-lecture-upload";
 import { IconAsterisk, IconAsteriskSimple } from "@tabler/icons-react";
 import { useBackgroundUpload } from "@/hooks/use-background-lecture-upload";
 import { toast } from "@/components/ui/use-toast";
+import { createFormSchema } from "@/lib/ui_utils";
+import { useUser } from "@clerk/clerk-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { IconInfoCircle } from "@tabler/icons-react";
 
+
+const LoadingSkeleton = () => {
+  return (
+    <div className="space-y-8">
+      {/* Title Field Skeleton */}
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-16" /> {/* Label */}
+        <Skeleton className="h-10 w-full" /> {/* Input */}
+      </div>
+
+      {/* Description Field Skeleton */}
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-24" /> {/* Label */}
+        <Skeleton className="h-32 w-full" /> {/* Textarea */}
+      </div>
+
+      {/* File Upload Field Skeleton */}
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-12" /> {/* Label */}
+        <Skeleton className="h-10 w-full" /> {/* Input */}
+      </div>
+
+      {/* Buttons Skeleton */}
+      <div className="flex justify-between">
+        <Skeleton className="h-10 w-20" /> {/* Back button */}
+        <Skeleton className="h-10 w-32" /> {/* Upload button */}
+      </div>
+    </div>
+  );
+}
 
 interface LectureUploadFormProps {
   moduleId: Id<"modules">;
@@ -46,9 +80,10 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
   const { isLoading, uploadProgress, uploadLecture } = useLectureUpload();
   const { startBackgroundUpload } = useBackgroundUpload();
 
+  const { user, isLoaded } = useUser();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<ReturnType<typeof createFormSchema>>>({
+    resolver: zodResolver(createFormSchema(user)),
     defaultValues: {
       title: "",
       description: "",
@@ -58,7 +93,18 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
     },
   });
 
-  const handleBackgroundUpload = async (values: z.infer<typeof formSchema>) => {
+  if (!isLoaded) {
+    return (
+      <>
+        <DialogHeader>
+          <Skeleton className="h-8 w-48" />
+        </DialogHeader>
+        <LoadingSkeleton />
+      </>
+    );
+  }
+
+  const handleBackgroundUpload = async (values: z.infer<ReturnType<typeof createFormSchema>>) => {
     await startBackgroundUpload(values, moduleId, fileType);
 
     toast({
@@ -69,7 +115,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
     onComplete();
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<ReturnType<typeof createFormSchema>>) => {
     let success;
     if (values.type === "website") {
       success = await uploadLecture(values, moduleId, "website");
@@ -149,11 +195,32 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
               <FormField
                 control={form.control}
                 name="link"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem>
-                    <div className="flex gap-x-1">
+                    <div className="flex gap-x-1 items-center mb-2">
                       <FormLabel>Website Link</FormLabel>
                       <IconAsterisk className="w-3 h-3 text-destructive" />
+
+                      {fieldState.error && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <IconInfoCircle className="h-5 w-5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-[300px] text-start space-y-2">
+                              <p>Connect your Google account in a few simple steps:</p>
+                              <ol className="list-decimal ml-4 mt-1">
+                                <li>Click on your your profile picture in the sidebar</li>
+                                <li>Select "Manage Account"</li>
+                                <li>Navigate to "Social Accounts"</li>
+                                <li>Click "Connect Google"</li>
+                                <li>Follow Google's sign-in process</li>
+                              </ol>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+
                     </div>
                     <FormControl>
                       <Input
