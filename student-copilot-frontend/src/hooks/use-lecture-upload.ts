@@ -5,12 +5,15 @@ import { api } from '../../convex/_generated/api';
 import { Id } from 'convex/_generated/dataModel';
 import pdfToText from 'react-pdftotext';
 import * as z from 'zod';
-import { formSchema } from '@/lib/ui_utils';
 import useAudioExtractor from './use-audio-extractor';
 import { useWebsiteUploaders } from './use-website-uploaders';
 import { chunkAndProcess, UploadProgressSetter } from '@/lib/lecture-upload-utils';
-const PDF_CHUNK_SIZE = 500; // 500 words
 
+
+import { createFormSchema } from '@/lib/ui_utils';
+
+
+const PDF_CHUNK_SIZE = 500; // 500 words
 
 export const useLectureUpload = () => {
   const { toast } = useToast();
@@ -71,7 +74,7 @@ export const useLectureUpload = () => {
 
   const handlePdfUpload = async (
     file: File,
-    values: z.infer<typeof formSchema>,
+    values: z.infer<ReturnType<typeof createFormSchema>>,
     moduleId: Id<"modules">,
     setUploadProgress: UploadProgressSetter
   ): Promise<void> => {
@@ -141,7 +144,7 @@ export const useLectureUpload = () => {
 
   const handleAudioUpload = async (
     file: File,
-    values: z.infer<typeof formSchema>,
+    values: z.infer<ReturnType<typeof createFormSchema>>,
     moduleId: Id<"modules">,
     setUploadProgress: UploadProgressSetter
   ): Promise<void> => {
@@ -165,7 +168,7 @@ export const useLectureUpload = () => {
 
   const handleVideoUpload = async (
     file: File,
-    values: z.infer<typeof formSchema>,
+    values: z.infer<ReturnType<typeof createFormSchema>>,
     moduleId: Id<"modules">,
     setUploadProgress: UploadProgressSetter
   ) => {
@@ -195,7 +198,7 @@ export const useLectureUpload = () => {
   };
 
   const uploadLecture = async (
-    values: z.infer<typeof formSchema>,
+    values: z.infer<ReturnType<typeof createFormSchema>>,
     moduleId: Id<"modules">,
     fileType: 'pdf' | 'audio' | 'video' | 'website'
   ) => {
@@ -226,7 +229,7 @@ export const useLectureUpload = () => {
   };
 
   const handleWebsiteUpload = async (
-    values: z.infer<typeof formSchema>,
+    values: z.infer<ReturnType<typeof createFormSchema>>,
     moduleId: Id<"modules">
   ): Promise<boolean> => {
 
@@ -248,7 +251,7 @@ export const useLectureUpload = () => {
 
 
   const handleFileUpload = async (
-    values: z.infer<typeof formSchema> & { type: 'file', file: File },
+    values: z.infer<ReturnType<typeof createFormSchema>> & { type: 'file', file: File },
     moduleId: Id<"modules">,
     fileType: 'pdf' | 'audio' | 'video'
   ): Promise<boolean> => {
