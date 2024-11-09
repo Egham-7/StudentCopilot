@@ -69,7 +69,8 @@ const fileSchema = baseSchema.extend({
 });
 
 // Website link schema
-const createWebsiteSchema = (user: UserResource | null | undefined) => baseSchema.extend({
+
+export const createWebsiteSchema = (user: UserResource | null | undefined) => baseSchema.extend({
   link: z.string()
     .url("Invalid URL")
     .refine((url) => {
@@ -81,7 +82,9 @@ const createWebsiteSchema = (user: UserResource | null | undefined) => baseSchem
         return isGoogleAccountConnected;
       }
       return true;
-    }, "You must connect your Google account to upload YouTube videos"),
+    }, {
+      message: "You must connect your Google account to upload YouTube videos",
+    }),
 });
 
 export const createFormSchema = (user: UserResource | null | undefined) => z.discriminatedUnion('type', [

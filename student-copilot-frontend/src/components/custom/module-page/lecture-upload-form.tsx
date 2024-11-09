@@ -23,6 +23,9 @@ import { toast } from "@/components/ui/use-toast";
 import { createFormSchema } from "@/lib/ui_utils";
 import { useUser } from "@clerk/clerk-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { IconInfoCircle } from "@tabler/icons-react";
+
 
 const LoadingSkeleton = () => {
   return (
@@ -192,11 +195,32 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
               <FormField
                 control={form.control}
                 name="link"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem>
-                    <div className="flex gap-x-1">
+                    <div className="flex gap-x-1 items-center mb-2">
                       <FormLabel>Website Link</FormLabel>
                       <IconAsterisk className="w-3 h-3 text-destructive" />
+
+                      {fieldState.error && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <IconInfoCircle className="h-5 w-5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-[300px] text-start space-y-2">
+                              <p>Connect your Google account in a few simple steps:</p>
+                              <ol className="list-decimal ml-4 mt-1">
+                                <li>Click on your your profile picture in the sidebar</li>
+                                <li>Select "Manage Account"</li>
+                                <li>Navigate to "Social Accounts"</li>
+                                <li>Click "Connect Google"</li>
+                                <li>Follow Google's sign-in process</li>
+                              </ol>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+
                     </div>
                     <FormControl>
                       <Input
