@@ -26,6 +26,7 @@ export const useWebsiteUploaders = () => {
   const getWebsiteText = useAction(api.websites.html.getWebsiteTranscription);
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
   const generateUploadUrl = useMutation(api.uploads.generateUploadUrl);
+  const getYoutubeVideoTranscription = useAction(api.websites.youtube.getYoutubeTranscript);
 
   const uploaders = useMemo(() => {
     const uploadFile = async (file: File) => {
@@ -126,13 +127,25 @@ export const useWebsiteUploaders = () => {
       },
     });
 
+    const isYoutubeUrl = (url: string): boolean => {
+      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
+      return youtubeRegex.test(url);
+    }
+
     return [
+
+      createUploader(
+        (url: string): boolean => isYoutubeUrl(url),
+        (link: string) => getYoutubeVideoTranscription({ videoUrl: link })
+
+      ),
+
       createUploader(
         () => true,
         (link) => getWebsiteText({ link }),
       ),
     ];
-  }, [getWebsiteText, storeLecture, generateUploadUrl, getEmbedding]);
+  }, [getWebsiteText, storeLecture, generateUploadUrl, getEmbedding, getYoutubeVideoTranscription]);
 
   const getUploader = (url: string): WebsiteUploader =>
     uploaders.find((uploader) => uploader.canHandle(url)) ||
