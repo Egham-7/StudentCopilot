@@ -15,13 +15,44 @@ import { Textarea } from "@/components/ui/textarea";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Id } from "convex/_generated/dataModel";
 import AnimatedCircularProgressBar from "@/components/magicui/animated-circular-progress-bar";
-import { formSchema } from "@/lib/ui_utils";
 import * as z from "zod";
 import { useLectureUpload } from "@/hooks/use-lecture-upload";
 import { IconAsterisk, IconAsteriskSimple } from "@tabler/icons-react";
 import { useBackgroundUpload } from "@/hooks/use-background-lecture-upload";
 import { toast } from "@/components/ui/use-toast";
+import { createFormSchema } from "@/lib/ui_utils";
+import { useUser } from "@clerk/clerk-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
+const LoadingSkeleton = () => {
+  return (
+    <div className="space-y-8">
+      {/* Title Field Skeleton */}
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-16" /> {/* Label */}
+        <Skeleton className="h-10 w-full" /> {/* Input */}
+      </div>
+
+      {/* Description Field Skeleton */}
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-24" /> {/* Label */}
+        <Skeleton className="h-32 w-full" /> {/* Textarea */}
+      </div>
+
+      {/* File Upload Field Skeleton */}
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-12" /> {/* Label */}
+        <Skeleton className="h-10 w-full" /> {/* Input */}
+      </div>
+
+      {/* Buttons Skeleton */}
+      <div className="flex justify-between">
+        <Skeleton className="h-10 w-20" /> {/* Back button */}
+        <Skeleton className="h-10 w-32" /> {/* Upload button */}
+      </div>
+    </div>
+  );
+}
 
 interface LectureUploadFormProps {
   moduleId: Id<"modules">;
@@ -46,9 +77,10 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
   const { isLoading, uploadProgress, uploadLecture } = useLectureUpload();
   const { startBackgroundUpload } = useBackgroundUpload();
 
+  const { user, isLoaded } = useUser();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<ReturnType<typeof createFormSchema>>>({
+    resolver: zodResolver(createFormSchema(user)),
     defaultValues: {
       title: "",
       description: "",
@@ -58,7 +90,18 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
     },
   });
 
-  const handleBackgroundUpload = async (values: z.infer<typeof formSchema>) => {
+  if (!isLoaded) {
+    return (
+      <>
+        <DialogHeader>
+          <Skeleton className="h-8 w-48" />
+        </DialogHeader>
+        <LoadingSkeleton />
+      </>
+    );
+  }
+
+  const handleBackgroundUpload = async (values: z.infer<ReturnType<typeof createFormSchema>>) => {
     await startBackgroundUpload(values, moduleId, fileType);
 
     toast({
@@ -69,7 +112,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
     onComplete();
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<ReturnType<typeof createFormSchema>>) => {
     let success;
     if (values.type === "website") {
       success = await uploadLecture(values, moduleId, "website");

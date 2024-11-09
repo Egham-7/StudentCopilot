@@ -8,7 +8,7 @@ export default function DashboardLayout() {
     <Authenticated>
       <SidebarProvider>
         <AppSidebar />
-        <main className="max-h-full max-w-full">
+        <main className="h-full w-full">
           <SidebarTrigger className="fixed" />
           <Outlet />
         </main>
