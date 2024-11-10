@@ -7,7 +7,8 @@ async function main() {
 
   const youtubeTranscriptApi = new YouTubeTranscriptExtractor();
 
-  console.log(await youtubeTranscriptApi.retrieveTranscript("_594mPXoHMI&t=6s"));
+  console.log(await youtubeTranscriptApi.retrieveTranscript("VzQgr-TgBzc&ab_"));
+
 
 
 }

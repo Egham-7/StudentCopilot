@@ -1,9 +1,10 @@
 import axios from 'axios';
+import { CaptionTrack, TranscriptResponse } from './types';
 
 export class YouTubeTranscriptExtractor {
   private static readonly YT_INITIAL_PLAYER_RESPONSE_RE = /ytInitialPlayerResponse\s*=\s*({.+?})\s*;\s*(?:var\s+(?:meta|head)|<\/script|\n)/;
 
-  public async retrieveTranscript(videoId: string) {
+  public async retrieveTranscript(videoId: string): Promise<TranscriptResponse | undefined> {
     try {
       const response = await axios.get(`https://www.youtube.com/watch?v=${videoId}`);
       const body = response.data;
@@ -15,10 +16,10 @@ export class YouTubeTranscriptExtractor {
 
       const player = JSON.parse(playerResponse[1]);
       const metadata = {
-        title: player.videoDetails.title,
-        duration: player.videoDetails.lengthSeconds,
-        author: player.videoDetails.author,
-        views: player.videoDetails.viewCount,
+        title: player.videoDetails?.title,
+        duration: player.videoDetails?.lengthSeconds,
+        author: player.videoDetails?.author,
+        views: player.videoDetails?.viewCount,
       };
 
       // Get and sort tracks by priority
@@ -57,7 +58,8 @@ export class YouTubeTranscriptExtractor {
     }
   }
 
-  private compareTracks(track1: any, track2: any): number {
+  private compareTracks(track1: CaptionTrack, track2: CaptionTrack): number {
+
     const langCode1 = track1.languageCode;
     const langCode2 = track2.languageCode;
 

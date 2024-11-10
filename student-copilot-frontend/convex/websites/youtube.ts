@@ -2,16 +2,7 @@
 
 import { action } from "../_generated/server";
 import { v } from "convex/values";
-import { createClerkClient } from '@clerk/backend';
-
-interface CaptionItem {
-  id: string;
-  snippet: {
-    language?: string;
-    trackKind?: string;
-  };
-}
-
+import { YouTubeTranscriptExtractor } from 'youtube-transcript-fetcher';
 
 export const getYoutubeTranscript = action({
   args: {
@@ -30,6 +21,21 @@ export const getYoutubeTranscript = action({
     }
 
     try {
+
+      const ytExtractor = new YouTubeTranscriptExtractor();
+
+
+      const response = await ytExtractor.retrieveTranscript(videoId);
+
+
+      if (!response) {
+        throw new Error("Video not found.");
+      }
+
+
+      if (!response.transcript) {
+        throw new Error("Transcript not found for this video.");
+      }
 
 
     } catch (error: unknown) {
