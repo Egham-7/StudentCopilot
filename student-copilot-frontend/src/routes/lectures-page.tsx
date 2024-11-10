@@ -25,9 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import LecturePlayer from "@/components/custom/module-page/lecture-player";
-import SearchBar from "@/components/custom/module-page/search-bar";
-import { SearchResults } from "@/lib/ui_utils";
 import UploadLectureDialog from "@/components/custom/module-page/upload-lecture-dialog";
+import { LectureSearchBar } from "@/components/custom/module-page/lecture-search-bar";
 
 export default function LecturesPage() {
   const { moduleId } = useParams();
@@ -46,14 +45,14 @@ export default function LecturesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const lecturesPerPage = 6;
 
-  const [searchResults, setSearchResults] = useState<SearchResults | null>(
+  const [searchResults, setSearchResults] = useState<Id<"lectures">[] | null>(
     null,
   );
 
   const filteredLectures = useMemo(() => {
-    if (searchResults && searchResults.lectures.length > 0) {
+    if (searchResults && searchResults.length > 0) {
       return lectures.filter((lecture) =>
-        searchResults.lectures.includes(lecture._id),
+        searchResults.includes(lecture._id),
       );
     }
     return lectures;
@@ -72,11 +71,9 @@ export default function LecturesPage() {
   const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
 
   const handleSearchResults = useCallback(
-    (type: "lectures" | "notes", results: SearchResults) => {
-      if (type === "lectures") {
-        setSearchResults(results);
-        setCurrentPage(1); // Reset to first page when search results change
-      }
+    (results: Id<"lectures">[]) => {
+      setSearchResults(results);
+      setCurrentPage(1); // Reset to first page when search results change
     },
     [],
   );
@@ -123,11 +120,10 @@ export default function LecturesPage() {
           </p>
         </div>
 
-        <SearchBar
-          type="lectures"
+        <LectureSearchBar
           moduleId={moduleId as Id<"modules">}
           onSearchResults={(results) =>
-            handleSearchResults("lectures", results)
+            handleSearchResults(results)
           }
         />
 
