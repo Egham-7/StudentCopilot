@@ -1,6 +1,6 @@
 {
   "name": "youtube-transcript-fetcher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A package to fetch and parse YouTube video transcripts",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
