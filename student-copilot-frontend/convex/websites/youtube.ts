@@ -2,7 +2,6 @@
 
 import { action } from "../_generated/server";
 import { v } from "convex/values";
-import { YouTubeTranscriptExtractor } from 'youtube-transcript-fetcher';
 
 export const getYoutubeTranscript = action({
   args: {
@@ -14,37 +13,37 @@ export const getYoutubeTranscript = action({
       throw new Error("Not authenticated to access this endpoint.");
     }
 
-    const videoId = extractVideoId(args.videoUrl);
-
-    if (!videoId) {
-      throw new Error('Invalid YouTube URL');
-    }
-
-    console.log("Video Id: ", videoId);
-
     try {
 
-      const ytExtractor = new YouTubeTranscriptExtractor();
+      const videoId = extractVideoId(args.videoUrl);
 
-
-      const response = await ytExtractor.retrieveTranscript(videoId);
-
-
-      if (!response) {
-        throw new Error("Video not found.");
+      if (!videoId) {
+        throw new Error('Invalid YouTube URL');
       }
 
 
-      if (!response.transcript) {
-        throw new Error("Transcript not found for this video.");
+      console.log("Video Id: ", videoId);
+
+      const url = `${process.env.API_URL}/youtube/Transcription/${videoId}?userId=${identity.subject}`
+
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'GET'
+      })
+
+      if (!response.ok) {
+
+        const errorResponse = await response.json();
+
+        throw new Error(`Failed to fetch transcription ${errorResponse.message}`)
       }
 
 
+      const data = await response.json();
 
-      return response.transcript.reduce((acc, segment) => {
-        return acc + segment.text;
-      }, '');
-
+      return data.text;
 
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -53,16 +52,9 @@ export const getYoutubeTranscript = action({
       }
       throw error;
     }
+
   }
 });
-
-
-
-
-
-
-
-
 
 
 
