@@ -39,7 +39,7 @@ export const getYoutubeTranscript = action({
 
       console.log("Session Token: ", sessionToken);
 
-      const url = `${process.env.API_URL}/api/youtube/Transcript/${videoId}?userId=${identity.tokenIdentifier}`;
+      const url = `${process.env.API_URL}/api/youtube/Transcript/${videoId}?userId=${identity.subject}`;
 
       const response = await fetch(url, {
         headers: {
