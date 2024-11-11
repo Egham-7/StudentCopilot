@@ -12,7 +12,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IYouTubeTranscriptService, YouTubeTranscriptService>();
-
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(x =>
@@ -40,15 +40,24 @@ builder.Services.AddClerkApiClient(config =>
   config.SecretKey = builder.Configuration["Clerk:SecretKey"]!;
 });
 
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-  serverOptions.ListenAnyIP(int.Parse(builder.Configuration["PORT"]!));
-});
-
 builder.Services.AddHttpsRedirection(options =>
 {
   options.HttpsPort = 443;
 });
+
+builder.Services.AddCors(options =>
+{
+  options.AddPolicy("MyAllowedOrigins",
+      policy =>
+      {
+        policy.WithOrigins(
+              "https://grandiose-caiman-959.convex.cloud"
+          )
+          .AllowAnyHeader()
+          .AllowAnyMethod();
+      });
+});
+
 
 var app = builder.Build();
 
