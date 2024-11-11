@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("7f5efa5b-17cb-49fe-8180-304f53dc882f")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("StudentCopilotApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+77fd6e626a7da5333109f329f7c433922b7edc64")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8bff53fbf4b8848b28bed0557d8fa42364832c7b")]
 [assembly: System.Reflection.AssemblyProductAttribute("StudentCopilotApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("StudentCopilotApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -4,7 +4,6 @@ using StudentCopilotApi.youtube.Services;
 
 namespace StudentCopilotApi.youtube.Controllers
 {
-
   [ApiController]
   [Route("api/youtube/[controller]")]
   public class TranscriptController : ControllerBase
@@ -17,7 +16,7 @@ namespace StudentCopilotApi.youtube.Controllers
     }
 
     [HttpGet("{videoId}")]
-    public async Task<ActionResult<TranscriptResponse>> GetTranscript(string videoId, string userId)
+    public async Task<ActionResult<TranscriptResponse>> GetTranscript(string videoId, [FromQuery] string userId)
     {
       try
       {
@@ -31,3 +30,4 @@ namespace StudentCopilotApi.youtube.Controllers
     }
   }
 }
+
