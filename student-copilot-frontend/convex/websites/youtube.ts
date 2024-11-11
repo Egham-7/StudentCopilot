@@ -8,7 +8,7 @@ export const getYoutubeTranscript = action({
   args: {
     videoUrl: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated to access this endpoint.");
@@ -19,6 +19,8 @@ export const getYoutubeTranscript = action({
     if (!videoId) {
       throw new Error('Invalid YouTube URL');
     }
+
+    console.log("Video Id: ", videoId);
 
     try {
 
@@ -38,6 +40,12 @@ export const getYoutubeTranscript = action({
       }
 
 
+
+      return response.transcript.reduce((acc, segment) => {
+        return acc + segment.text;
+      }, '');
+
+
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.log("Caught Error:", error.message);
@@ -48,18 +56,19 @@ export const getYoutubeTranscript = action({
   }
 });
 
+
+
+
+
+
+
+
+
+
+
+
 function extractVideoId(url: string): string | null {
-  const patterns = [
-    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/,
-    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/,
-    /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?]+)/
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-
-  return null;
+  const videoIdRegex = /v=([\w-]+&\w+_)/;
+  const match = url.match(videoIdRegex);
+  return match ? match[1] : null;
 }
-

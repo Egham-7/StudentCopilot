@@ -1,0 +1,6 @@
+@StudentCopilotApi_HostAddress = http://localhost:5182
+
+GET {{StudentCopilotApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

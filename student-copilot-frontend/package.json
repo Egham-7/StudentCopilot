@@ -71,7 +71,7 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^10.0.0",
     "vaul": "^1.1.0",
-    "youtube-transcript-fetcher": "^1.0.1",
+    "youtube-transcript-fetcher": "^1.0.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
