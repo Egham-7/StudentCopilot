@@ -16,7 +16,7 @@ namespace StudentCopilotApi.youtube.Services
     private readonly HttpClient _httpClient;
     private readonly ClerkApiClient _clerkClient;
     private readonly ILogger<YouTubeTranscriptService> _logger;
-    private const string GoogleOAuthProvider = "oauth_google";
+    private const string GoogleOAuthProvider = "google";
     private readonly string[] SupportedLanguages = new[] { "en", "en-US" };
 
     public YouTubeTranscriptService(
