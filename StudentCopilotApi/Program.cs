@@ -6,23 +6,26 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configuration setup
+builder.Configuration.AddEnvironmentVariables();
+
+// Core services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddLogging();
+
+// HTTP and API services
 builder.Services.AddHttpClient();
-
-
 builder.Services.AddClerkApiClient(config =>
 {
   config.SecretKey = builder.Configuration["Clerk:SecretKey"]!;
 });
 
-builder.Services.AddScoped<IYouTubeTranscriptService, YouTubeTranscriptService>();
-builder.Configuration.AddEnvironmentVariables();
+// Register application services
+builder.Services.AddTransient<IYouTubeTranscriptService, YouTubeTranscriptService>();
 
-
-
+// Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(x =>
     {
@@ -37,8 +40,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       };
     });
 
-
-
+// CORS configuration
 builder.Services.AddCors(options =>
 {
   options.AddPolicy("MyAllowedOrigins",
@@ -53,6 +55,7 @@ builder.Services.AddCors(options =>
       });
 });
 
+// Health checks
 builder.Services.AddHealthChecks()
     .AddCheck("Configuration", () =>
     {
@@ -65,24 +68,24 @@ builder.Services.AddHealthChecks()
           : HealthCheckResult.Unhealthy("Missing configuration");
     });
 
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Development specific configuration
 if (app.Environment.IsDevelopment())
 {
   app.UseSwagger();
   app.UseSwaggerUI();
 }
 
+// Logging configuration status
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-
 logger.LogInformation("Configuration Status:");
 logger.LogInformation("Clerk Authority: {Authority}", builder.Configuration["Clerk:Authority"] ?? "NOT SET");
 logger.LogInformation("Clerk Secret Key: {HasSecret}", !string.IsNullOrEmpty(builder.Configuration["Clerk:SecretKey"]));
 logger.LogInformation("Clerk Authorized Party: {HasParty}", !string.IsNullOrEmpty(builder.Configuration["Clerk:AuthorizedParty"]));
 
-
+// Middleware pipeline
+app.UseCors("MyAllowedOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
