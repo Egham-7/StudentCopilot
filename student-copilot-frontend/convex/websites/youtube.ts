@@ -29,6 +29,7 @@ export const getYoutubeTranscript = action({
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${identity.tokenIdentifier}`
         },
         method: 'GET'
       })
@@ -47,7 +48,7 @@ export const getYoutubeTranscript = action({
 
     } catch (error: unknown) {
       if (error instanceof Error) {
-        console.log("Caught Error:", error.message);
+        console.log("Caught Error:", error);
         throw new Error(`Failed to upload youtube video: ${error.message}`);
       }
       throw error;
@@ -57,10 +58,19 @@ export const getYoutubeTranscript = action({
 });
 
 
-
-
 function extractVideoId(url: string): string | null {
-  const videoIdRegex = /v=([\w-]+&\w+_)/;
-  const match = url.match(videoIdRegex);
-  return match ? match[1] : null;
+  // Handle various YouTube URL formats
+  const patterns = [
+    /(?:v=|\/)([\w-]{11})(?:\?|&|$)/,  // Standard YouTube URL
+    /(?:youtu\.be\/)([\w-]{11})(?:\?|&|$)/, // Short YouTube URL
+    /(?:embed\/)([\w-]{11})(?:\?|&|$)/, // Embed URL
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+
+  return null;
 }
+

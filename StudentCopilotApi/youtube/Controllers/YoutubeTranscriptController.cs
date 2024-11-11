@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using StudentCopilotApi.youtube.Models;
 using StudentCopilotApi.youtube.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace StudentCopilotApi.youtube.Controllers
 {
   [ApiController]
   [Route("api/youtube/[controller]")]
+  [Authorize]
   public class TranscriptController : ControllerBase
   {
     private readonly YouTubeTranscriptService _transcriptService;
