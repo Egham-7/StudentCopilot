@@ -10,9 +10,9 @@ namespace StudentCopilotApi.youtube.Controllers
   [Authorize]
   public class TranscriptController : ControllerBase
   {
-    private readonly YouTubeTranscriptService _transcriptService;
+    private readonly IYouTubeTranscriptService _transcriptService;
 
-    public TranscriptController(YouTubeTranscriptService transcriptService)
+    public TranscriptController(IYouTubeTranscriptService transcriptService)
     {
       _transcriptService = transcriptService;
     }
