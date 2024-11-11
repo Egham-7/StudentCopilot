@@ -3,6 +3,7 @@ using Clerk.Net.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +59,19 @@ builder.Services.AddCors(options =>
       });
 });
 
+builder.Services.AddHealthChecks()
+    .AddCheck("Configuration", () =>
+    {
+      var configValid = !string.IsNullOrEmpty(builder.Configuration["Clerk:Authority"]) &&
+                       !string.IsNullOrEmpty(builder.Configuration["Clerk:SecretKey"]) &&
+                       !string.IsNullOrEmpty(builder.Configuration["Clerk:AuthorizedParty"]);
+
+      return configValid
+          ? HealthCheckResult.Healthy("Configuration loaded")
+          : HealthCheckResult.Unhealthy("Missing configuration");
+    });
+
+
 
 var app = builder.Build();
 
@@ -72,6 +86,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 

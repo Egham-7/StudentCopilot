@@ -2,11 +2,15 @@
 
 import { action } from "../_generated/server";
 import { v } from "convex/values";
+import { createClerkClient } from '@clerk/backend'
+
+const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
 
 export const getYoutubeTranscript = action({
   args: {
-    videoUrl: v.string(),
+    videoUrl: v.string()
   },
+
   handler: async (ctx, args): Promise<string> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -14,42 +18,46 @@ export const getYoutubeTranscript = action({
     }
 
     try {
-
       const videoId = extractVideoId(args.videoUrl);
-
       if (!videoId) {
         throw new Error('Invalid YouTube URL');
       }
 
+      console.log("Subject: ", identity.subject);
 
-      console.log("Video Id: ", videoId);
+      // Get user's active sessions
+      const sessions = await clerkClient.sessions.getSessionList({
+        userId: identity.subject,
+        status: 'active'
+      });
 
-      const url = `${process.env.API_URL}/youtube/Transcription/${videoId}?userId=${identity.subject}`
+      if (!sessions.data.length) {
+        throw new Error('No active session found');
+      }
+
+      const sessionToken = await clerkClient.sessions.getToken(sessions.data[0].id, "convex");
+
+      console.log("Session Token: ", sessionToken);
+
+      const url = `${process.env.API_URL}/api/youtube/Transcript/${videoId}?userId=${identity.tokenIdentifier}`;
 
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${identity.tokenIdentifier}`
+          'Authorization': `Bearer ${sessionToken.jwt}`
         },
-        method: 'GET'
-      })
+        method: 'GET',
+        redirect: 'follow'
+      });
 
       if (!response.ok) {
-
         const errorResponse = await response.text();
-
         console.log("Error Response: ", errorResponse);
-
-        throw new Error(`Failed to fetch transcription ${errorResponse}`)
+        throw new Error(`Failed to fetch transcription ${errorResponse}`);
       }
 
-
       const data = await response.json();
-
-      console.log("Data: ", data);
-
       return data.text;
-
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.log("Caught Error:", error);
@@ -57,7 +65,6 @@ export const getYoutubeTranscript = action({
       }
       throw error;
     }
-
   }
 });
 

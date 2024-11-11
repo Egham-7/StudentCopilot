@@ -20,6 +20,7 @@ namespace StudentCopilotApi.youtube.Controllers
     [HttpGet("{videoId}")]
     public async Task<ActionResult<TranscriptResponse>> GetTranscript(string videoId, [FromQuery] string userId)
     {
+
       try
       {
         var transcript = await _transcriptService.GetTranscriptAsync(videoId, userId);
