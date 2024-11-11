@@ -31,21 +31,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 
-
-
 builder.Services.AddClerkApiClient(config =>
 {
   config.SecretKey = builder.Configuration["Clerk:SecretKey"]!;
 });
-
-
-
-builder.Services.AddHttpsRedirection(options =>
-{
-  options.HttpsPort = builder.Configuration.GetValue<int>("HTTPS_PORT", 443);
-  options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
-});
-
 
 
 builder.Services.AddCors(options =>
@@ -75,9 +64,6 @@ builder.Services.AddHealthChecks()
     });
 
 
-
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -95,7 +81,6 @@ logger.LogInformation("Clerk Secret Key: {HasSecret}", !string.IsNullOrEmpty(bui
 logger.LogInformation("Clerk Authorized Party: {HasParty}", !string.IsNullOrEmpty(builder.Configuration["Clerk:AuthorizedParty"]));
 
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
