@@ -2,7 +2,6 @@ using StudentCopilotApi.youtube.Services;
 using Clerk.Net.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +15,7 @@ builder.Services.AddScoped<IYouTubeTranscriptService, YouTubeTranscriptService>(
 builder.Configuration.AddEnvironmentVariables();
 
 
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(x =>
     {
@@ -23,22 +23,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       x.TokenValidationParameters = new TokenValidationParameters()
       {
         ValidateAudience = true,
-        ValidAudience = "convex",  // Match your "aud" claim
-        NameClaimType = "name",    // Map to the name claim
+        ValidAudience = "convex",
+        NameClaimType = "name",
         ValidateIssuer = true,
         ValidIssuer = builder.Configuration["Clerk:Authority"]
       };
-      x.Events = new JwtBearerEvents()
-      {
-        OnTokenValidated = context =>
-        {
-          var azp = context.Principal?.FindFirstValue("azp");
-          if (string.IsNullOrEmpty(azp) || !azp.Equals(builder.Configuration["Clerk:AuthorizedParty"]))
-            context.Fail("AZP Claim is invalid or missing");
-          return Task.CompletedTask;
-        }
-      };
     });
+
+
 
 
 builder.Services.AddClerkApiClient(config =>
