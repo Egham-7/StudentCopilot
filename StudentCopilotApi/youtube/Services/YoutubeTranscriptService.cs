@@ -77,7 +77,8 @@ namespace StudentCopilotApi.youtube.Services
     {
         YouTubeService.Scope.YoutubeForceSsl,
         YouTubeService.Scope.Youtube,
-        YouTubeService.Scope.YoutubeReadonly
+        YouTubeService.Scope.YoutubeReadonly,
+        YouTubeService.Scope.Youtubepartner
     };
       return new YouTubeService(new BaseClientService.Initializer
       {

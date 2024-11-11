@@ -50,9 +50,9 @@ export const getYoutubeTranscript = action({
       });
 
       if (!response.ok) {
-        const errorResponse = await response.text();
+        const errorResponse = await response.json();
         console.log("Error Response: ", errorResponse);
-        throw new Error(`Failed to fetch transcription ${errorResponse}`);
+        throw new Error(`Failed to fetch transcription ${errorResponse.error}`);
       }
 
       const data = await response.json();
