@@ -42,7 +42,12 @@ builder.Services.AddClerkApiClient(config =>
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-  serverOptions.ListenAnyIP(int.Parse(builder.Configuration["PORT"] ?? "8080"));
+  serverOptions.ListenAnyIP(int.Parse(builder.Configuration["PORT"]!));
+});
+
+builder.Services.AddHttpsRedirection(options =>
+{
+  options.HttpsPort = 443;
 });
 
 var app = builder.Build();
