@@ -11,6 +11,13 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
+
+
+builder.Services.AddClerkApiClient(config =>
+{
+  config.SecretKey = builder.Configuration["Clerk:SecretKey"]!;
+});
+
 builder.Services.AddScoped<IYouTubeTranscriptService, YouTubeTranscriptService>();
 builder.Configuration.AddEnvironmentVariables();
 
@@ -30,11 +37,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
       };
     });
 
-
-builder.Services.AddClerkApiClient(config =>
-{
-  config.SecretKey = builder.Configuration["Clerk:SecretKey"]!;
-});
 
 
 builder.Services.AddCors(options =>
