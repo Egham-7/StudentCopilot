@@ -38,10 +38,15 @@ builder.Services.AddClerkApiClient(config =>
   config.SecretKey = builder.Configuration["Clerk:SecretKey"]!;
 });
 
+
+
 builder.Services.AddHttpsRedirection(options =>
 {
-  options.HttpsPort = 443;
+  options.HttpsPort = builder.Configuration.GetValue<int>("HTTPS_PORT", 443);
+  options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
 });
+
+
 
 builder.Services.AddCors(options =>
 {
@@ -49,7 +54,8 @@ builder.Services.AddCors(options =>
       policy =>
       {
         policy.WithOrigins(
-              "https://grandiose-caiman-959.convex.cloud"
+              "https://grandiose-caiman-959.convex.cloud",
+              "http://grandiose-caiman-959.convex.cloud"
           )
           .AllowAnyHeader()
           .AllowAnyMethod();
