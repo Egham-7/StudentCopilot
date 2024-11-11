@@ -15,14 +15,18 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<IYouTubeTranscriptService, YouTubeTranscriptService>();
 builder.Configuration.AddEnvironmentVariables();
 
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(x =>
     {
       x.Authority = builder.Configuration["Clerk:Authority"];
       x.TokenValidationParameters = new TokenValidationParameters()
       {
-        ValidateAudience = false,
-        NameClaimType = ClaimTypes.NameIdentifier
+        ValidateAudience = true,
+        ValidAudience = "convex",  // Match your "aud" claim
+        NameClaimType = "name",    // Map to the name claim
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["Clerk:Authority"]
       };
       x.Events = new JwtBearerEvents()
       {
@@ -35,6 +39,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         }
       };
     });
+
 
 builder.Services.AddClerkApiClient(config =>
 {
