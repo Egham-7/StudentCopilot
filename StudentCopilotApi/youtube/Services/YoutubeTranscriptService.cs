@@ -72,9 +72,16 @@ namespace StudentCopilotApi.youtube.Services
 
     private YouTubeService CreateYouTubeService(GoogleCredential credential)
     {
+
+      var scopes = new[]
+    {
+        YouTubeService.Scope.YoutubeForceSsl,
+        YouTubeService.Scope.Youtube,
+        YouTubeService.Scope.YoutubeReadonly
+    };
       return new YouTubeService(new BaseClientService.Initializer
       {
-        HttpClientInitializer = credential,
+        HttpClientInitializer = credential.CreateScoped(scopes),
         ApplicationName = "YouTubeTranscriptService"
       });
     }

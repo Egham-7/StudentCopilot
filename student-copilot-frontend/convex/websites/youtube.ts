@@ -47,7 +47,6 @@ export const getYoutubeTranscript = action({
           'Authorization': `Bearer ${sessionToken.jwt}`
         },
         method: 'GET',
-        redirect: 'follow'
       });
 
       if (!response.ok) {
