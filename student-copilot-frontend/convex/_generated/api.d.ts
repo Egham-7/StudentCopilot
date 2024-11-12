@@ -16,6 +16,7 @@ import type {
 import type * as activities from "../activities.js";
 import type * as ai from "../ai.js";
 import type * as aiChats from "../aiChats.js";
+import type * as flashcards from "../flashcards.js";
 import type * as http from "../http.js";
 import type * as lectures from "../lectures.js";
 import type * as modules from "../modules.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   ai: typeof ai;
   aiChats: typeof aiChats;
+  flashcards: typeof flashcards;
   http: typeof http;
   lectures: typeof lectures;
   modules: typeof modules;
