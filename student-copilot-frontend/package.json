@@ -50,6 +50,7 @@
     "lodash-es": "^4.17.21",
     "lucide-react": "^0.453.0",
     "openai": "^4.57.1",
+    "pdfjs-dist": "^4.8.69",
     "react": "^18.3.1",
     "react-arborist": "^3.4.0",
     "react-dom": "^18.3.1",
@@ -71,7 +72,6 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^10.0.0",
     "vaul": "^1.1.0",
-    "youtube-transcript-fetcher": "^1.0.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -88,7 +88,6 @@
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.3.1",
     "@vitejs/plugin-react-swc": "^3.5.0",
-    "autoprefixer": "^10.4.20",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.11",

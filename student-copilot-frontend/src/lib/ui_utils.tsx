@@ -2,7 +2,6 @@ import { CardContent, Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { Id } from "convex/_generated/dataModel";
 import { z } from "zod";
-import type { UserResource } from "@clerk/types";
 
 const ACCEPTED_FILE_TYPES = [
   "audio/mpeg",
@@ -70,24 +69,12 @@ const fileSchema = baseSchema.extend({
 
 // Website link schema
 
-export const createWebsiteSchema = (user: UserResource | null | undefined) => baseSchema.extend({
+export const createWebsiteSchema = () => baseSchema.extend({
   link: z.string()
     .url("Invalid URL")
-    .refine((url) => {
-      if (isYoutubeUrl(url)) {
-        const externalAccounts = user?.externalAccounts || [];
-        const isGoogleAccountConnected = externalAccounts.some(
-          account => account.provider === "google"
-        );
-        return isGoogleAccountConnected;
-      }
-      return true;
-    }, {
-      message: "You must connect your Google account to upload YouTube videos",
-    }),
 });
 
-export const createFormSchema = (user: UserResource | null | undefined) => z.discriminatedUnion('type', [
+export const createFormSchema = () => z.discriminatedUnion('type', [
   fileSchema.extend({ type: z.literal('file') }),
-  createWebsiteSchema(user).extend({ type: z.literal('website') }),
+  createWebsiteSchema().extend({ type: z.literal('website') }),
 ]);
