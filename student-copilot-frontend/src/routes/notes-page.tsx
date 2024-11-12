@@ -22,10 +22,11 @@ import ErrorPage from "@/components/custom/error-page";
 import { Id } from "convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import SearchBar from "@/components/custom/module-page/search-bar";
-import { SearchResults } from "@/lib/ui_utils";
+import { NotesSearchBar } from "@/components/custom/module-page/notes-search-bar";
 import CreateNotesDialog from "@/components/custom/notes-page/create-notes-dialog";
 import { useNavigate } from "react-router-dom";
+
+
 export default function NotesPage() {
   const { moduleId } = useParams();
   const navigate = useNavigate();
@@ -41,13 +42,13 @@ export default function NotesPage() {
   const notes = useMemo(() => notesQuery ?? [], [notesQuery]);
   const [currentPage, setCurrentPage] = useState(1);
   const notesPerPage = 6;
-  const [searchResults, setSearchResults] = useState<SearchResults | null>(
+  const [searchResults, setSearchResults] = useState<Id<"notes">[] | null>(
     null,
   );
 
   const filteredNotes = useMemo(() => {
-    if (searchResults && searchResults.notes.length > 0) {
-      return notes.filter((note) => searchResults.notes.includes(note._id));
+    if (searchResults && searchResults.length > 0) {
+      return notes.filter((note) => searchResults.includes(note._id));
     }
     return notes;
   }, [notes, searchResults]);
@@ -65,14 +66,14 @@ export default function NotesPage() {
   const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
 
   const handleSearchResults = useCallback(
-    (type: "lectures" | "notes", results: SearchResults) => {
-      if (type === "notes") {
-        setSearchResults(results);
-        setCurrentPage(1); // Reset to first page when search results change
-      }
+    (results: Id<"notes">[]) => {
+      setSearchResults(results);
+      setCurrentPage(1); // Reset to first page when search results change
+
+
     },
-    [],
-  );
+    [setSearchResults, setCurrentPage]
+  )
 
   const goToNote = (noteId: string) => {
     navigate(`/dashboard/note/${noteId}`, { replace: true });
@@ -107,10 +108,10 @@ export default function NotesPage() {
       </header>
 
       <main className="container mx-auto py-12 px-6 max-w-6xl">
-        <SearchBar
-          type="notes"
+
+        <NotesSearchBar
           moduleId={moduleId as Id<"modules">}
-          onSearchResults={(results) => handleSearchResults("notes", results)}
+          onSearchResults={(results) => handleSearchResults(results)}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">

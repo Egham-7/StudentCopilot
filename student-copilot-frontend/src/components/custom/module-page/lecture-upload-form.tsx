@@ -15,12 +15,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Id } from "convex/_generated/dataModel";
 import AnimatedCircularProgressBar from "@/components/magicui/animated-circular-progress-bar";
-import { formSchema } from "@/lib/ui_utils";
 import * as z from "zod";
 import { useLectureUpload } from "@/hooks/use-lecture-upload";
 import { IconAsterisk, IconAsteriskSimple } from "@tabler/icons-react";
 import { useBackgroundUpload } from "@/hooks/use-background-lecture-upload";
 import { toast } from "@/components/ui/use-toast";
+import { createFormSchema } from "@/lib/ui_utils";
+
 
 
 interface LectureUploadFormProps {
@@ -47,8 +48,8 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
   const { startBackgroundUpload } = useBackgroundUpload();
 
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<ReturnType<typeof createFormSchema>>>({
+    resolver: zodResolver(createFormSchema()),
     defaultValues: {
       title: "",
       description: "",
@@ -58,7 +59,9 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
     },
   });
 
-  const handleBackgroundUpload = async (values: z.infer<typeof formSchema>) => {
+
+
+  const handleBackgroundUpload = async (values: z.infer<ReturnType<typeof createFormSchema>>) => {
     await startBackgroundUpload(values, moduleId, fileType);
 
     toast({
@@ -69,7 +72,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
     onComplete();
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<ReturnType<typeof createFormSchema>>) => {
     let success;
     if (values.type === "website") {
       success = await uploadLecture(values, moduleId, "website");
@@ -151,7 +154,7 @@ const LectureUploadForm: React.FC<LectureUploadFormProps> = ({
                 name="link"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex gap-x-1">
+                    <div className="flex gap-x-1 items-center mb-2">
                       <FormLabel>Website Link</FormLabel>
                       <IconAsterisk className="w-3 h-3 text-destructive" />
                     </div>

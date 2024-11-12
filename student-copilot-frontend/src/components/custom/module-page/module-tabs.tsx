@@ -12,10 +12,11 @@ import { Id, Doc } from "convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { toast } from "@/components/ui/use-toast";
-import SearchBar from "./search-bar";
 import LecturesTab from "./lectures-tab";
 import NotesTab from "./notes-tab";
-import { SearchResults, LecturesData } from "@/lib/ui_utils";
+import { LecturesData } from "@/lib/ui_utils";
+import { LectureSearchBar } from "./lecture-search-bar";
+import { NotesSearchBar } from "./notes-search-bar";
 
 type ModuleTabsProps = {
   moduleId: Id<"modules">;
@@ -74,20 +75,30 @@ export default function ModuleTabs({
     }
   };
 
-  const handleSearchResults = useCallback(
-    (type: "lectures" | "notes", results: SearchResults) => {
-      if (type === "lectures") {
-        setFilteredLectures(
-          lectures?.filter((lecture) => results.lectures.includes(lecture._id)),
-        );
-      } else if (type === "notes") {
-        setFilteredNotes(
-          notes?.filter((note) => results.notes.includes(note._id)),
-        );
-      }
+
+
+  const handleLectureSearchResults = useCallback(
+
+    (results: Id<"lectures">[]) => {
+      setFilteredLectures(
+        lectures?.filter((lecture) => results.includes(lecture._id))
+      )
     },
-    [lectures, notes],
+    [lectures]
   );
+
+  const handleNotesSearchResults = useCallback(
+
+    (results: Id<"notes">[]) => {
+
+      setFilteredNotes(
+        notes?.filter((note) => results.includes(note._id)),
+      );
+
+    },
+
+    [notes]
+  )
 
   return (
     <Tabs
@@ -127,13 +138,7 @@ export default function ModuleTabs({
       </div>
 
       <TabsContent value="lectures">
-        <SearchBar
-          type="lectures"
-          moduleId={moduleId}
-          onSearchResults={(results) =>
-            handleSearchResults("lectures", results)
-          }
-        />
+        <LectureSearchBar moduleId={moduleId} onSearchResults={handleLectureSearchResults} />
 
         <LecturesTab
           moduleId={moduleId}
@@ -144,11 +149,8 @@ export default function ModuleTabs({
       </TabsContent>
 
       <TabsContent value="notes">
-        <SearchBar
-          type="notes"
-          moduleId={moduleId}
-          onSearchResults={() => setFilteredNotes}
-        />
+        <NotesSearchBar moduleId={moduleId} onSearchResults={handleNotesSearchResults} />
+
         <NotesTab notes={filteredNotes} />
       </TabsContent>
 

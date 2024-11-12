@@ -95,11 +95,11 @@ const ChatDialog = ({ lectures, sessionId, moduleId }: ChatDialogProps) => {
   }, [messages]);
 
   return (
-    <Card className="w-96 min-w-[500px] bg-card text-card-foreground border-border shadow-lg">
+    <Card className="w-full md:min-w-[500px] bg-card text-card-foreground border-border shadow-lg">
       <CardHeader className="border-b border-border">
         <CardTitle className="text-2xl font-bold flex items-center justify-between">
           <Sparkles className="w-6 h-6 mr-2 text-primary" />
-          AI Lecture Assistant
+          <span className="hidden md:inline">AI Lecture Assistant</span>
           <Button
             variant={"ghost"}
             className="text-red-500 justify-end items-center gap-2"
@@ -115,7 +115,7 @@ const ChatDialog = ({ lectures, sessionId, moduleId }: ChatDialogProps) => {
       <CardContent className="p-6">
 
         <ScrollArea
-          className="h-[400px] w-full rounded-md border border-border p-4 bg-muted"
+          className=" min-h-[250px] md:min-h-[400px] w-full rounded-md border border-border p-4 bg-muted"
           id="message-list"
         >
           <AnimatePresence>

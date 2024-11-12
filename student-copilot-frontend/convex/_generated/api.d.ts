@@ -1,5 +1,3 @@
-/* prettier-ignore-start */
-
 /* eslint-disable */
 /**
  * Generated `api` utility.
@@ -15,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as activities from "../activities.js";
 import type * as ai from "../ai.js";
 import type * as aiAgent_noteAgent from "../aiAgent/noteAgent.js";
 import type * as aiChats from "../aiChats.js";
@@ -31,6 +30,7 @@ import type * as uploads from "../uploads.js";
 import type * as usageLimits from "../usageLimits.js";
 import type * as users from "../users.js";
 import type * as utils from "../utils.js";
+import type * as websites_html from "../websites/html.js";
 import type * as websites_youtube from "../websites/youtube.js";
 
 /**
@@ -42,6 +42,7 @@ import type * as websites_youtube from "../websites/youtube.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  activities: typeof activities;
   ai: typeof ai;
   "aiAgent/noteAgent": typeof aiAgent_noteAgent;
   aiChats: typeof aiChats;
@@ -58,6 +59,7 @@ declare const fullApi: ApiFromModules<{
   usageLimits: typeof usageLimits;
   users: typeof users;
   utils: typeof utils;
+  "websites/html": typeof websites_html;
   "websites/youtube": typeof websites_youtube;
 }>;
 export declare const api: FilterApi<
@@ -68,5 +70,3 @@ export declare const internal: FilterApi<
   typeof fullApi,
   FunctionReference<any, "internal">
 >;
-
-/* prettier-ignore-end */

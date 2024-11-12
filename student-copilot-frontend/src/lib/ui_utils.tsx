@@ -45,6 +45,10 @@ export type LecturesData = {
 
 }
 
+export const isYoutubeUrl = (url: string) => {
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
+  return youtubeRegex.test(url);
+};
 
 // Base schema for all lecture types
 const baseSchema = z.object({
@@ -64,14 +68,13 @@ const fileSchema = baseSchema.extend({
 });
 
 // Website link schema
-const websiteSchema = baseSchema.extend({
-  link: z.string().url("Invalid URL"),
+
+export const createWebsiteSchema = () => baseSchema.extend({
+  link: z.string()
+    .url("Invalid URL")
 });
 
-// Union of all possible schemas
-export const formSchema = z.discriminatedUnion('type', [
+export const createFormSchema = () => z.discriminatedUnion('type', [
   fileSchema.extend({ type: z.literal('file') }),
-  websiteSchema.extend({ type: z.literal('website') }),
+  createWebsiteSchema().extend({ type: z.literal('website') }),
 ]);
-
-export type UploadLectureFormSchema = typeof formSchema;

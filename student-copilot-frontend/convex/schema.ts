@@ -147,4 +147,23 @@ export default defineSchema({
     features: v.optional(v.array(v.string())),
     buttonText: v.string(),
   }).index("byStripeProductId", ["stripeId"]),
+
+  activities: defineTable({
+    userId: v.string(),
+    date: v.string(), // Store date as ISO string
+    type: v.union(
+      v.literal("lecture_created"),
+      v.literal("note_created"),
+      v.literal("module_created"),
+      v.literal("lecture_completed"),
+    ),
+    count: v.number(),
+    moduleId: v.optional(v.id("modules")),
+    lectureId: v.optional(v.id("lectures")),
+    noteId: v.optional(v.id("notes")),
+    metadata: v.optional(v.string()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_date", ["date"])
+    .index("by_userId_and_date", ["userId", "date"]),
 });

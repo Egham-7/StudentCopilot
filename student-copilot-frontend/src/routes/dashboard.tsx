@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter } from "lucide-react";
 import { Doc } from "../../convex/_generated/dataModel";
 import { useUserInfo } from "@/hooks/users";
@@ -17,9 +17,7 @@ import AddModuleCard from "@/components/custom/dashboard/add-module-card";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api.js";
 import ModuleCard from "@/components/custom/dashboard/module-card.js";
-import { UserNotifications } from "@/components/custom/dashboard/user-notifications.js";
-import DeleteNotificationsDialog from "@/components/custom/dashboard/delete-notifications-dialog.js";
-import { ModeToggle } from "@/components/ui/mode-toggle.js";
+import ActivityTracker from "@/components/custom/dashboard/activity-tracker.js";
 
 const filterConfig = [
   { key: "department", label: "Department" },
@@ -86,15 +84,13 @@ const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
+    <div className="bg-background overflow-x-hidden p-4 sm:p-6 md:p-10">
       <div className="mx-auto max-w-6xl space-y-6 sm:space-y-8">
         <header className="space-y-2 text-center sm:text-left">
-          <div className="flex items-start justify-between text-center">
+          <div className="flex items-start justify-center text-center md:justify-start">
             <h1 className="text-4xl font-bold tracking-tight text-foreground mb-20">
               Welcome {userInfo?.name}
             </h1>
-
-            <ModeToggle />
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
             Student Dashboard
@@ -104,16 +100,7 @@ const DashboardPage: React.FC = () => {
           </p>
         </header>
 
-        <Card>
-          <CardHeader className=" flex-row justify-between items-center">
-            <CardTitle>Recent Notifications</CardTitle>
-
-            <DeleteNotificationsDialog />
-          </CardHeader>
-          <CardContent className="h-96 overflow-scroll md:h-full">
-            <UserNotifications />
-          </CardContent>
-        </Card>
+        <ActivityTracker />
 
         <Card className="overflow-hidden bg-card text-card-foreground">
           <CardContent className="p-6 sm:p-8">

@@ -47,6 +47,12 @@ export const store = mutation({
       relatedId: moduleId,
     });
 
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId,
+      type: "module_created",
+      moduleId,
+    });
+
     return moduleId;
   },
 });

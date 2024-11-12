@@ -106,6 +106,12 @@ export const storeNotes = internalMutation({
       createdAt: new Date().toISOString(),
       isRead: false,
     });
+
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId: moduleUser.userId,
+      type: "note_created",
+      noteId,
+    });
   },
 });
 

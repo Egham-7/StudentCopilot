@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Id } from 'convex/_generated/dataModel';
 import * as z from 'zod';
-import { formSchema } from '@/lib/ui_utils';
+import { createFormSchema } from '@/lib/ui_utils';
 
 interface BackgroundUploadState {
   id: string;
@@ -86,7 +86,7 @@ export const useBackgroundUpload = () => {
   }, [updateUploadProgress, completeUpload, handleUploadError]);
 
   const startBackgroundUpload = useCallback(async (
-    values: z.infer<typeof formSchema>,
+    values: z.infer<ReturnType<typeof createFormSchema>>,
     moduleId: Id<"modules">,
     fileType: 'pdf' | 'audio' | 'video' | 'website'
   ) => {
