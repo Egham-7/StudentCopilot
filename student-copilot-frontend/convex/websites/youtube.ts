@@ -39,7 +39,7 @@ export const getYoutubeTranscript = action({
 
       console.log("Session Token: ", sessionToken);
 
-      const url = `${process.env.API_URL}/api/youtube/Transcript/${videoId}?userId=${identity.subject}`;
+      const url = `${process.env.API_URL}/api/youtube/Transcript/${videoId}`;
 
       const response = await fetch(url, {
         headers: {
@@ -55,8 +55,11 @@ export const getYoutubeTranscript = action({
         throw new Error(`Failed to fetch transcription ${errorResponse.error}`);
       }
 
-      const data = await response.json();
-      return data.text;
+      const data = await response.text();
+
+      return data;
+
+
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.log("Caught Error:", error);
