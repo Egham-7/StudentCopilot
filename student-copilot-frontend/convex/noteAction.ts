@@ -8,9 +8,12 @@ import {
     internalAction,
 } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph,TNoteBlock, getImageLink } from "./aiAgent/noteAgent";
+import { graph,TNoteBlock,Noteplanner } from "./aiAgent/noteAgent";
 
 import { exponentialBackoff } from "./utils";
+import { v4 as uuidv4 } from "uuid";
+import{MemorySaver } from "@langchain/langgraph";
+
 export const fetchAndProcessTranscriptions = internalAction({
   args: {
     lectureIds: v.array(v.id("lectures")),
@@ -29,6 +32,7 @@ export const fetchAndProcessTranscriptions = internalAction({
       v.literal("PhD"),
     ),
   },
+  
   handler: async (ctx, args) => {
     const transcriptionChunks: string[] = [];
 
@@ -92,14 +96,29 @@ export const generateNotes = internalAction({
       levelOfStudy,
     } = args;
 
+
     // Process chunks in parallel
     let noteArray: TNoteBlock[] = []; // Empty array of a custom type
+    const memory = new MemorySaver();
 
-    const Link = await getImageLink("Cat");
-    console.log(Link);
     
+    const Noteplan=Noteplanner(
+      noteTakingStyle,
+      learningStyle,
+      levelOfStudy,
+      course,
+      transcriptionChunks.slice(0,-5));
+
+
+    console.log("lecture: ", transcriptionChunks.slice(0,-5));
+    console.log((await Noteplan).content);
+
+
+    const app = graph.compile({ checkpointer: memory });
+    const config = { configurable: { thread_id: uuidv4() } };
     const chunkPromises = transcriptionChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
+        
         //Work11
         const info = {
             chunk: chunk,
@@ -108,20 +127,22 @@ export const generateNotes = internalAction({
             levelOfStudy: levelOfStudy,
             course: course,
             arrNote:noteArray,
+            plan:Noteplan
             
         };
         const GOOGLE_API_KEY = process.env.Google_API_KEY;
         const CX = process.env.CX;
-        const result = await graph.invoke(info) ;
-        noteArray.push(result);
+        const result = await app.invoke(info , config);
+        //faltten data:
         
+        noteArray.push(result.note[1]);
+        console.log(result.note[1]);
         const finalres = JSON.stringify({
           type: 'note',
           blocks: result.note
         });
         
         
-
         const noteChunkBlob = new Blob([finalres], { type: "application/json" })//"text/plain";
 
         const storageId = await ctx.storage.store(noteChunkBlob);
@@ -132,7 +153,7 @@ export const generateNotes = internalAction({
         return { storageId, embedding };
       });
     });
-
+    
     const processedChunks = await Promise.all(chunkPromises);
 
     const noteChunkIds: Id<"_storage">[] = [];

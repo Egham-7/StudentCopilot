@@ -3,8 +3,9 @@ import { AIMessage, AIMessageChunk } from "@langchain/core/messages";
 import { Annotation, END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
 import axios from 'axios';
-import { z } from 'zod';
+import { string, z } from 'zod';
 import { BaseMessage } from "@langchain/core/messages";
+import { link } from "fs";
 
 
 
@@ -19,14 +20,14 @@ stretched: z.boolean().optional(),
 })
 
 const ParagraphBlockData = z.object({
-    text: z.string().describe("The main content or body text of the note"),
+    text: z.string().describe("Paragraph"),
     alignment: z.enum(['left', 'center', 'right'])
     .optional()
     .describe("Alignment of the paragraph text; can be 'left', 'center', or 'right' (optional)"),
 });
 
 const HeaderBlockData = z.object({
-text: z.string().describe("The title or header text of the paragraph in the note"),
+text: z.string().describe("The title or header "),
 level: z.string().describe("The size or heading level of the title (e.g., '1', '2', etc.)"),
 });
 
@@ -62,13 +63,14 @@ learningStyle: Annotation<"visual" | "auditory" | "kinesthetic" | "analytical">,
 levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
 course: Annotation<string>,
 arrNote: Annotation<[TNoteBlock]>,
+plan:Annotation<string>
 });
 
 const OutputAnnotation = Annotation.Root({
     note: Annotation<TNoteBlock[]>,
     });
 // Helper to get an image link based on a query
-const GOOGLE_API_KEY = process.env.Google_API_KEY;
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const CX = process.env.CX;
 const Tesseract = require('tesseract.js');
 const fs = require('fs');
@@ -116,10 +118,10 @@ export async function getImageLink(query: string): Promise<string> {
 async function generateImageSearchQuery(_state: typeof InputAnnotation.State): Promise<typeof OutputAnnotation.State> {
 const prompt = `
 Your task is to:
-1.Highlight Core Themes: Identify and focus on the main concepts and themes present in the note. Ensure that the image encapsulates these key ideas visually.
-2.Use Simple and Clear Visuals: Create or select images that use clear, simple designs and symbols to represent complex ideas. Avoid clutter to enhance understanding and retention.
-3.Incorporate Relevant Context: Ensure that the image includes relevant contextual elements that help visual learners connect the visual representation with the information in the notes. Use annotations, labels, or color coding to provide additional clarity.
-4.Please ensure the search query does not exceed a maximum of 6 words to maintain clarity and focus.
+    1.Highlight Core Themes: Identify and focus on the main concepts and themes present in the note. Ensure that the image encapsulates these key ideas visually.
+    2.Use Simple and Clear Visuals: Create or select images that use clear, simple designs and symbols to represent complex ideas. Avoid clutter to enhance understanding and retention.
+    3.Incorporate Relevant Context: Ensure that the image includes relevant contextual elements that help visual learners connect the visual representation with the information in the notes. Use annotations, labels, or color coding to provide additional clarity.
+    4.Please ensure the search query does not exceed a maximum of 6 words to maintain clarity and focus.
 
 Given the note, provide the most relevant search query to find a highly accurate image that visually explains or represents the key concept. Focus on the essential elements and context of the note to create the search query.
 Based on the following lecture : ${_state.chunk},
@@ -127,13 +129,19 @@ generate the most relevant search query to find an accurate image that visually 
 Focus on the essential elements and context to ensure the search query retrieves the best possible image.
 
 Important: don't make the search query bigger than 4 words`;
+
 const llm = new ChatOpenAI({ model: "gpt-3.5-turbo" });
-  const result = await llm.invoke(prompt);
-  //const Link = await getImageLink(result.toString());
-  const Link = "https://cdn.britannica.com/70/234870-050-D4D024BB/Orange-colored-cat-yawns-displaying-teeth.jpg";
+  
   // First, await the note generation
-  const generatedNotes = await generateNote1(_state);
+  const generatedNotes = await generateNote2(_state);
   // Then combine the image block with the generated notes
+  let Link="";
+  if(generatedNotes[0].type=="header"){
+    const result = await llm.invoke(prompt);
+    Link = await getImageLink(result.content.toString());
+  }
+
+  
   const combinedBlocks: TNoteBlock[] = [
     {
       type: 'image',
@@ -216,7 +224,77 @@ const result = await llm.invoke([
 return [res2];
 
 }
+export async function generateNote2(_state: typeof InputAnnotation.State):Promise<TNoteBlock[]> {
 
+    const prompt = `You are a note generator, tasked with creating a structured summary note based on the following inputs:
+
+        1. **Previous Notes & Context**: Use previous chunk and previously generated notes to maintain continuity with prior content.
+        2. **Lecture Content**: Analyze the provided small chunk of lecture content in detail.
+        3. **Lecture Plan**: Refer to the lecture plan for an overall structure, ensuring alignment in headings and sections.
+
+        Your task is to:
+        1. Generate a concise note based on the current chunk of lecture content, which may include a title and a paragraph, or just a paragraph.
+        - **Title**: If a title is needed, limit it to exactly *X* words (or characters) to concisely encapsulate the main theme.
+        - **Paragraph**: Expand on the theme in a paragraph, expressing related ideas clearly.
+        - Ensure the title and paragraph flow naturally when provided together, maintaining coherence with previous topics covered.
+        2. Follow the provided plan closely, positioning this note within the appropriate section and heading.
+        3. Tailor the note to the following user preferences:
+        - **Note Style**: ${_state.noteTakingStyle} style
+        - **Learning Style**: ${_state.learningStyle}
+        - **Level of Study**: ${_state.levelOfStudy}
+        - **Course**: ${_state.course}
+        4. Start a new section or subheading if indicated by the plan, or integrate this content with the existing section cohesively.
+        5. Use straightforward language, focusing only on essential ideas, and avoid unnecessary details.
+        6. Exclude citations or extraneous references, and capture only the lecture content.
+
+### Lecture Plan:
+${_state.plan}
+
+### Content Chunk:
+${_state.chunk}
+`;
+
+    const llm = new ChatOpenAI({ model: "gpt-3.5-turbo" });
+    
+    // Define array type for structured output
+    
+    
+    const structuredLlm = llm.withStructuredOutput(NoteBlock);
+    const res = await structuredLlm.invoke(prompt);
+    const res2 = NoteBlock.parse(res);
+    console.log(res2);
+    return [res2];
+    
+    }
+
+
+export async function generateNote3(_state: typeof InputAnnotation.State):Promise<TNoteBlock[]> {
+    console.log("Arr of notes:",_state.arrNote);
+    const prompt = `
+    Based on previous lecture chunks if there any,
+    
+    Generate note for next chunk :${_state.chunk}
+    
+    3. Ensure the note is aligned with the user's preferences:
+   - ${_state.noteTakingStyle} note style
+   - ${_state.learningStyle} learning style
+   - ${_state.levelOfStudy} level of study
+   - ${_state.course} course
+
+    Make short notes.
+`;
+    const llm = new ChatOpenAI({ model: "gpt-3.5-turbo" });
+
+    // Define array type for structured output
+    
+    
+    const structuredLlm = llm.withStructuredOutput(NoteBlock);
+    const res = await structuredLlm.invoke(prompt);
+    const res2 = NoteBlock.parse(res);
+    console.log(res2);
+    return [res2];
+    }
+    
 async function gen_img_or_no(_state: typeof InputAnnotation.State):Promise<{ messages: AIMessageChunk }>{
     const prompt1 =`Your task is to:
     
@@ -256,78 +334,33 @@ export const graph = new StateGraph({
 .addEdge("__start__", "generate_img")
 //.addEdge("generate_note","generate_image")
 .addEdge("generate_img",END)
-.compile();
 
 
-/*
-const chunk=`The Double-Slit Experiment: Where Waves Behave Like Particles
 
-Alright, everyone, buckle up because today we're diving into one of the most mind-bending experiments in all of physics: the double-slit experiment. This experiment, seemingly simple in its setup, reveals a fundamental strangeness at the heart of quantum mechanics.
+export async function Noteplanner( noteTakingStyle: string,
+    learningStyle: "auditory" | "visual" | "kinesthetic" | "analytical",
+    levelOfStudy: "Bachelors" | "Associate" | "Masters" | "PhD",
+    course: string,
+    lecture:string[]):Promise<AIMessage>{
+    const prompt1 =`You are a Planner tasked with designing a lecture plan that will help generate the best summary notes based on the given preferences.
+                    The plan must contain main titles, sub title and genral ideas of the lecture
+                    Your task is to:
+                    1. Analyze the provided lecture content and structure.
+                    2. Create a structured plan that will help an LLM generate summary notes.
+                    3. Ensure the plan fits the following user preferences:
+                    - ${noteTakingStyle} note style
+                    - ${learningStyle} learning style
+                    - ${levelOfStudy} level of study
+                    - ${course} course
+                    4. The plan should be in Markdown (.md) format, with clear sections, headings, and subheadings (use titles and subtitles).
+                    5. Focus on generating a high-level plan, including only the most relevant sections for the summary. Avoid unnecessary details.
+                    6. Ensure the structure is clear and follows a logical flow based on the lecture content.
 
-Imagine shining a beam of light at a barrier with two narrow slits. Behind the barrier is a screen. Now, classical physics, the physics of our everyday world, tells us that the light passing through the slits should create two bright bands on the screen, corresponding to the two slits.
+                    The lecture content: ${lecture}
+                    
+                    remember The plan must contain main titles, sub title and genral ideas of the lecture NO citations`;
 
-And indeed, if we were talking about classical particles, like tiny marbles, that's exactly what we'd see. But light, as we know, isn't just a stream of particles. It also behaves like a wave.
-
-So, what happens when we shine the light through `;
-const chunk1= `the two slits? We get an interference pattern! Instead of two bright bands, we see a series of bright and dark fringes on the screen. This is a classic wave phenomenon, where waves passing through the slits interfere with each other, creating areas of reinforcement (bright fringes) and cancellation (dark fringes).
-
-So far, so good, right? Here's where things get really weird.
-
-Instead of light, let's fire individual electrons, those tiny particles of matter, at the slits. Now, common sense tells us that each electron should pass through one slit or the other, creating two distinct bands on the screen, just like the marbles.
-
-But that's not `;
-
-const chunk2 = `what happens
-
-Even when firing electrons one by one, we still observe an interference pattern! It's as if each electron somehow passes through both slits simultaneously, interferes with itself, and then hits the screen. This is the essence of wave-particle duality, a cornerstone of quantum mechanics.
-
-But it gets even stranger. If we try to observe which slit the electron goes through, the interference pattern disappears! The act of observation, of measurement, forces the electron to "choose" a single path, collapsing the wave function and destroying the interference.
-
-This experiment highlights the probabilistic nature of quantum mechanics. We can't know for certain which slit the electron will go through, only the probability of finding it at a particular location on the screen. It challenges our classical intuitions about how the world works and forces us to embrace a reality that is fundamentally uncertain, yet undeniably fascinating.`;
-
-/*                            
-const chunk3=`This experiment highlights the probabilistic nature of quantum mechanics. We can't know exactly where an electron will hit the screen—only the likelihood of where it might appear. It's as if reality, at this tiny scale, isn’t set in stone until we observe it.
-
-But what does this really mean? Imagine for a moment that particles like electrons don’t follow fixed, predictable paths like a baseball thrown in the air. Instead, they exist in a state of possibilities, a cloud of potential positions, speeds, and paths all at once. This is what's known as a "wave function," a mathematical description of all these potential states.
-
-When we don’t observe the `
-const chunk4=`electron, it behaves as if it passes through both slits, like a wave, creating an interference pattern. But the instant we try to observe or measure it—forcing it to reveal which slit it actually passed through—the wave function collapses. The electron then behaves like a particle, choosing a definite path, and the interference pattern vanishes.
-
-So, what causes this wave-particle duality, and why does observation change the outcome? This is one of the biggest mysteries in physics. One interpretation, known as the Copenhagen Interpretation, suggests that particles exist in a state of superposition, occupying all possible positions simultaneously until observed. In other words, reality is a "smear" of probabilities until we take a look.
-
-Another theory, the Many-Worlds `;
-const chunk5=`Interpretation, takes things even further. It suggests that every possible outcome of a quantum measurement actually happens, but in separate, parallel universes. When we observe the electron, we’re simply "branching off" into one of those universes where it went through a specific slit.
-
-Both theories are fascinating, but neither fully resolves the mystery. What’s certain is that quantum mechanics has forced us to rethink the nature of reality itself. We live in a universe where particles can be waves, where observation changes reality, and where uncertainty is built into the fabric of existence.
-
-As mind-bending as it sounds, the double-slit experiment is only the beginning of the weirdness that quantum mechanics has in store.`;
-        
-
-
-let chunkArray: string[] = [chunk,chunk1];
-let noteArray: TNoteBlock[] = [];
-
-async function processChunks() {
-    for (let i = 0; i < chunkArray.length; i++) {
-        const info = {
-            chunk: chunkArray[i],
-            noteTakingStyle: "bullet point",
-            learningStyle: "auditory",
-            levelOfStudy: "Bachelors",
-            course: "physics",
-            messages: [],
-            arrNote: noteArray,
-        };
-
-        try {
-            const result = await graph.invoke(info);
-            console.log("Graph invocation result ",i," :", result.notes);
-            noteArray.push(result.notes);
-        } catch (error) {
-            console.error("Error invoking graph:", error);
-        }
-    }
+    const llm = new ChatOpenAI({ model: "gpt-3.5-turbo" });
+    const res = await llm.invoke(prompt1);
+    return res;
 }
-
-processChunks();
-*/

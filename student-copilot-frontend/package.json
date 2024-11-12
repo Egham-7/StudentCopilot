@@ -15,7 +15,8 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.4.2",
     "@hookform/resolvers": "^3.9.0",
-    "@langchain/core": "^0.3.13",
+    "@langchain/core": "^0.3.18",
+    "@langchain/langgraph": "^0.2.20",
     "@langchain/openai": "^0.3.9",
     "@microlink/react": "^5.5.22",
     "@radix-ui/react-avatar": "^1.1.1",
