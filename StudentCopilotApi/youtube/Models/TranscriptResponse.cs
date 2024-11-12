@@ -1,10 +1,12 @@
 namespace StudentCopilotApi.youtube.Models
 {
-  public class TranscriptResponse
+
+  public class TranscriptSegment
   {
-    public string Transcript { get; set; } = "";
-    public string Language { get; set; } = "";
-    public string VideoId { get; set; } = "";
+    public string Text { get; set; } = "";
+    public double Start { get; set; }
+    public double Duration { get; set; }
   }
+
 }
 

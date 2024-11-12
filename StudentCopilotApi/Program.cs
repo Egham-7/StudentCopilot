@@ -1,8 +1,8 @@
-using StudentCopilotApi.youtube.Services;
 using Clerk.Net.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using StudentCopilotApi.youtube.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +23,7 @@ builder.Services.AddClerkApiClient(config =>
 });
 
 // Register application services
-builder.Services.AddTransient<IYouTubeTranscriptService, YouTubeTranscriptService>();
+builder.Services.AddScoped<YoutubeTranscriptService>();
 
 // Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

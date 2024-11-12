@@ -1,126 +1,110 @@
-using Google.Apis.Services;
-using Google.Apis.YouTube.v3;
+using System.Text;
+using HtmlAgilityPack;
+using StudentCopilotApi.youtube.Exceptions;
 using StudentCopilotApi.youtube.Models;
-using Clerk.Net.Client;
-using Google.Apis.Auth.OAuth2;
+
 
 namespace StudentCopilotApi.youtube.Services
 {
-  public interface IYouTubeTranscriptService
-  {
-    Task<TranscriptResponse> GetTranscriptAsync(string videoId, string userId);
-  }
-
-  public class YouTubeTranscriptService : IYouTubeTranscriptService
+  public class YoutubeTranscriptService
   {
     private readonly HttpClient _httpClient;
-    private readonly ClerkApiClient _clerkClient;
-    private readonly ILogger<YouTubeTranscriptService> _logger;
-    private const string GoogleOAuthProvider = "google";
-    private readonly string[] SupportedLanguages = new[] { "en", "en-US" };
+    private readonly ILogger<YoutubeTranscriptService> _logger;
+    private const string TRANSCRIPT_BASE_URL = "https://youtubetranscript.com";
+    private const string VALIDATION_BASE_URL = "https://video.google.com/timedtext";
 
-    public YouTubeTranscriptService(
-        ClerkApiClient clerkClient,
-        HttpClient httpClient,
-        ILogger<YouTubeTranscriptService> logger)
+    public YoutubeTranscriptService(HttpClient httpClient, ILogger<YoutubeTranscriptService> logger)
     {
-      _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-      _clerkClient = clerkClient ?? throw new ArgumentNullException(nameof(clerkClient));
-      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _httpClient = httpClient;
+      _logger = logger;
     }
 
-    public async Task<TranscriptResponse> GetTranscriptAsync(string videoId, string userId)
+    public async Task<string> GetTranscriptAsync(string videoId, CancellationToken cancellationToken = default)
     {
-      if (string.IsNullOrEmpty(videoId))
-        throw new ArgumentException("Video ID cannot be null or empty", nameof(videoId));
+      if (string.IsNullOrWhiteSpace(videoId))
+      {
+        throw new ArgumentException("Video ID cannot be empty", nameof(videoId));
+      }
 
-      if (string.IsNullOrEmpty(userId))
-        throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
+      var url = BuildTranscriptUrl(videoId);
+      _logger.LogInformation("Fetching transcript for video ID: {VideoId}", videoId);
+
+      var response = await _httpClient.GetStringAsync(url, cancellationToken);
+      var doc = new HtmlDocument();
+      doc.LoadHtml(response);
+
+      var errorNode = doc.DocumentNode.SelectSingleNode("//error");
+      if (errorNode != null)
+      {
+        var errorMessage = errorNode.InnerText;
+        _logger.LogError("Error fetching transcript: {ErrorMessage}", errorMessage);
+        throw new TranscriptException(errorMessage);
+      }
+
+      var transcriptBuilder = new StringBuilder();
+      var transcriptNodes = doc.DocumentNode.SelectNodes("//transcript//text");
+
+      if (transcriptNodes == null || !transcriptNodes.Any())
+      {
+        throw new TranscriptException("No transcript segments found");
+      }
+
+      foreach (var node in transcriptNodes)
+      {
+        var segment = new TranscriptSegment
+        {
+          Text = node.InnerText.Trim(),
+          Start = double.Parse(node.GetAttributeValue("start", "0")),
+          Duration = double.Parse(node.GetAttributeValue("dur", "0"))
+        };
+
+        transcriptBuilder.AppendLine(segment.Text);
+      }
+
+      return transcriptBuilder.ToString().Trim();
+    }
+
+    public async Task<bool> ValidateVideoIdAsync(string videoId, CancellationToken cancellationToken = default)
+    {
+      if (string.IsNullOrWhiteSpace(videoId))
+      {
+        return false;
+      }
+
+      var url = BuildValidationUrl(videoId);
 
       try
       {
-        var credential = await GetGoogleCredentialAsync(userId);
-        var youtubeService = CreateYouTubeService(credential);
-        var caption = await GetCaptionAsync(youtubeService, videoId);
-        var transcript = await DownloadTranscriptAsync(youtubeService, caption.Id);
-
-        return new TranscriptResponse
-        {
-          Transcript = transcript,
-          Language = caption.Snippet.Language,
-          VideoId = videoId
-        };
+        using var response = await _httpClient.GetAsync(url, cancellationToken);
+        return response.IsSuccessStatusCode;
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Error getting transcript for video {VideoId} and user {UserId}", videoId, userId);
-        throw new YouTubeTranscriptException("Failed to retrieve transcript", ex);
+        _logger.LogWarning(ex, "Failed to validate video ID: {VideoId}", videoId);
+        return false;
       }
     }
 
-    private async Task<GoogleCredential> GetGoogleCredentialAsync(string userId)
+    private static Uri BuildTranscriptUrl(string videoId)
     {
-      var oauthTokens = await _clerkClient.Users[userId]
-          .Oauth_access_tokens[GoogleOAuthProvider]
-          .GetAsync();
-
-      var token = oauthTokens?.FirstOrDefault()?.Token
-          ?? throw new UnauthorizedAccessException("User does not have a valid Google OAuth token.");
-
-      return GoogleCredential.FromAccessToken(token);
+      var url = new UriBuilder(TRANSCRIPT_BASE_URL);
+      var query = System.Web.HttpUtility.ParseQueryString(string.Empty);
+      query["server_vid2"] = videoId;
+      url.Query = query.ToString();
+      return url.Uri;
     }
 
-    private YouTubeService CreateYouTubeService(GoogleCredential credential)
+    private static Uri BuildValidationUrl(string videoId)
     {
-
-      var scopes = new[]
-    {
-        YouTubeService.Scope.YoutubeForceSsl,
-        YouTubeService.Scope.Youtube,
-        YouTubeService.Scope.YoutubeReadonly,
-        YouTubeService.Scope.Youtubepartner
-    };
-      return new YouTubeService(new BaseClientService.Initializer
-      {
-        HttpClientInitializer = credential.CreateScoped(scopes),
-        ApplicationName = "YouTubeTranscriptService"
-      });
-    }
-
-    private async Task<Google.Apis.YouTube.v3.Data.Caption> GetCaptionAsync(
-        YouTubeService youtubeService,
-        string videoId)
-    {
-      var captionListRequest = youtubeService.Captions.List("snippet", videoId);
-      var captionListResponse = await captionListRequest.ExecuteAsync();
-
-      var captions = captionListResponse.Items;
-      if (captions?.Any() != true)
-      {
-        throw new YouTubeTranscriptException($"No captions found for video {videoId}");
-      }
-
-      var caption = captions
-          .Where(c => c != null)
-          .FirstOrDefault(c => SupportedLanguages.Contains(c.Snippet.Language));
-
-      return caption ?? throw new YouTubeTranscriptException($"No English captions found for video {videoId}");
-    }
-
-    private async Task<string> DownloadTranscriptAsync(
-        YouTubeService youtubeService,
-        string captionId)
-    {
-      var captionRequest = youtubeService.Captions.Download(captionId);
-      return await captionRequest.ExecuteAsync();
+      var url = new UriBuilder(VALIDATION_BASE_URL);
+      var query = System.Web.HttpUtility.ParseQueryString(string.Empty);
+      query["type"] = "track";
+      query["v"] = videoId;
+      query["id"] = "0";
+      query["lang"] = "en";
+      url.Query = query.ToString();
+      return url.Uri;
     }
   }
 
-  public class YouTubeTranscriptException : Exception
-  {
-    public YouTubeTranscriptException(string message) : base(message) { }
-    public YouTubeTranscriptException(string message, Exception innerException)
-        : base(message, innerException) { }
-  }
 }
-

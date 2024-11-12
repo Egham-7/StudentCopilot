@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("StudentCopilotApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+00258b299e946f6da18c17aa07c79e638ed4ae77")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d35db495ea553ca40e6a21b2f90cbffe36a80394")]
 [assembly: System.Reflection.AssemblyProductAttribute("StudentCopilotApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("StudentCopilotApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

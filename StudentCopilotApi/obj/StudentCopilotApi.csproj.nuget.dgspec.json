@@ -50,6 +50,10 @@
               "target": "Package",
               "version": "[1.68.0.3582, )"
             },
+            "HtmlAgilityPack": {
+              "target": "Package",
+              "version": "[1.11.71, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[8.0.10, )"

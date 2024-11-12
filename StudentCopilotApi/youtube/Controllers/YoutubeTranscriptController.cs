@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using StudentCopilotApi.youtube.Models;
 using StudentCopilotApi.youtube.Services;
 using Microsoft.AspNetCore.Authorization;
 
@@ -10,20 +9,20 @@ namespace StudentCopilotApi.youtube.Controllers
   [Authorize]
   public class TranscriptController : ControllerBase
   {
-    private readonly IYouTubeTranscriptService _transcriptService;
+    private readonly YoutubeTranscriptService _transcriptService;
 
-    public TranscriptController(IYouTubeTranscriptService transcriptService)
+    public TranscriptController(YoutubeTranscriptService transcriptService)
     {
       _transcriptService = transcriptService;
     }
 
     [HttpGet("{videoId}")]
-    public async Task<ActionResult<TranscriptResponse>> GetTranscript(string videoId, [FromQuery] string userId)
+    public async Task<ActionResult<String>> GetTranscript(string videoId)
     {
 
       try
       {
-        var transcript = await _transcriptService.GetTranscriptAsync(videoId, userId);
+        var transcript = await _transcriptService.GetTranscriptAsync(videoId);
         return Ok(transcript);
       }
       catch (Exception ex)
