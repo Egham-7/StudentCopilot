@@ -58,3 +58,5 @@ msbuild.wrn
 # Test results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
+
+Properties/
