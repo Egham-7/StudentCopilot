@@ -8,7 +8,7 @@ import {
     internalAction,
 } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph,TNoteBlock,planLectureNotes } from "./aiAgent/noteAgent";
+import { graph,planLectureNotes } from "./aiAgent/noteAgent";
 
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
