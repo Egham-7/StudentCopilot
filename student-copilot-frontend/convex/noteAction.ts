@@ -96,8 +96,6 @@ export const generateNotes = internalAction({
       levelOfStudy,
     } = args;
 
-// Initialize an array to store note blocks of type TNoteBlock
-let noteBlocks: TNoteBlock[] = [];
 
 // Initialize a memory manager for saving the processing state
 const memoryManager = new MemorySaver();
@@ -128,7 +126,6 @@ const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
       learningStyle: learningStyle,
       levelOfStudy: levelOfStudy,
       course: course,
-      arrNote: noteBlocks,
       plan: lectureNotePlan
     };
 
@@ -136,7 +133,7 @@ const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
     const processingResult = await appGraph.invoke(processingData, executionConfig);
 
     // Extract the generated note from the result and add it to the noteBlocks array
-    noteBlocks.push(processingResult.note[1]);
+    
 
     // Convert the processed note into JSON format for storage
     const finalResultJson = JSON.stringify({
