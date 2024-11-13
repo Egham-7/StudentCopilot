@@ -8,7 +8,7 @@ import {
     internalAction,
 } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph,TNoteBlock,Noteplanner } from "./aiAgent/noteAgent";
+import { graph,TNoteBlock,planLectureNotes } from "./aiAgent/noteAgent";
 
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
@@ -96,72 +96,76 @@ export const generateNotes = internalAction({
       levelOfStudy,
     } = args;
 
+// Initialize an array to store note blocks of type TNoteBlock
+let noteBlocks: TNoteBlock[] = [];
 
-    // Process chunks in parallel
-    let noteArray: TNoteBlock[] = []; // Empty array of a custom type
-    const memory = new MemorySaver();
+// Initialize a memory manager for saving the processing state
+const memoryManager = new MemorySaver();
 
+// Plan lecture notes based on the provided preferences and a portion of transcription chunks
+const lectureNotePlan = planLectureNotes(
+  noteTakingStyle,
+  learningStyle,
+  levelOfStudy,
+  course,
+  transcriptionChunks
+);
+
+// Compile the application state graph with memory checkpointing enabled
+const appGraph = graph.compile({ checkpointer: memoryManager });
+
+// Configuration for the application with a unique thread ID
+const executionConfig = { configurable: { thread_id: uuidv4() } };
+
+// Process each transcription chunk in parallel
+const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
+  return exponentialBackoff(async () => {
     
-    const Noteplan=Noteplanner(
-      noteTakingStyle,
-      learningStyle,
-      levelOfStudy,
-      course,
-      transcriptionChunks.slice(0,-5));
+    // Prepare input data for each chunk, including user preferences and plan details
+    const processingData = {
+      chunk: chunk,
+      noteTakingStyle: noteTakingStyle,
+      learningStyle: learningStyle,
+      levelOfStudy: levelOfStudy,
+      course: course,
+      arrNote: noteBlocks,
+      plan: lectureNotePlan
+    };
 
+    // Invoke the application graph with the current chunk data and config
+    const processingResult = await appGraph.invoke(processingData, executionConfig);
 
-    console.log("lecture: ", transcriptionChunks.slice(0,-5));
-    console.log((await Noteplan).content);
+    // Extract the generated note from the result and add it to the noteBlocks array
+    noteBlocks.push(processingResult.note[1]);
 
-
-    const app = graph.compile({ checkpointer: memory });
-    const config = { configurable: { thread_id: uuidv4() } };
-    const chunkPromises = transcriptionChunks.map(async (chunk) => {
-      return exponentialBackoff(async () => {
-        
-        //Work11
-        const info = {
-            chunk: chunk,
-            noteTakingStyle: noteTakingStyle,
-            learningStyle: learningStyle,
-            levelOfStudy: levelOfStudy,
-            course: course,
-            arrNote:noteArray,
-            plan:Noteplan
-            
-        };
-        const GOOGLE_API_KEY = process.env.Google_API_KEY;
-        const CX = process.env.CX;
-        const result = await app.invoke(info , config);
-        //faltten data:
-        
-        noteArray.push(result.note[1]);
-        console.log(result.note[1]);
-        const finalres = JSON.stringify({
-          type: 'note',
-          blocks: result.note
-        });
-        
-        
-        const noteChunkBlob = new Blob([finalres], { type: "application/json" })//"text/plain";
-
-        const storageId = await ctx.storage.store(noteChunkBlob);
-
-        // Generate embedding for the chunk
-        const embedding = await generateEmbedding(result.toString());
-
-        return { storageId, embedding };
-      });
+    // Convert the processed note into JSON format for storage
+    const finalResultJson = JSON.stringify({
+      type: 'note',
+      blocks: processingResult.note
     });
+
+    // Create a blob from the JSON data for storage
+    const noteChunkBlob = new Blob([finalResultJson], { type: "application/json" });
+
+    // Store the blob in storage and retrieve the storage ID
+    const storageId = await ctx.storage.store(noteChunkBlob);
+
+    // Generate an embedding for the current chunk and return the storage ID with the embedding
+    const chunkEmbedding = await generateEmbedding(processingResult.toString());
+
+    return { storageId, chunkEmbedding };
+  });
+});
+
     
-    const processedChunks = await Promise.all(chunkPromises);
+    const processedChunks = await Promise.all(chunkProcessingPromises);
 
     const noteChunkIds: Id<"_storage">[] = [];
     const allEmbeddings: number[][] = [];
 
-    for (const { storageId, embedding } of processedChunks) {
+    for (const { storageId, chunkEmbedding } of processedChunks) {
       noteChunkIds.push(storageId);
-      allEmbeddings.push(embedding);
+      allEmbeddings.push(chunkEmbedding);
     }
     
     // Concatenate embeddings into a single 1536-dimensional vector
