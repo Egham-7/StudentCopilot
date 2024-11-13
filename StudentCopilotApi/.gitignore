@@ -1,0 +1,62 @@
+# .NET Core build outputs
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# Visual Studio files
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.dbmdl
+*.dbproj.schemaview
+*.pfx
+*.publishsettings
+
+# IDE settings
+.vscode/
+.idea/
+*.sln.iml
+
+# Dependencies
+packages/
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+
+# Environment files
+appsettings.*.json
+!appsettings.json
+*.env
+.env.*
+
+# Logs and databases
+*.log
+*.sqlite
+*.mdf
+*.ldf
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build results
+[Bb]uild/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+Properties/
