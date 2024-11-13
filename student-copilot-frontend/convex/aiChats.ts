@@ -1,29 +1,28 @@
-import { v } from "convex/values";
-import { internal } from "./_generated/api";
-import { Id } from "./_generated/dataModel";
-import {
-  internalAction,
-  internalMutation,
-  mutation,
-  query,
-  internalQuery,
-} from "./_generated/server";
-import { generateEmbedding } from "./ai";
-import { ChatOpenAI } from "@langchain/openai";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { OpenAIEmbeddings } from "@langchain/openai";
-import { Document } from "langchain/document";
-import {
-  RunnableSequence,
-  RunnablePassthrough,
-} from "@langchain/core/runnables";
+import { AIMessage, BaseMessage, HumanMessage } from "@langchain/core/messages";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import {
   ChatPromptTemplate,
   MessagesPlaceholder,
 } from "@langchain/core/prompts";
-import { AIMessage, HumanMessage, BaseMessage } from "@langchain/core/messages";
+import {
+  RunnablePassthrough,
+  RunnableSequence,
+} from "@langchain/core/runnables";
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
+import { v } from "convex/values";
+import { Document } from "langchain/document";
 import { TokenTextSplitter } from "langchain/text_splitter";
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
+import { generateEmbedding } from "./ai";
 
 type DocumentMetadata = {
   title: string;
@@ -194,7 +193,10 @@ export const answer = internalAction({
       If appropriate, reference the lecture materials.
 
       If you don't know the answer, or it is not in the provided materials, express that and encourage the student to seek further assistance.
+      
+      Make the answer more direct without unacessary comments and unacessary details.
 
+      Make sure the answer is less than 40 words.
       {context}`;
 
       const qaPrompt = ChatPromptTemplate.fromMessages([

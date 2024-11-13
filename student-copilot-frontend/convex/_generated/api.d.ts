@@ -15,10 +15,12 @@ import type {
 } from "convex/server";
 import type * as activities from "../activities.js";
 import type * as ai from "../ai.js";
+import type * as aiAgent_noteAgent from "../aiAgent/noteAgent.js";
 import type * as aiChats from "../aiChats.js";
 import type * as http from "../http.js";
 import type * as lectures from "../lectures.js";
 import type * as modules from "../modules.js";
+import type * as noteAction from "../noteAction.js";
 import type * as notes from "../notes.js";
 import type * as notifications from "../notifications.js";
 import type * as stripe from "../stripe.js";
@@ -42,10 +44,12 @@ import type * as websites_youtube from "../websites/youtube.js";
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   ai: typeof ai;
+  "aiAgent/noteAgent": typeof aiAgent_noteAgent;
   aiChats: typeof aiChats;
   http: typeof http;
   lectures: typeof lectures;
   modules: typeof modules;
+  noteAction: typeof noteAction;
   notes: typeof notes;
   notifications: typeof notifications;
   stripe: typeof stripe;

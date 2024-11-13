@@ -1,7 +1,6 @@
+import { v } from 'convex/values';
 import OpenAI from 'openai';
 import { action } from './_generated/server';
-import { v } from 'convex/values';
-
 
 
 const openai = new OpenAI({
@@ -10,7 +9,7 @@ const openai = new OpenAI({
 
 const CHUNK_SIZE = 25 * 1024 * 1024; // 25 MB in bytes
 
-export const generateEmbedding = async (text: string) => {
+export const generateEmbedding = async (text:string ) => {
   const response = await openai.embeddings.create({
     model: "text-embedding-3-small",
     input: text,
