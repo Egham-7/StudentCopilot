@@ -217,7 +217,14 @@ export async function generateNotes(_state: typeof InputAnnotation.State): Promi
     const llm = new ChatOpenAI({ model: "gpt-3.5-turbo" });
     const structuredLlm = llm.withStructuredOutput(NoteBlockSchema);
     const result = await structuredLlm.invoke(prompt);
-    return [NoteBlockSchema.parse(result)];
+
+    const dataResponse = await NoteBlockSchema.safeParseAsync(result);
+
+    if(!dataResponse.success){
+        throw new Error("Incorrect structure.");
+    }
+
+    return [dataResponse.data];
 }
 
 
