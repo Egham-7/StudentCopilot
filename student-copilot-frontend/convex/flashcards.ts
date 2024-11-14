@@ -192,7 +192,8 @@ export const updateCardReview = mutation({
   },
 });
 
-export function calculateNextReview(
+
+function calculateNextReview(
   currentStatus: string,
   isCorrect: boolean,
   difficulty: string
@@ -235,7 +236,7 @@ enum FlashCardStatus {
   MASTERED = "mastered"
 }
 
-export function determineNewStatus(
+function determineNewStatus(
   currentStatus: string,
   isCorrect: boolean,
   correctCount: number
