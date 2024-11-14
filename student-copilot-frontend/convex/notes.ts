@@ -1,19 +1,15 @@
+
+import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 import {
-  internalAction,
+  action,
   internalMutation,
   internalQuery,
   mutation,
-  query,
-  action,
+  query
 } from "./_generated/server";
-import { v } from "convex/values";
-import { internal } from "./_generated/api";
-import { Doc, Id } from "./_generated/dataModel";
 import { generateEmbedding } from "./ai";
-import { exponentialBackoff } from "./utils";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { RunnableSequence } from "@langchain/core/runnables";
-import { ChatOpenAI } from "@langchain/openai";
 
 export const storeClient = mutation({
   args: {
@@ -47,7 +43,7 @@ export const storeClient = mutation({
 
     await ctx.scheduler.runAfter(
       0,
-      internal.notes.fetchAndProcessTranscriptions,
+      internal.noteAction.fetchAndProcessTranscriptions,
       {
         lectureIds: args.lectureIds,
         noteTakingStyle: user.noteTakingStyle,
@@ -64,140 +60,10 @@ export const storeClient = mutation({
   },
 });
 
-export const fetchAndProcessTranscriptions = internalAction({
-  args: {
-    lectureIds: v.array(v.id("lectures")),
-    noteTakingStyle: v.string(),
-    learningStyle: v.union(
-      v.literal("auditory"),
-      v.literal("visual"),
-      v.literal("kinesthetic"),
-      v.literal("analytical"),
-    ),
-    course: v.string(),
-    levelOfStudy: v.union(
-      v.literal("Bachelors"),
-      v.literal("Associate"),
-      v.literal("Masters"),
-      v.literal("PhD"),
-    ),
-  },
-  handler: async (ctx, args) => {
-    const transcriptionChunks: string[] = [];
-
-    for (const lectureId of args.lectureIds) {
-      const lecture = await ctx.runQuery(internal.notes.getLecture, {
-        lectureId,
-      });
-      if (!lecture) {
-        throw new Error(`Lecture with ID ${lectureId} not found.`);
-      }
-
-      for (const chunkId of lecture.lectureTranscription) {
-        const chunkUrl = await ctx.storage.getUrl(chunkId);
-        if (!chunkUrl) {
-          throw new Error(`Transcription chunk with ID ${chunkId} not found.`);
-        }
-
-        const response = await fetch(chunkUrl);
-        const chunkText = await response.text();
-        transcriptionChunks.push(chunkText);
-      }
-    }
-
-    // Schedule the note generation task
-    await ctx.scheduler.runAfter(0, internal.notes.generateNotes, {
-      transcriptionChunks,
-      lectureIds: args.lectureIds,
-      noteTakingStyle: args.noteTakingStyle,
-      learningStyle: args.learningStyle,
-      course: args.course,
-      levelOfStudy: args.levelOfStudy,
-    });
-  },
-});
-
 export const getLecture = internalQuery({
   args: { lectureId: v.id("lectures") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.lectureId);
-  },
-});
-
-export const generateNotes = internalAction({
-  args: {
-    transcriptionChunks: v.array(v.string()),
-    lectureIds: v.array(v.id("lectures")),
-    noteTakingStyle: v.string(),
-    learningStyle: v.union(
-      v.literal("auditory"),
-      v.literal("visual"),
-      v.literal("kinesthetic"),
-      v.literal("analytical"),
-    ),
-    course: v.string(),
-    levelOfStudy: v.union(
-      v.literal("Bachelors"),
-      v.literal("Associate"),
-      v.literal("Masters"),
-      v.literal("PhD"),
-    ),
-  },
-  handler: async (ctx, args) => {
-    const {
-      transcriptionChunks,
-      noteTakingStyle,
-      learningStyle,
-      course,
-      levelOfStudy,
-    } = args;
-
-    // Process chunks in parallel
-
-    const chunkPromises = transcriptionChunks.map(async (chunk) => {
-      return exponentialBackoff(async () => {
-        const noteChunk = await processChunk(chunk, {
-          noteTakingStyle,
-          learningStyle,
-          course,
-          levelOfStudy,
-        });
-        const noteChunkBlob = new Blob([noteChunk], { type: "text/plain" });
-        const storageId = await ctx.storage.store(noteChunkBlob);
-
-        // Generate embedding for the chunk
-        const embedding = await generateEmbedding(noteChunk);
-
-        return { storageId, embedding };
-      });
-    });
-
-    const processedChunks = await Promise.all(chunkPromises);
-
-    const noteChunkIds: Id<"_storage">[] = [];
-    const allEmbeddings: number[][] = [];
-
-    for (const { storageId, embedding } of processedChunks) {
-      noteChunkIds.push(storageId);
-      allEmbeddings.push(embedding);
-    }
-
-    // Concatenate embeddings into a single 1536-dimensional vector
-    const concatenatedEmbedding: number[] = [];
-    for (let i = 0; i < 1536; i++) {
-      const sum = allEmbeddings.reduce(
-        (acc, embedding) => acc + (embedding[i] || 0),
-        0,
-      );
-      concatenatedEmbedding.push(sum / allEmbeddings.length);
-    }
-
-    // Store the list of note chunk IDs and the concatenated embedding in the database
-    await ctx.runMutation(internal.notes.storeNotes, {
-      noteChunkIds: noteChunkIds,
-      lectureIds: args.lectureIds,
-      embedding: concatenatedEmbedding,
-    });
   },
 });
 
@@ -249,70 +115,6 @@ export const storeNotes = internalMutation({
   },
 });
 
-async function processChunk(
-  chunk: string,
-  userInfo: {
-    noteTakingStyle: string;
-    learningStyle: "auditory" | "visual" | "kinesthetic" | "analytical";
-    levelOfStudy: "Bachelors" | "Associate" | "Masters" | "PhD";
-    course: string;
-  },
-): Promise<string> {
-  return exponentialBackoff(async () => {
-    const prompt: string = `
-    Your task is to:
-    1. Analyze the given lecture chunk thoroughly.
-    2. Create a comprehensive summary in Markdown format, adapting to the user's note-taking and learning style.
-    3. Use appropriate Markdown syntax for headings, subheadings, lists, and emphasis.
-    4. Highlight key concepts, definitions, and important points.
-    5. Organize the information logically and hierarchically.
-    6. Include any relevant examples or case studies mentioned.
-    7. If applicable, add bullet points for easy readability.
-    8. Ensure the notes are concise yet informative, appropriate for the user's level of study.
-    9. Use code blocks for any multiline code content.
-    10. Use markdown math syntax that is compatible with Katex for math formulas and equations.
-    11. End with a brief "Key Takeaways" section if appropriate.
-    12. For visual learners, include suggestions for diagrams or visual aids where applicable.
-    13. For auditory learners, emphasize key phrases or mnemonics that could be easily remembered.
-    14. For kinesthetic learners, suggest practical applications or hands-on activities related to the content.
-    15. For analytical learners, include logical breakdowns and connections between concepts.
-    Produce notes that would be valuable for review and quick reference, tailored to the user's specific needs and the course content. If the lecture chunk appears to be cut off mid-sentence or mid-thought, please use your best judgment to infer the intended meaning and complete the idea logically. Do not leave any sentences or thoughts unfinished in your summary.`;
-    const question: string = `Please summarize the following lecture chunk into well-structured Markdown notes, tailored to the user's preferences. If the chunk is cut off, please infer the intended meaning and complete the summary accordingly:${chunk}`;
-    const qaPrompt = ChatPromptTemplate.fromMessages([
-      ["system", prompt],
-      ["human", "{question}"],
-    ]);
-    const llm = new ChatOpenAI({ model: "gpt-3.5-turbo", temperature: 0 }); // Make sure you have your OpenAI API key set up
-    const simpleChain = RunnableSequence.from([
-      async (input: {
-        question: string;
-        noteTakingStyle: string;
-        learningStyle: string;
-        levelOfStudy: string;
-        course: string;
-      }) => ({
-        context: `This is some example context related to:
-        Note-taking style: ${input.noteTakingStyle}
-        Learning style: ${input.learningStyle}
-        Level of study: ${input.levelOfStudy}
-        Course: ${input.course}`,
-        question: input.question,
-      }),
-      qaPrompt,
-      llm,
-    ]);
-    const result = await simpleChain.invoke({
-      question,
-      noteTakingStyle: userInfo.noteTakingStyle,
-      learningStyle: userInfo.learningStyle,
-      levelOfStudy: userInfo.levelOfStudy,
-      course: userInfo.course,
-    });
-
-    return result.content as string;
-  });
-}
-
 export const getNotesForModule = query({
   args: {
     moduleId: v.id("modules"),
@@ -347,57 +149,6 @@ export const getNote = internalQuery({
       throw new Error("Not authorized to get this note.");
     }
     return await ctx.db.get(args.noteId);
-  },
-});
-
-export const getNoteById = action({
-  args: { noteId: v.id("notes") },
-  handler: async (ctx, args): Promise<Doc<"notes" & { content: string }>> => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw new Error("Not authorized to use this action.");
-    }
-
-    const note = await ctx.runQuery(internal.notes.getNote, {
-      noteId: args.noteId,
-      userId: identity.subject,
-    });
-    if (!note) {
-      throw new Error(`Note with ID ${args.noteId} not found.`);
-    }
-
-    const noteModule = await ctx.runQuery(internal.modules.getByIdInternal, {
-      id: note.moduleId as Id<"modules">,
-    });
-
-    if (!noteModule) {
-      throw new Error(`Module with ID ${note.moduleId} not found.`);
-    }
-
-    if (noteModule.userId !== identity.subject) {
-      throw new Error("Not authorized to view this note.");
-    }
-
-    // Fetch content for each text chunk
-    const textContent = await Promise.all(
-      note.textChunks.map(async (chunkId) => {
-        const url = await ctx.storage.getUrl(chunkId);
-        if (!url) {
-          throw new Error(`Failed to get URL for chunk ${chunkId}`);
-        }
-        const response = await fetch(url);
-        return response.text();
-      }),
-    );
-
-    // Combine all text chunks
-    const fullContent = textContent.join("\n");
-
-    return {
-      ...note,
-      content: fullContent,
-    };
   },
 });
 
@@ -459,3 +210,7 @@ export const deleteNote = mutation({
     return { success: true, message: "Note deleted successfully." };
   },
 });
+
+
+
+
