@@ -4,11 +4,14 @@ FROM node:22.7-alpine AS build
 # Set working directory
 WORKDIR /app
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
 # Install dependencies (including dev dependencies)
-RUN npm ci
+RUN pnpm install
 
 # Copy all project files
 COPY . .
@@ -21,7 +24,7 @@ ARG VITE_CLERK_SIGN_UP_FORCE_REDIRECT_URL
 ARG VITE_CONVEX_URL
 
 # Build the app and deploy Convex functions
-RUN npx convex deploy --cmd 'npx vite build'
+RUN pnpm dlx convex deploy --cmd 'pnpm vite build'
 
 # Production stage
 FROM nginx:alpine
@@ -37,3 +40,4 @@ EXPOSE 80
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
+
