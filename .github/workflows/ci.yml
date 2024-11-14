@@ -15,15 +15,22 @@ jobs:
         working-directory: ./student-copilot-frontend
     steps:
       - uses: actions/checkout@v3
+      
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+          
       - uses: actions/setup-node@v3
         with:
           node-version: '22'
           cache: 'pnpm'
-      - run: pnpm install --no-frozen-lockfile
-      - run: pnpm test
+          cache-dependency-path: './student-copilot-frontend/pnpm-lock.yaml'
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Run tests
+        run: pnpm test
 
   lint:
     name: Lint
@@ -33,15 +40,22 @@ jobs:
         working-directory: ./student-copilot-frontend
     steps:
       - uses: actions/checkout@v3
+      
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+          
       - uses: actions/setup-node@v3
         with:
           node-version: '22'
           cache: 'pnpm'
-      - run: pnpm install --no-frozen-lockfile
-      - run: pnpm run lint
+          cache-dependency-path: './student-copilot-frontend/pnpm-lock.yaml'
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Run lint
+        run: pnpm run lint
 
   build:
     name: Build
@@ -51,15 +65,23 @@ jobs:
         working-directory: ./student-copilot-frontend
     steps:
       - uses: actions/checkout@v3
+      
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+          
       - uses: actions/setup-node@v3
         with:
           node-version: '22'
           cache: 'pnpm'
-      - run: pnpm install --no-frozen-lockfile
-      - run: pnpm run build
+          cache-dependency-path: './student-copilot-frontend/pnpm-lock.yaml'
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Build
+        run: pnpm run build
+        
       - uses: actions/upload-artifact@v3
         with:
           name: dist
@@ -73,13 +95,19 @@ jobs:
         working-directory: ./student-copilot-frontend
     steps:
       - uses: actions/checkout@v3
+      
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+          
       - uses: actions/setup-node@v3
         with:
           node-version: '22'
           cache: 'pnpm'
-      - run: pnpm install --no-frozen-lockfile
-      - run: pnpm run type-check
-
+          cache-dependency-path: './student-copilot-frontend/pnpm-lock.yaml'
+          
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Type check
+        run: pnpm run type-check
