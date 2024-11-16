@@ -5,7 +5,7 @@ import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph, planLectureNotes } from "./aiAgent/noteAgent";
+import { graph, planLectureNotes, TNoteBlock } from "./aiAgent/noteAgent";
 
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
@@ -181,6 +181,19 @@ export const generateNotes = internalAction({
   },
 });
 
+export function flattenNotes(blocks: TNoteBlock[]): any[] {
+  return blocks.reduce<TNoteBlock[]>((acc, block) => {
+    // If block is an array, recursively flatten it
+    if (Array.isArray(block)) {
+      return [...acc, ...flattenNotes(block)];
+    }
+    // Otherwise add the block directly
+    return [...acc, block];
+  }, []);
+}
+
+
+
 export const getNoteById = action({
   args: { noteId: v.id("notes") },
   handler: async (ctx, args): Promise<Doc<"notes" & { content: string }>> => {
@@ -226,7 +239,7 @@ export const getNoteById = action({
       ...note,
       content: {
         time: Date.now(),
-        blocks: textContent,
+        blocks: flattenNotes(textContent),
         version: "2.11.10",
       },
     };

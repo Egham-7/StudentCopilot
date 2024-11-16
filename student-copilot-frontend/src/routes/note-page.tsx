@@ -1,29 +1,23 @@
 import LoadingPage from "@/components/custom/loading";
-import { Id } from "convex/_generated/dataModel";
+import { Doc, Id } from "convex/_generated/dataModel";
 import { useAction } from "convex/react";
 import { ChevronRight } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import { useRef } from "react";
-import EditorJS from "@editorjs/editorjs";
+import EditorJS, { OutputData } from "@editorjs/editorjs";
 import Header from "@editorjs/header";
 import Paragraph from "@editorjs/paragraph";
 import ImageTool from "@editorjs/image";
-import type {
-  ToolConstructable,
-  BlockToolConstructable,
-} from "@editorjs/editorjs";
-
 interface EditorProps {
   data: any;
-  onChange: (data: any) => void;
+  onChange: (data: OutputData) => void;
 }
 const Editor = ({ data, onChange }: EditorProps) => {
   const editorRef = useRef<EditorJS>();
 
-  // Convert string content to Editor.js format if needed
-
+  console.log("Data Content: ", data.blocks);
   useEffect(() => {
     const initEditor = async () => {
       if (!editorRef.current) {
@@ -45,9 +39,7 @@ const Editor = ({ data, onChange }: EditorProps) => {
               },
             },
           },
-          data: {
-            blocks: data.blocks,
-          },
+          data,
           onChange: async () => {
             const savedData = await editor.save();
             onChange(savedData);
@@ -80,17 +72,13 @@ interface Note {
 export default function NotePage() {
   const { noteId } = useParams<{ noteId: string }>();
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const getNoteById = useAction(api.noteAction.getNoteById);
-  const updateNote = useAction(api.noteAction.updateNote);
 
   const handleEditorChange = async (content: any) => {
     if (currentNote) {
       setCurrentNote({ ...currentNote, content });
-      await updateNote({
-        noteId: currentNote._id,
-        content,
-      });
+
     }
   };
 
@@ -125,6 +113,7 @@ export default function NotePage() {
       </header>
       <div className="p-4 flex-grow overflow-auto">
         <Editor data={currentNote.content} onChange={handleEditorChange} />
+
       </div>
     </main>
   );
