@@ -8,6 +8,8 @@ import { api } from "../../convex/_generated/api";
 import { useRef } from "react";
 import EditorJS from "@editorjs/editorjs";
 import Header from "@editorjs/header";
+import Paragraph from "@editorjs/paragraph";
+import ImageTool from "@editorjs/image";
 import type {
   ToolConstructable,
   BlockToolConstructable,
@@ -21,16 +23,6 @@ const Editor = ({ data, onChange }: EditorProps) => {
   const editorRef = useRef<EditorJS>();
 
   // Convert string content to Editor.js format if needed
-  const initialData = {
-    blocks: [
-      {
-        type: "paragraph",
-        data: {
-          text: data || "",
-        },
-      },
-    ],
-  };
 
   useEffect(() => {
     const initEditor = async () => {
@@ -38,9 +30,24 @@ const Editor = ({ data, onChange }: EditorProps) => {
         const editor = new EditorJS({
           holder: "editorjs",
           tools: {
-            header: Header as unknown as BlockToolConstructable,
+            header: Header,
+            paragraph: {
+              class: Paragraph,
+              inlineToolbar: true,
+            },
+            image: {
+              class: ImageTool,
+              config: {
+                endpoints: {
+                  byFile: "http://localhost:8008/uploadFile", // Your backend file uploader endpoint
+                  byUrl: "http://localhost:8008/fetchUrl", // Your endpoint that provides uploading by Url
+                },
+              },
+            },
           },
-          data: initialData,
+          data: {
+            blocks: data.blocks,
+          },
           onChange: async () => {
             const savedData = await editor.save();
             onChange(savedData);
@@ -107,6 +114,7 @@ export default function NotePage() {
   if (isLoading) return <LoadingPage />;
   if (!currentNote) return <div>Note not found</div>;
 
+  console.log(currentNote.content);
   return (
     <main className="flex-1 overflow-hidden flex flex-col">
       <header className="flex items-center justify-between p-4 border-b">

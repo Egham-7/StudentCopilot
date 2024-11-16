@@ -17,6 +17,8 @@
     "@clerk/clerk-react": "^5.4.2",
     "@editorjs/editorjs": "^2.30.7",
     "@editorjs/header": "^2.8.8",
+    "@editorjs/image": "^2.10.0",
+    "@editorjs/paragraph": "^2.11.6",
     "@hookform/resolvers": "^3.9.0",
     "@langchain/core": "^0.3.18",
     "@langchain/langgraph": "^0.2.20",

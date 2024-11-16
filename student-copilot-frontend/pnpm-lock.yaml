@@ -20,6 +20,12 @@ importers:
       '@editorjs/header':
         specifier: ^2.8.8
         version: 2.8.8
+      '@editorjs/image':
+        specifier: ^2.10.0
+        version: 2.10.0
+      '@editorjs/paragraph':
+        specifier: ^2.11.6
+        version: 2.11.6
       '@hookform/resolvers':
         specifier: ^3.9.0
         version: 3.9.1(react-hook-form@7.53.2(react@18.3.1))
@@ -394,14 +400,26 @@ packages:
     resolution: {integrity: sha512-iR1tc17mK8RDuUkN5tYkl7eymdePf86OodglGms9sVAKmr9mD3pKDN1yEE9LZi3LxgFdTc95QwqrwGQ6h7bAkw==}
     engines: {node: '>=18.17.0'}
 
+  '@codexteam/icons@0.0.4':
+    resolution: {integrity: sha512-V8N/TY2TGyas4wLrPIFq7bcow68b3gu8DfDt1+rrHPtXxcexadKauRJL6eQgfG7Z0LCrN4boLRawR4S9gjIh/Q==}
+
   '@codexteam/icons@0.0.5':
     resolution: {integrity: sha512-s6H2KXhLz2rgbMZSkRm8dsMJvyUNZsEjxobBEg9ztdrb1B2H3pEzY6iTwI4XUPJWJ3c3qRKwV4TrO3J5jUdoQA==}
+
+  '@codexteam/icons@0.3.2':
+    resolution: {integrity: sha512-P1ep2fHoy0tv4wx85eic+uee5plDnZQ1Qa6gDfv7eHPkCXorMtVqJhzMb75o1izogh6G7380PqmFDXV3bW3Pig==}
 
   '@editorjs/editorjs@2.30.7':
     resolution: {integrity: sha512-FfdeUqrgcKWC+Cy2GW6Dxup6s2TaRKokR4FL+HKXshu6h9Y//rrx4SQkURgkZOCSbV77t9btbmAXdFXWGB+diw==}
 
   '@editorjs/header@2.8.8':
     resolution: {integrity: sha512-bsMSs34u2hoi0UBuRoc5EGWXIFzJiwYgkFUYQGVm63y5FU+s8zPBmVx5Ip2sw1xgs0fqfDROqmteMvvmbCy62w==}
+
+  '@editorjs/image@2.10.0':
+    resolution: {integrity: sha512-WkQtXE8gICUagnBfowI/4tiVqsPTkBju7IqDVigMgEMzmw6AFuKDSYpVL12uB9ByDikAZWOK/mdUzeVfVBnKwg==}
+
+  '@editorjs/paragraph@2.11.6':
+    resolution: {integrity: sha512-i9B50Ylvh+0ZzUGWIba09PfUXsA00Y//zFZMwqsyaXXKxMluSIJ6ADFJbbK0zaV9Ijx49Xocrlg+CEPRqATk9w==}
 
   '@emotion/is-prop-valid@1.2.2':
     resolution: {integrity: sha512-uNsoYd37AFmaCdXlg6EYD1KaPOaRWRByMCYzbKUX4+hhMfrxdVSelShywL4JVaAeM/eHUOSprYBQls+/neX3pw==}
@@ -4412,7 +4430,11 @@ snapshots:
     dependencies:
       csstype: 3.1.1
 
+  '@codexteam/icons@0.0.4': {}
+
   '@codexteam/icons@0.0.5': {}
+
+  '@codexteam/icons@0.3.2': {}
 
   '@editorjs/editorjs@2.30.7': {}
 
@@ -4420,6 +4442,14 @@ snapshots:
     dependencies:
       '@codexteam/icons': 0.0.5
       '@editorjs/editorjs': 2.30.7
+
+  '@editorjs/image@2.10.0':
+    dependencies:
+      '@codexteam/icons': 0.3.2
+
+  '@editorjs/paragraph@2.11.6':
+    dependencies:
+      '@codexteam/icons': 0.0.4
 
   '@emotion/is-prop-valid@1.2.2':
     dependencies:

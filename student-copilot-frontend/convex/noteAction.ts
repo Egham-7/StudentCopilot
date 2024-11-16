@@ -3,16 +3,13 @@ import { internal } from "./_generated/api";
 
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
-import {
-    action,
-    internalAction,
-} from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph,planLectureNotes } from "./aiAgent/noteAgent";
+import { graph, planLectureNotes } from "./aiAgent/noteAgent";
 
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
-import{MemorySaver } from "@langchain/langgraph";
+import { MemorySaver } from "@langchain/langgraph";
 
 export const fetchAndProcessTranscriptions = internalAction({
   args: {
@@ -22,17 +19,17 @@ export const fetchAndProcessTranscriptions = internalAction({
       v.literal("auditory"),
       v.literal("visual"),
       v.literal("kinesthetic"),
-      v.literal("analytical"),
+      v.literal("analytical")
     ),
     course: v.string(),
     levelOfStudy: v.union(
       v.literal("Bachelors"),
       v.literal("Associate"),
       v.literal("Masters"),
-      v.literal("PhD"),
+      v.literal("PhD")
     ),
   },
-  
+
   handler: async (ctx, args) => {
     const transcriptionChunks: string[] = [];
 
@@ -77,14 +74,14 @@ export const generateNotes = internalAction({
       v.literal("auditory"),
       v.literal("visual"),
       v.literal("kinesthetic"),
-      v.literal("analytical"),
+      v.literal("analytical")
     ),
     course: v.string(),
     levelOfStudy: v.union(
       v.literal("Bachelors"),
       v.literal("Associate"),
       v.literal("Masters"),
-      v.literal("PhD"),
+      v.literal("PhD")
     ),
   },
   handler: async (ctx, args) => {
@@ -96,65 +93,65 @@ export const generateNotes = internalAction({
       levelOfStudy,
     } = args;
 
+    // Initialize a memory manager for saving the processing state
+    const memoryManager = new MemorySaver();
 
-// Initialize a memory manager for saving the processing state
-const memoryManager = new MemorySaver();
+    // Plan lecture notes based on the provided preferences and a portion of transcription chunks
+    const lectureNotePlan = planLectureNotes(
+      noteTakingStyle,
+      learningStyle,
+      levelOfStudy,
+      course,
+      transcriptionChunks
+    );
 
-// Plan lecture notes based on the provided preferences and a portion of transcription chunks
-const lectureNotePlan = planLectureNotes(
-  noteTakingStyle,
-  learningStyle,
-  levelOfStudy,
-  course,
-  transcriptionChunks
-);
+    // Compile the application state graph with memory checkpointing enabled
+    const appGraph = graph.compile({ checkpointer: memoryManager });
 
-// Compile the application state graph with memory checkpointing enabled
-const appGraph = graph.compile({ checkpointer: memoryManager });
+    // Configuration for the application with a unique thread ID
+    const executionConfig = { configurable: { thread_id: uuidv4() } };
 
-// Configuration for the application with a unique thread ID
-const executionConfig = { configurable: { thread_id: uuidv4() } };
+    // Process each transcription chunk in parallel
+    const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
+      return exponentialBackoff(async () => {
+        // Prepare input data for each chunk, including user preferences and plan details
+        const processingData = {
+          chunk: chunk,
+          noteTakingStyle: noteTakingStyle,
+          learningStyle: learningStyle,
+          levelOfStudy: levelOfStudy,
+          course: course,
+          plan: lectureNotePlan,
+        };
 
-// Process each transcription chunk in parallel
-const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
-  return exponentialBackoff(async () => {
-    
-    // Prepare input data for each chunk, including user preferences and plan details
-    const processingData = {
-      chunk: chunk,
-      noteTakingStyle: noteTakingStyle,
-      learningStyle: learningStyle,
-      levelOfStudy: levelOfStudy,
-      course: course,
-      plan: lectureNotePlan
-    };
+        // Invoke the application graph with the current chunk data and config
+        const processingResult = await appGraph.invoke(
+          processingData,
+          executionConfig
+        );
 
-    // Invoke the application graph with the current chunk data and config
-    const processingResult = await appGraph.invoke(processingData, executionConfig);
+        // Extract the generated note from the result and add it to the noteBlocks array
 
-    // Extract the generated note from the result and add it to the noteBlocks array
-    
+        // Convert the processed note into JSON format for storage
+        const finalResultJson = JSON.stringify(processingResult.note);
 
-    // Convert the processed note into JSON format for storage
-    const finalResultJson = JSON.stringify({
-      type: 'note',
-      blocks: processingResult.note
+        // Create a blob from the JSON data for storage
+        const noteChunkBlob = new Blob([finalResultJson], {
+          type: "application/json",
+        });
+
+        // Store the blob in storage and retrieve the storage ID
+        const storageId = await ctx.storage.store(noteChunkBlob);
+
+        // Generate an embedding for the current chunk and return the storage ID with the embedding
+        const chunkEmbedding = await generateEmbedding(
+          processingResult.toString()
+        );
+
+        return { storageId, chunkEmbedding };
+      });
     });
 
-    // Create a blob from the JSON data for storage
-    const noteChunkBlob = new Blob([finalResultJson], { type: "application/json" });
-
-    // Store the blob in storage and retrieve the storage ID
-    const storageId = await ctx.storage.store(noteChunkBlob);
-
-    // Generate an embedding for the current chunk and return the storage ID with the embedding
-    const chunkEmbedding = await generateEmbedding(processingResult.toString());
-
-    return { storageId, chunkEmbedding };
-  });
-});
-
-    
     const processedChunks = await Promise.all(chunkProcessingPromises);
 
     const noteChunkIds: Id<"_storage">[] = [];
@@ -164,13 +161,13 @@ const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
       noteChunkIds.push(storageId);
       allEmbeddings.push(chunkEmbedding);
     }
-    
+
     // Concatenate embeddings into a single 1536-dimensional vector
     const concatenatedEmbedding: number[] = [];
     for (let i = 0; i < 1536; i++) {
       const sum = allEmbeddings.reduce(
         (acc, embedding) => acc + (embedding[i] || 0),
-        0,
+        0
       );
       concatenatedEmbedding.push(sum / allEmbeddings.length);
     }
@@ -221,17 +218,17 @@ export const getNoteById = action({
           throw new Error(`Failed to get URL for chunk ${chunkId}`);
         }
         const response = await fetch(url);
-        return response.text();
-      }),
+        return response.json();
+      })
     );
-
-    // Combine all text chunks
-    const fullContent = textContent.join("\n");
 
     return {
       ...note,
-      content: fullContent,
+      content: {
+        time: Date.now(),
+        blocks: textContent,
+        version: "2.11.10",
+      },
     };
   },
 });
-
