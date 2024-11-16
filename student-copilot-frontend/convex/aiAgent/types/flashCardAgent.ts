@@ -8,8 +8,8 @@ export const flashCardSetSchema = z.object({
   description: z.string().optional(),
   contentIds: z.array(z.string()),
   lastStudied: z.string().optional(),
-  totalCards: z.number(),
-  masteredCards: z.number()
+  totalCards: z.number().min(0),
+  masteredCards: z.number().min(0)
 });
 
 export const flashcardSchema = z.object({
@@ -20,9 +20,10 @@ export const flashcardSchema = z.object({
   status: z.enum(["new", "learning", "review", "mastered"]),
   nextReviewDate: z.string().optional(),
   lastReviewDate: z.string().optional(),
-  reviewCount: z.number(),
-  correctCount: z.number(),
-  incorrectCount: z.number(),
+  reviewCount: z.number().min(0),
+  correctCount: z.number().min(0),
+  incorrectCount: z.number().min(0),
   tags: z.array(z.string()).optional(),
   sourceContentId: z.string().optional()
 });
+

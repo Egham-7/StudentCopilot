@@ -1,6 +1,7 @@
 
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 export const createFlashCardSet = mutation({
   args: {
@@ -254,3 +255,62 @@ function determineNewStatus(
       return FlashCardStatus.MASTERED;
   }
 }
+
+
+export const generateFlashCardsClient = mutation({
+  args: {
+    moduleId: v.id("modules"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    lectureIds: v.optional(v.array(v.id("lectures"))),
+    noteIds: v.optional(v.array(v.id("notes"))),
+
+  },
+  handler: async (ctx, args) => {
+
+    const { moduleId, title, description, lectureIds, noteIds } = args;
+
+
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Must be authenticated to use this function.");
+    }
+
+    const user = await ctx.db.query("users").withIndex("by_clerkId").first();
+    if (!user) {
+      throw new Error("User not found.");
+    }
+
+    const userId = identity.subject;
+
+
+    const contentIds = [...(lectureIds ?? []), ...(noteIds ?? [])];
+
+
+
+    // Create the flashcard set first
+    const flashCardSetId = await ctx.db.insert("flashCardSets", {
+      moduleId: moduleId,
+      userId: identity.subject,
+      title: title,
+      description: description,
+      contentIds: contentIds,
+      totalCards: 0,
+      masteredCards: 0,
+    });
+
+    // Schedule the generation task
+    await ctx.scheduler.runAfter(0, internal.flashCardActions.generateFlashCards, {
+      flashCardSetId,
+      userId,
+      lectureIds,
+      noteIds,
+      learningStyle: user.learningStyle,
+      course: user.course,
+      levelOfStudy: user.levelOfStudy,
+    });
+
+    return flashCardSetId;
+  },
+});
+
