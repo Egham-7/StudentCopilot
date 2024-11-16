@@ -1,43 +1,91 @@
 import LoadingPage from "@/components/custom/loading";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useDebounce } from "@/hooks/use-debounce";
 import { Id } from "convex/_generated/dataModel";
 import { useAction } from "convex/react";
-import 'katex/dist/katex.min.css';
-import { ChevronRight, Edit, Save } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
-import { BlockMath, InlineMath } from 'react-katex';
-import ReactMarkdown, { Components } from "react-markdown";
+import { ChevronRight } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import rehypeKatex from 'rehype-katex';
-import remarkMath from 'remark-math';
 import { api } from "../../convex/_generated/api";
+import { useRef } from "react";
+import EditorJS from "@editorjs/editorjs";
+import Header from "@editorjs/header";
+import type {
+  ToolConstructable,
+  BlockToolConstructable,
+} from "@editorjs/editorjs";
 
-
-interface ExtendedComponents extends Components {
-  math: React.ComponentType<{ value: string }>;
-  inlineMath: React.ComponentType<{ value: string }>;
+interface EditorProps {
+  data: any;
+  onChange: (data: any) => void;
 }
+const Editor = ({ data, onChange }: EditorProps) => {
+  const editorRef = useRef<EditorJS>();
 
+  // Convert string content to Editor.js format if needed
+  const initialData = {
+    blocks: [
+      {
+        type: "paragraph",
+        data: {
+          text: data || "",
+        },
+      },
+    ],
+  };
+
+  useEffect(() => {
+    const initEditor = async () => {
+      if (!editorRef.current) {
+        const editor = new EditorJS({
+          holder: "editorjs",
+          tools: {
+            header: Header as unknown as BlockToolConstructable,
+          },
+          data: initialData,
+          onChange: async () => {
+            const savedData = await editor.save();
+            onChange(savedData);
+          },
+        });
+        await editor.isReady;
+        editorRef.current = editor;
+      }
+    };
+
+    initEditor();
+
+    return () => {
+      if (editorRef.current && editorRef.current.destroy) {
+        editorRef.current.destroy();
+      }
+    };
+  }, []);
+
+  return <div id="editorjs" />;
+};
 
 interface Note {
   _id: Id<"notes">;
   moduleId: Id<"modules">;
   lectureIds: Id<"lectures">[];
-  textChunks: Id<"_storage">[];
-  content: string;
+  content: any;
 }
 
 export default function NotePage() {
   const { noteId } = useParams<{ noteId: string }>();
   const [currentNote, setCurrentNote] = useState<Note | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const debouncedNote = useDebounce<string>(currentNote?.content ?? "", 500);
   const getNoteById = useAction(api.noteAction.getNoteById);
+  const updateNote = useAction(api.noteAction.updateNote);
+
+  const handleEditorChange = async (content: any) => {
+    if (currentNote) {
+      setCurrentNote({ ...currentNote, content });
+      await updateNote({
+        noteId: currentNote._id,
+        content,
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -56,67 +104,8 @@ export default function NotePage() {
     fetchNote();
   }, [noteId, getNoteById]);
 
-
-
-
-  const handleSave = useCallback(async () => {
-    if (currentNote) {
-      // Implement save logic here
-    }
-    setIsEditing(false);
-  }, [currentNote]);
-
-  useEffect(() => {
-    if (debouncedNote && currentNote) {
-      handleSave();
-    }
-  }, [debouncedNote, handleSave, currentNote]);
-
-  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (currentNote) {
-      setCurrentNote({ ...currentNote, content: e.target.value });
-    }
-  };
-
-  const toggleEditMode = () => {
-    setIsEditing(!isEditing);
-  };
-
-  if (isLoading) {
-    return <LoadingPage />;
-  }
-
-  if (!currentNote) {
-    return <div>Note not found</div>;
-  }
-
-  const components: ExtendedComponents = {
-    code({ className, children, ...props }: { className?: string, children?: React.ReactNode }) {
-      const match = /language-(\w+)/.exec(className || '');
-      return match ? (
-        <SyntaxHighlighter
-          {...props}
-          language={match[1]}
-          style={vscDarkPlus}
-          PreTag="div"
-          customStyle={{
-            margin: '1em 0',
-            borderRadius: '5px',
-            padding: '1em',
-          }}
-        >
-          {String(children).replace(/\n$/, '')}
-        </SyntaxHighlighter>
-      ) : (
-        <code className={className} {...props}>
-          {children}
-        </code>
-      );
-    },
-    math: ({ value }) => <BlockMath math={value} />,
-    inlineMath: ({ value }) => <InlineMath math={value} />
-  };
-
+  if (isLoading) return <LoadingPage />;
+  if (!currentNote) return <div>Note not found</div>;
 
   return (
     <main className="flex-1 overflow-hidden flex flex-col">
@@ -125,35 +114,10 @@ export default function NotePage() {
           <ChevronRight className="h-4 w-4" />
           <span>Note for Module {currentNote.moduleId}</span>
         </div>
-        <div>
-          <Button variant="outline" size="sm" onClick={toggleEditMode} className="mr-2">
-            {isEditing ? <Save className="h-4 w-4 mr-2" /> : <Edit className="h-4 w-4 mr-2" />}
-            {isEditing ? "Save" : "Edit"}
-          </Button>
-        </div>
       </header>
-      <div className="p-4 flex-grow overflow-auto h-screen">
-        {isEditing ? (
-          <Textarea
-            value={currentNote.content}
-            onChange={handleNoteChange}
-            className="w-full h-full resize-none border-none p-0 focus-visible:ring-0"
-            placeholder="Start writing here..."
-          />
-        ) : (
-          <div className="prose max-w-none h-screen dark:prose-invert">
-            <ReactMarkdown
-              components={components as Components}
-              remarkPlugins={[remarkMath]}
-              rehypePlugins={[rehypeKatex]}
-            >
-              {currentNote.content}
-            </ReactMarkdown>
-
-          </div>
-        )}
+      <div className="p-4 flex-grow overflow-auto">
+        <Editor data={currentNote.content} onChange={handleEditorChange} />
       </div>
     </main>
   );
 }
-

@@ -14,6 +14,12 @@ importers:
       '@clerk/clerk-react':
         specifier: ^5.4.2
         version: 5.15.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@editorjs/editorjs':
+        specifier: ^2.30.7
+        version: 2.30.7
+      '@editorjs/header':
+        specifier: ^2.8.8
+        version: 2.8.8
       '@hookform/resolvers':
         specifier: ^3.9.0
         version: 3.9.1(react-hook-form@7.53.2(react@18.3.1))
@@ -387,6 +393,15 @@ packages:
   '@clerk/types@4.33.0':
     resolution: {integrity: sha512-iR1tc17mK8RDuUkN5tYkl7eymdePf86OodglGms9sVAKmr9mD3pKDN1yEE9LZi3LxgFdTc95QwqrwGQ6h7bAkw==}
     engines: {node: '>=18.17.0'}
+
+  '@codexteam/icons@0.0.5':
+    resolution: {integrity: sha512-s6H2KXhLz2rgbMZSkRm8dsMJvyUNZsEjxobBEg9ztdrb1B2H3pEzY6iTwI4XUPJWJ3c3qRKwV4TrO3J5jUdoQA==}
+
+  '@editorjs/editorjs@2.30.7':
+    resolution: {integrity: sha512-FfdeUqrgcKWC+Cy2GW6Dxup6s2TaRKokR4FL+HKXshu6h9Y//rrx4SQkURgkZOCSbV77t9btbmAXdFXWGB+diw==}
+
+  '@editorjs/header@2.8.8':
+    resolution: {integrity: sha512-bsMSs34u2hoi0UBuRoc5EGWXIFzJiwYgkFUYQGVm63y5FU+s8zPBmVx5Ip2sw1xgs0fqfDROqmteMvvmbCy62w==}
 
   '@emotion/is-prop-valid@1.2.2':
     resolution: {integrity: sha512-uNsoYd37AFmaCdXlg6EYD1KaPOaRWRByMCYzbKUX4+hhMfrxdVSelShywL4JVaAeM/eHUOSprYBQls+/neX3pw==}
@@ -4396,6 +4411,15 @@ snapshots:
   '@clerk/types@4.33.0':
     dependencies:
       csstype: 3.1.1
+
+  '@codexteam/icons@0.0.5': {}
+
+  '@editorjs/editorjs@2.30.7': {}
+
+  '@editorjs/header@2.8.8':
+    dependencies:
+      '@codexteam/icons': 0.0.5
+      '@editorjs/editorjs': 2.30.7
 
   '@emotion/is-prop-valid@1.2.2':
     dependencies:
