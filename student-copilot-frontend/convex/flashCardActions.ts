@@ -181,6 +181,10 @@ export const getContent = internalAction({
               throw new Error("Url cannot be null.");
             }
             const response = await fetch(url);
+
+            if (!response.ok) {
+              throw new Error("Failed to fetch chunk");
+            }
             return response.text();
           })
         );

@@ -50,8 +50,8 @@ export const getWebsiteTranscription = action({
       if (error instanceof Error) {
         throw new Error(`Failed to get website transcription: ${error.message}`);
       }
-    }
 
-    return "";
+      throw error;
+    }
   }
 });
