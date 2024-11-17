@@ -6,13 +6,28 @@ import * as cheerio from "cheerio";
 import { z } from "zod";
 
 
-const validateUrl = (url: string) => {
-  const result = z.string().url().safeParse(url);
+const validateUrl = async (url: string) => {
+  const result = await urlSchema.safeParseAsync(url);
   if (!result.success) {
     throw new Error("Invalid URL format");
   }
   return true;
 }
+
+const urlSchema = z.string().url().refine(
+  (url) => {
+    const protocols = ['https:'];
+    try {
+      const urlObj = new URL(url);
+      return protocols.includes(urlObj.protocol);
+    } catch {
+      return false;
+    }
+  },
+  {
+    message: 'URL must use HTTPS protocol'
+  }
+);
 
 export const getWebsiteTranscription = action({
   args: {
