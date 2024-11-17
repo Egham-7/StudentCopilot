@@ -38,7 +38,9 @@ export const getWebsiteTranscription = action({
     try {
       const { link } = args;
 
-      if (!validateUrl(link)) {
+      const urlValidationResult = await validateUrl(link);
+
+      if (!urlValidationResult) {
         throw new Error("Passed malformed url.");
       }
 
