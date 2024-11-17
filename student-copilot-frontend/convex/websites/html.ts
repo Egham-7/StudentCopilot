@@ -3,6 +3,16 @@
 import { action } from "../_generated/server";
 import { v } from "convex/values";
 import * as cheerio from "cheerio";
+import { z } from "zod";
+
+
+const validateUrl = (url: string) => {
+  const result = z.string().url().safeParse(url);
+  if (!result.success) {
+    throw new Error("Invalid URL format");
+  }
+  return true;
+}
 
 export const getWebsiteTranscription = action({
   args: {
@@ -12,6 +22,10 @@ export const getWebsiteTranscription = action({
 
     try {
       const { link } = args;
+
+      if (!validateUrl(link)) {
+        throw new Error("Passed malformed url.");
+      }
 
       const response = await fetch(link);
 
