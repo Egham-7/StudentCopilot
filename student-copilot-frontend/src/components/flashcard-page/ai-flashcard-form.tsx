@@ -9,6 +9,7 @@ import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/
 import { Id } from 'convex/_generated/dataModel'
 import { Input } from "@/components/ui/input"
 import { DialogTrigger } from '../ui/dialog'
+import { toast } from '../ui/use-toast';
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -25,7 +26,6 @@ interface AIFlashcardFormProps {
 export function AIFlashcardForm({ moduleId, setOpen }: AIFlashcardFormProps) {
   const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>([])
   const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([])
-
   const lectures = useQuery(api.lectures.getLecturesByModuleId, { moduleId })
   const notes = useQuery(api.notes.getNotesForModule, { moduleId })
   const generateFlashCard = useMutation(api.flashcards.generateFlashCardsClient)
@@ -41,22 +41,31 @@ export function AIFlashcardForm({ moduleId, setOpen }: AIFlashcardFormProps) {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { title, description, lectureIds, noteIds } = values
 
-    if (!lectureIds?.length && !noteIds?.length) {
-      return
+    try {
+      const { title, description, lectureIds, noteIds } = values
+
+      if (!lectureIds?.length && !noteIds?.length) {
+        return
+      }
+
+      await generateFlashCard({
+        moduleId,
+        title,
+        description,
+        lectureIds: lectureIds as Id<"lectures">[],
+        noteIds: noteIds as Id<"notes">[]
+      })
+
+      form.reset()
+      setOpen?.(false)
+    } catch (error: any) {
+
+      toast({
+        title: "Failed to generate flashcards.",
+        description: error.message
+      })
     }
-
-    await generateFlashCard({
-      moduleId,
-      title,
-      description,
-      lectureIds: lectureIds as Id<"lectures">[],
-      noteIds: noteIds as Id<"notes">[]
-    })
-
-    form.reset()
-    setOpen?.(false)
   }
 
   return (
