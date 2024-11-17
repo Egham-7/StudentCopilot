@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Id } from 'convex/_generated/dataModel'
 import { AddFlashcardDialog } from '@/components/flashcard-page/add-flashcard-dialog'
+import { toast } from '@/components/ui/use-toast'
 
 export default function FlashcardPage() {
   const { moduleId, flashCardSetId } = useParams<{ flashCardSetId: Id<"flashCardSets">, moduleId: Id<"modules"> }>()
@@ -30,15 +31,25 @@ export default function FlashcardPage() {
   }, [filter, cards])
 
   const handleCardReview = async (difficulty: "easy" | "medium" | "hard") => {
-    if (!filteredCards[currentCard]) return
-    await updateCardReview({
-      cardId: filteredCards[currentCard]._id,
-      difficulty,
-    })
-    nextCard()
+
+    try {
+      if (!filteredCards[currentCard]) return
+      await updateCardReview({
+        cardId: filteredCards[currentCard]._id,
+        difficulty,
+      })
+      nextCard()
+    } catch (error: any) {
+
+      toast({
+        title: `Failed to update review on flashcard: ${filteredCards[currentCard].front}`,
+        description: error.message
+      })
+    }
   }
 
   const nextCard = () => {
+
     setCurrentCard((prev) => (prev + 1) % filteredCards.length)
     setIsFlipped(false)
   }
@@ -48,8 +59,8 @@ export default function FlashcardPage() {
     setIsFlipped(false)
   }
 
-  // Keyboard navigation handlers
   const handleKeyPress = (e: KeyboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
     switch (e.key) {
       case ' ':
       case 'Enter':
@@ -101,7 +112,7 @@ export default function FlashcardPage() {
           <div
             className="w-full max-w-2xl aspect-video bg-card text-card-foreground rounded-[var(--radius)] shadow-lg flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-muted"
             onClick={() => setIsFlipped(!isFlipped)}
-            onKeyPress={(e) => e.key === 'Enter' && setIsFlipped(!isFlipped)}
+            onKeyDown={(e) => e.key === 'Enter' && setIsFlipped(!isFlipped)}
             role="button"
             tabIndex={0}
             aria-label={`Flashcard ${currentCard + 1} of ${filteredCards.length}. Press Enter to flip.`}

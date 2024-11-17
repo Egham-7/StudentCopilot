@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Id } from 'convex/_generated/dataModel'
 import { Input } from "@/components/ui/input"
-import { DialogTrigger } from '../ui/dialog'
 import { toast } from '../ui/use-toast';
 
 const formSchema = z.object({
@@ -20,10 +19,11 @@ const formSchema = z.object({
 
 interface AIFlashcardFormProps {
   moduleId: Id<"modules">
-  setOpen?: (state: boolean) => void
+  onComplete?: () => void;
+
 }
 
-export function AIFlashcardForm({ moduleId, setOpen }: AIFlashcardFormProps) {
+export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) {
   const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>([])
   const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([])
   const lectures = useQuery(api.lectures.getLecturesByModuleId, { moduleId })
@@ -58,7 +58,7 @@ export function AIFlashcardForm({ moduleId, setOpen }: AIFlashcardFormProps) {
       })
 
       form.reset()
-      setOpen?.(false)
+      onComplete?.();
     } catch (error: any) {
 
       toast({
@@ -142,14 +142,12 @@ export function AIFlashcardForm({ moduleId, setOpen }: AIFlashcardFormProps) {
         />
 
         <div className='flex justify-end'>
-          <DialogTrigger asChild>
-            <Button
-              type="submit"
-              disabled={selectedLectures.length === 0 && selectedNotes.length === 0}
-            >
-              Generate Flashcards
-            </Button>
-          </DialogTrigger>
+          <Button
+            type="submit"
+            disabled={selectedLectures.length === 0 && selectedNotes.length === 0}
+          >
+            Generate Flashcards
+          </Button>
         </div>
       </form>
     </Form>

@@ -51,5 +51,7 @@ export const getWebsiteTranscription = action({
         throw new Error(`Failed to get website transcription: ${error.message}`);
       }
     }
-  },
+
+    return "";
+  }
 });

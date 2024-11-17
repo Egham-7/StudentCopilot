@@ -27,6 +27,10 @@ TriggerButton.displayName = 'TriggerButton';
 const DesktopDialog = ({ moduleId }: CreateFlashCardsFormProps) => {
   const [open, setOpen] = useState(false);
 
+  const handleFormComplete = () => {
+    setOpen(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -34,7 +38,7 @@ const DesktopDialog = ({ moduleId }: CreateFlashCardsFormProps) => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogTitle>Create Flashcards</DialogTitle>
-        <AIFlashcardForm moduleId={moduleId} setOpen={setOpen} />
+        <AIFlashcardForm moduleId={moduleId} onComplete={handleFormComplete} />
       </DialogContent>
     </Dialog>
   );
@@ -43,6 +47,10 @@ const DesktopDialog = ({ moduleId }: CreateFlashCardsFormProps) => {
 const MobileDrawer = ({ moduleId }: CreateFlashCardsFormProps) => {
   const [open, setOpen] = useState(false);
 
+  const handleFormComplete = () => {
+    setOpen(false);
+  };
+
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
@@ -50,7 +58,7 @@ const MobileDrawer = ({ moduleId }: CreateFlashCardsFormProps) => {
       </DrawerTrigger>
       <DrawerContent>
         <DrawerTitle>Create Flashcards</DrawerTitle>
-        <AIFlashcardForm moduleId={moduleId} setOpen={setOpen} />
+        <AIFlashcardForm moduleId={moduleId} onComplete={handleFormComplete} />
       </DrawerContent>
     </Drawer>
   );
