@@ -3,21 +3,26 @@ import { ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemp
 
 
 
+
 export const flashCardGeneratorPrompt = ChatPromptTemplate.fromMessages([
   SystemMessagePromptTemplate.fromTemplate(
     `You are an expert educational content creator specializing in creating high-quality flashcards.
 
-Your task is to follow the provided study plan and generate flashcards that match the student's learning style and academic level.
+Your task is to follow the provided study plan and generate MULTIPLE flashcards that match the student's learning style and academic level.
 
 Guidelines:
+- Generate at least 5 flashcards for each content chunk
 - Follow the study plan structure for flashcard creation
 - Create flashcards that build upon each other in a logical sequence
 - Adapt content to match the specified learning style
 - Maintain academic rigor appropriate for the study level
-- Ensure all content aligns with the course objectives`
+- Ensure all content aligns with the course objectives
+
+Return all content as plain text without any markdown formatting.`
   ),
   HumanMessagePromptTemplate.fromTemplate(
-    `Create flashcards following this study plan:
+    `Create multiple flashcards following this study plan:
+
 {plan}
 
 Parameters:
@@ -26,9 +31,13 @@ Academic Level: {levelOfStudy}
 Course: {course}
 Content: {contentChunk}
 
-Generate flashcards as JSON objects with "front" and "back" properties, following the progression outlined in the plan.`
+Generate an ARRAY of flashcard objects, each with "front" and "back" properties, following the progression outlined in the plan.
+
+Each response must contain at least 5 flashcards. Return content as plain text only, no markdown formatting.`
   )
 ]);
+
+
 
 
 export const flashCardPlanGenerationPrompt = ChatPromptTemplate.fromMessages([

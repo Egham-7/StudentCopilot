@@ -28,7 +28,6 @@ export default function ActivityTracker() {
     },
   );
 
-  console.log("Activities: ", activities);
 
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
   const months = [
@@ -192,11 +191,10 @@ export default function ActivityTracker() {
                               <Tooltip key={dayIndex}>
                                 <TooltipTrigger asChild>
                                   <div
-                                    className={`w-4 h-4 m-px rounded-sm transition-colors ${
-                                      day
+                                    className={`w-4 h-4 m-px rounded-sm transition-colors ${day
                                         ? getActivityColor(day.count)
                                         : "bg-muted"
-                                    }`}
+                                      }`}
                                   />
                                 </TooltipTrigger>
                                 <TooltipContent>

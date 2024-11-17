@@ -148,7 +148,7 @@ export const generateNotes = internalAction({
         const storageId = await ctx.storage.store(noteChunkBlob);
 
         // Generate an embedding for the current chunk and return the storage ID with the embedding
-        const chunkEmbedding = await generateEmbedding(processingResult.toString());
+        const chunkEmbedding = await generateEmbedding(JSON.stringify(processingResult));
 
         return { storageId, chunkEmbedding };
       });
@@ -188,6 +188,7 @@ export const getNoteById = action({
   args: { noteId: v.id("notes") },
   handler: async (ctx, args): Promise<Doc<"notes" & { content: string }>> => {
     const identity = await ctx.auth.getUserIdentity();
+
 
     if (!identity) {
       throw new Error("Not authorized to use this action.");

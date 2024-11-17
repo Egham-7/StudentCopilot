@@ -100,22 +100,33 @@ export const generateFlashCards = internalAction({
       };
 
 
-      return await flashCardGraph.invoke(graphParams, executionConfig);
+      const response = await flashCardGraph.invoke(graphParams, executionConfig);
+
+      return response.flashCardsObject;
+
+
     })
 
 
-    const flashCards = await Promise.all(flashCardPromises);
+    const flashCardsPromise = await Promise.all(flashCardPromises);
 
 
-    const flashCardAddPromises = flashCards.map(flashCard =>
-      ctx.runMutation(api.flashcards.addFlashCard, {
+    const flashCardsObjects = flashCardsPromise.flat();
+    console.log("Flashcard objects: ", flashCardsObjects);
+    const flashCards = flashCardsObjects[0].flashCards;
+
+
+    for (const flashCard of flashCards) {
+
+      await ctx.runMutation(api.flashcards.addFlashCard, {
         front: flashCard.front,
         back: flashCard.back,
         flashCardSetId,
       })
-    );
 
-    await Promise.all(flashCardAddPromises);
+    }
+
+
 
   }
 })
@@ -160,7 +171,11 @@ export const getContent = internalAction({
 
         const chunkContents = await Promise.all(
           note.textChunks.map(async (chunkId) => {
-            const chunk = await fetch(chunkId);
+            const url = await ctx.storage.getUrl(chunkId);
+            if (!url) {
+              throw new Error("Url cannot be null.");
+            }
+            const chunk = await fetch(url);
             return chunk.toString();
           })
         );

@@ -2,50 +2,92 @@ import { useState } from 'react'
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useQuery } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from '@/components/ui/label'
+import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Id } from 'convex/_generated/dataModel'
-import { aiFormSchema } from './forms';
+import { aiFormSchema } from './forms'
+import { DialogTrigger } from '../ui/dialog';
+
 
 interface AIFlashcardFormProps {
   moduleId: Id<"modules">
-  onSubmit: (values: z.infer<typeof aiFormSchema>) => Promise<void>
+  flashCardSetId: Id<"flashCardSets">
+  setOpen?: (state: boolean) => void
 }
 
-export function AIFlashcardForm({ moduleId, onSubmit }: AIFlashcardFormProps) {
-  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>([])
-  const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([])
+export function AIFlashcardForm({ moduleId, flashCardSetId, setOpen }: AIFlashcardFormProps) {
+  const flashCardSet = useQuery(api.flashcards.getFlashCardSet, {
+    flashCardSetId
+  })
+
+  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>(flashCardSet?.lectureIds ?? [])
+  const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>(flashCardSet?.noteIds ?? [])
 
   const lectures = useQuery(api.lectures.getLecturesByModuleId, { moduleId })
   const notes = useQuery(api.notes.getNotesForModule, { moduleId })
+  const generateFlashCard = useMutation(api.flashcards.generateFlashCardsClient)
 
   const form = useForm<z.infer<typeof aiFormSchema>>({
     resolver: zodResolver(aiFormSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      lectureIds: [],
-      noteIds: [],
+      lectureIds: selectedLectures,
+      noteIds: selectedNotes,
     },
   })
 
+  async function onSubmit(values: z.infer<typeof aiFormSchema>) {
+    const { lectureIds, noteIds } = values
+
+    if (!flashCardSetId || (!lectureIds?.length && !noteIds?.length) || !flashCardSet) {
+      return
+    }
+
+
+
+    await generateFlashCard({
+      flashCardSetId,
+      moduleId,
+      title: flashCardSet.title,
+      description: flashCardSet.description,
+      lectureIds: lectureIds as Id<"lectures">[],
+      noteIds: noteIds as Id<"notes">[]
+    })
+
+    form.reset()
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="title"
-          render={({ field }) => (
+          name="lectureIds"
+          render={() => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Enter flashcard set title" />
-              </FormControl>
+              <FormLabel>Select Lectures</FormLabel>
+              <div className="grid grid-cols-2 gap-2">
+                {lectures?.map((lecture) => (
+                  <Button
+                    key={lecture._id}
+                    type="button"
+                    variant={selectedLectures.includes(lecture._id) ? "default" : "outline"}
+                    onClick={() => {
+                      const newSelection = selectedLectures.includes(lecture._id)
+                        ? selectedLectures.filter(id => id !== lecture._id)
+                        : [...selectedLectures, lecture._id]
+
+                      setSelectedLectures(newSelection)
+                      form.setValue('lectureIds', newSelection)
+                    }}
+                  >
+                    <p className='truncate'>
+                      {lecture.title}
+                    </p>
+                  </Button>
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -53,68 +95,47 @@ export function AIFlashcardForm({ moduleId, onSubmit }: AIFlashcardFormProps) {
 
         <FormField
           control={form.control}
-          name="description"
-          render={({ field }) => (
+          name="noteIds"
+          render={() => (
             <FormItem>
-              <FormLabel>Description (Optional)</FormLabel>
-              <FormControl>
-                <Textarea {...field} placeholder="Enter description" />
-              </FormControl>
+              <FormLabel>Select Notes</FormLabel>
+              <div className="grid grid-cols-2 gap-2">
+                {notes?.map((note) => (
+                  <Button
+                    key={note._id}
+                    type="button"
+                    variant={selectedNotes.includes(note._id) ? "default" : "outline"}
+                    onClick={() => {
+                      const newSelection = selectedNotes.includes(note._id)
+                        ? selectedNotes.filter(id => id !== note._id)
+                        : [...selectedNotes, note._id]
+
+                      setSelectedNotes(newSelection)
+                      form.setValue('noteIds', newSelection)
+                    }}
+                  >
+                    <p className='truncate'>
+                      {note._id}
+                    </p>
+                  </Button>
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="space-y-2">
-          <Label>Select Lectures</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {lectures?.map((lecture) => (
-              <Button
-                key={lecture._id}
-                type="button"
-                variant={selectedLectures.includes(lecture._id) ? "default" : "outline"}
-                onClick={() => {
-                  setSelectedLectures(prev =>
-                    prev.includes(lecture._id)
-                      ? prev.filter(id => id !== lecture._id)
-                      : [...prev, lecture._id]
-                  )
-                }}
-              >
-                {lecture.title}
-              </Button>
-            ))}
-          </div>
+        <div className='flex justify-end'>
+          <DialogTrigger asChild>
+            <Button
+              type="submit"
+              onClick={() => setOpen && setOpen(false)}
+              disabled={selectedLectures.length === 0 && selectedNotes.length === 0}
+            >
+              Generate Flashcards
+            </Button>
+          </DialogTrigger>
         </div>
-
-        <div className="space-y-2">
-          <Label>Select Notes</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {notes?.map((note) => (
-              <Button
-                key={note._id}
-                type="button"
-                variant={selectedNotes.includes(note._id) ? "default" : "outline"}
-                onClick={() => {
-                  setSelectedNotes(prev =>
-                    prev.includes(note._id)
-                      ? prev.filter(id => id !== note._id)
-                      : [...prev, note._id]
-                  )
-                }}
-              >
-                {note._id}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <Button
-          type="submit"
-          disabled={selectedLectures.length === 0 && selectedNotes.length === 0}
-        >
-          Generate Flashcards
-        </Button>
       </form>
     </Form>
   )

@@ -12,6 +12,10 @@ export const flashCardSetSchema = z.object({
   masteredCards: z.number().min(0)
 });
 
+
+
+
+
 export const flashcardSchema = z.object({
   flashCardSetId: z.string(),
   front: z.string(),
@@ -27,3 +31,10 @@ export const flashcardSchema = z.object({
   sourceContentId: z.string().optional()
 });
 
+
+export const flashcardArraySchema = z.object({
+  flashCards: z.array(flashcardSchema)
+});
+
+export type FlashCard = z.infer<typeof flashcardSchema>;
+export type FlashCardArray = z.infer<typeof flashcardArraySchema>;

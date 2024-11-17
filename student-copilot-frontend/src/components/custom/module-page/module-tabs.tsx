@@ -17,6 +17,7 @@ import NotesTab from "./notes-tab";
 import { LecturesData } from "@/lib/ui_utils";
 import { LectureSearchBar } from "./lecture-search-bar";
 import { NotesSearchBar } from "./notes-search-bar";
+import FlashcardSetsTab from "./flashcard-sets-tab";
 
 type ModuleTabsProps = {
   moduleId: Id<"modules">;
@@ -24,6 +25,7 @@ type ModuleTabsProps = {
   notes: Doc<"notes">[] | undefined;
   selectedLectures: Id<"lectures">[];
   setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
+  flashCardSets: Doc<"flashCardSets">[] | undefined;
 };
 
 export default function ModuleTabs({
@@ -32,6 +34,7 @@ export default function ModuleTabs({
   notes,
   selectedLectures,
   setSelectedLectures,
+  flashCardSets
 }: ModuleTabsProps) {
   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
   const [activeTab, setActiveTab] = useState("lectures");
@@ -110,6 +113,7 @@ export default function ModuleTabs({
         <TabsList>
           <TabsTrigger value="lectures">Lectures</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="flashcards">Flashcard Sets</TabsTrigger>
         </TabsList>
         {selectedLectures.length > 0 && activeTab === "lectures" && (
           <div className="flex space-x-2">
@@ -154,7 +158,9 @@ export default function ModuleTabs({
         <NotesTab notes={filteredNotes} />
       </TabsContent>
 
-      <TabsContent value="resources">Resources content here</TabsContent>
+      <TabsContent value="flashcards">
+        <FlashcardSetsTab moduleId={moduleId} flashcardSets={flashCardSets} />
+      </TabsContent>
       <TabsContent value="discussions">Discussions content here</TabsContent>
     </Tabs>
   );

@@ -1,13 +1,11 @@
 "use node";
 
 
-import { z } from "zod";
 import { Annotation, END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
-import { flashcardSchema } from "./types/flashCardAgent";
+import { FlashCardArray, flashcardArraySchema } from "./types/flashCardAgent";
 import { flashCardGeneratorPrompt } from "./prompts/flashCardAgent";
 
-type FlashCard = z.infer<typeof flashcardSchema>;
 type InputAnnotationState = typeof inputAnnotation.State;
 
 const inputAnnotation = Annotation.Root({
@@ -22,10 +20,12 @@ const inputAnnotation = Annotation.Root({
 
 const outputAnnotation = Annotation.Root({
 
-  flashCard: Annotation<FlashCard>
+  flashCardsObject: Annotation<FlashCardArray>
 })
 
-export async function generateFlashCard(state: InputAnnotationState) {
+type OutputAnnotationState = typeof outputAnnotation.State;
+
+export async function generateFlashCard(state: InputAnnotationState): Promise<OutputAnnotationState> {
 
   const { plan, contentChunk, learningStyle, levelOfStudy, course } = state;
 
@@ -34,7 +34,7 @@ export async function generateFlashCard(state: InputAnnotationState) {
     model: "gpt-4o-mini",
   });
 
-  const structuredModel = model.withStructuredOutput(flashcardSchema);
+  const structuredModel = model.withStructuredOutput(flashcardArraySchema);
 
   const chain = flashCardGeneratorPrompt.pipe(structuredModel);
 
@@ -47,16 +47,16 @@ export async function generateFlashCard(state: InputAnnotationState) {
     course
   })
 
-  const uncheckedFlashCardStruct = await flashcardSchema.safeParseAsync(result);
+  const uncheckedFlashCardStruct = await flashcardArraySchema.safeParseAsync(result);
 
   if (!uncheckedFlashCardStruct.success) {
-    throw new Error("Failed to generate proper flashcard.")
+    throw new Error(`Failed to generate proper flashcard: ${uncheckedFlashCardStruct.error}`)
   }
 
-  const flashCard = uncheckedFlashCardStruct.data;
+  const flashCardsObject = uncheckedFlashCardStruct.data;
 
   return {
-    flashCard
+    flashCardsObject
   };
 
 
@@ -66,7 +66,7 @@ export const graph = new StateGraph({
   input: inputAnnotation,
   output: outputAnnotation,
 })
-  .addNode("generate_flashcard", generateFlashCard)
-  .addEdge("__start__", "generate_flashcard")
-  .addEdge("generate_flashcard", END);
+  .addNode("generate_flashcards", generateFlashCard)
+  .addEdge("__start__", "generate_flashcards")
+  .addEdge("generate_flashcards", END);
 

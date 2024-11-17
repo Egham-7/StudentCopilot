@@ -8,8 +8,8 @@ export const createFlashCardSet = mutation({
     moduleId: v.id("modules"),
     title: v.string(),
     description: v.optional(v.string()),
-    noteIds: v.array(v.id("notes")),
-    lectureIds: v.array(v.id("lectures"))
+    noteIds: v.optional(v.array(v.id("notes"))),
+    lectureIds: v.optional(v.array(v.id("lectures")))
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -305,7 +305,12 @@ export const generateFlashCardsClient = mutation({
       throw new Error("Must be authenticated to use this function.");
     }
 
-    const user = await ctx.db.query("users").withIndex("by_clerkId").first();
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .first()
+
+
     if (!user) {
       throw new Error("User not found.");
     }
@@ -356,4 +361,20 @@ export const generateFlashCardsClient = mutation({
   },
 });
 
+export const deleteFlashcardSet = mutation({
+  args: { id: v.id("flashCardSets") },
+  handler: async (ctx, args) => {
+    const flashcards = await ctx.db
+      .query("flashcards")
+      .withIndex("by_flashCardSetId", (q) => q.eq("flashCardSetId", args.id))
+      .collect();
 
+    await Promise.all(
+      flashcards.map((flashcard) => ctx.db.delete(flashcard._id))
+    );
+
+    await ctx.db.delete(args.id);
+
+    return { success: true };
+  },
+})

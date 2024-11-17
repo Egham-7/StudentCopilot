@@ -3,20 +3,17 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Id } from 'convex/_generated/dataModel';
-import { aiFormSchema } from './forms';
-import { z } from 'zod';
 import { AIFlashcardForm } from './ai-flashcard-form';
 import { ManualFlashcardForm } from './manual-flashcard-form';
 
 interface AddFlashcardDialogProps {
   flashCardSetId: Id<"flashCardSets">
   moduleId: Id<"modules">
-  onAISubmit: (values: z.infer<typeof aiFormSchema>) => Promise<void>
 }
 
 
 
-export function AddFlashcardDialog({ moduleId, onAISubmit, flashCardSetId }: AddFlashcardDialogProps) {
+export function AddFlashcardDialog({ moduleId, flashCardSetId }: AddFlashcardDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -39,8 +36,8 @@ export function AddFlashcardDialog({ moduleId, onAISubmit, flashCardSetId }: Add
           </TabsContent>
           <TabsContent value="ai">
             <AIFlashcardForm
+              flashCardSetId={flashCardSetId}
               moduleId={moduleId}
-              onSubmit={onAISubmit}
             />
           </TabsContent>
         </Tabs>

@@ -2,49 +2,22 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
 import { ChevronLeft, ChevronRight, Tag } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Id } from 'convex/_generated/dataModel';
+import { Id } from 'convex/_generated/dataModel'
 import { AddFlashcardDialog } from '@/components/flashcard-page/add-flashcard-dialog'
 
-const aiFormSchema = z.object({
-  title: z.string().min(2, "Title is required"),
-  description: z.string().optional(),
-  lectureIds: z.array(z.string()).optional(),
-  noteIds: z.array(z.string()).optional(),
-})
-
 export default function FlashcardPage() {
-
   const { moduleId, flashCardSetId } = useParams<{ flashCardSetId: Id<"flashCardSets">, moduleId: Id<"modules"> }>()
-
   const cards = useQuery(api.flashcards.getFlashCards,
     flashCardSetId ? { flashCardSetId } : "skip"
   )
   const updateCardReview = useMutation(api.flashcards.updateCardReview)
-  const flashCardSet = useQuery(api.flashcards.getFlashCardSet, flashCardSetId ? { flashCardSetId } : "skip");
-  const generateCards = useMutation(api.flashcards.generateFlashCardsClient);
-
-  const [currentCard, setCurrentCard] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [filter, setFilter] = useState<"all" | "new" | "learning" | "review" | "mastered">("all");
-  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>([]);
-  const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([]);
-
-  const aiForm = useForm<z.infer<typeof aiFormSchema>>({
-    resolver: zodResolver(aiFormSchema),
-    defaultValues: {
-      title: flashCardSet?.title,
-      description: flashCardSet?.description,
-      lectureIds: flashCardSet?.lectureIds,
-      noteIds: flashCardSet?.noteIds,
-    },
-  })
+  const [currentCard, setCurrentCard] = useState(0)
+  const [isFlipped, setIsFlipped] = useState(false)
+  const [filter, setFilter] = useState<"all" | "new" | "learning" | "review" | "mastered">("all")
 
   const filteredCards = cards?.filter(card =>
     filter === "all" ? true : card.status === filter
@@ -69,31 +42,13 @@ export default function FlashcardPage() {
     setIsFlipped(false)
   }
 
-
-
-  async function onAISubmit(values: z.infer<typeof aiFormSchema>) {
-    if (!moduleId) return
-    await generateCards({
-      moduleId,
-      title: values.title,
-      description: values.description,
-      lectureIds: selectedLectures,
-      noteIds: selectedNotes,
-      flashCardSetId: flashCardSetId!
-    })
-    aiForm.reset()
-    setSelectedLectures([])
-    setSelectedNotes([])
-  }
-
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col p-4">
+    <div className="min-h-screen bg-background text-foreground flex flex-col p-4">
       <main className="flex-grow flex flex-col items-center justify-center space-y-8">
-        <h1 className="text-3xl font-bold">Advanced AI Flashcards</h1>
+        <h1 className="text-3xl font-heading font-bold text-foreground">Advanced AI Flashcards</h1>
 
-        {/* Filter Selection */}
         <Select value={filter} onValueChange={(value: typeof filter) => setFilter(value)}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] bg-card text-card-foreground">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
@@ -105,19 +60,17 @@ export default function FlashcardPage() {
           </SelectContent>
         </Select>
 
-        {/* Flashcard Display */}
         {filteredCards.length > 0 && (
           <div
-            className="w-full max-w-2xl aspect-video bg-white dark:bg-gray-800 rounded-lg shadow-lg flex flex-col items-center justify-center cursor-pointer"
+            className="w-full max-w-2xl aspect-video bg-card text-card-foreground rounded-[var(--radius)] shadow-lg flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-muted"
             onClick={() => setIsFlipped(!isFlipped)}
           >
             <div className="text-center p-8">
-              <h2 className="text-2xl font-bold mb-4">
+              <h2 className="text-2xl font-heading font-bold mb-4">
                 {isFlipped ? filteredCards[currentCard].back : filteredCards[currentCard].front}
               </h2>
-
               {filteredCards[currentCard].tags?.map((tag, index) => (
-                <Badge key={index} variant="secondary" className="mr-2">
+                <Badge key={index} variant="secondary" className="mr-2 bg-secondary text-secondary-foreground">
                   <Tag className="w-3 h-3 mr-1" />
                   {tag}
                 </Badge>
@@ -126,32 +79,49 @@ export default function FlashcardPage() {
           </div>
         )}
 
-        {/* Navigation Controls */}
         {filteredCards.length > 0 && (
           <>
             <div className="flex items-center space-x-4">
-              <Button onClick={prevCard} size="icon" variant="outline">
+              <Button onClick={prevCard} size="icon" variant="outline" className="border-border hover:bg-accent">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm">
+              <span className="text-sm text-muted-foreground">
                 Card {currentCard + 1} of {filteredCards.length}
               </span>
-              <Button onClick={nextCard} size="icon" variant="outline">
+              <Button onClick={nextCard} size="icon" variant="outline" className="border-border hover:bg-accent">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* Difficulty Buttons */}
             <div className="flex space-x-2">
-              <Button onClick={() => handleCardReview("easy")} variant="outline">Easy</Button>
-              <Button onClick={() => handleCardReview("medium")} variant="outline">Medium</Button>
-              <Button onClick={() => handleCardReview("hard")} variant="outline">Hard</Button>
+              <Button
+                onClick={() => handleCardReview("easy")}
+                variant="outline"
+                className="bg-primary/10 hover:bg-primary/20 text-primary-foreground"
+              >
+                Easy
+              </Button>
+              <Button
+                onClick={() => handleCardReview("medium")}
+                variant="outline"
+                className="bg-secondary hover:bg-secondary/80"
+              >
+                Medium
+              </Button>
+              <Button
+                onClick={() => handleCardReview("hard")}
+                variant="outline"
+                className="bg-destructive/10 hover:bg-destructive/20 text-destructive-foreground"
+              >
+                Hard
+              </Button>
             </div>
           </>
         )}
 
-
-        <AddFlashcardDialog />
+        {(moduleId && flashCardSetId) && (
+          <AddFlashcardDialog flashCardSetId={flashCardSetId} moduleId={moduleId} />
+        )}
       </main>
     </div>
   )

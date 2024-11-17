@@ -8,8 +8,6 @@ export const manualFormSchema = z.object({
 })
 
 export const aiFormSchema = z.object({
-  title: z.string().min(2, "Title is required"),
-  description: z.string().optional(),
   lectureIds: z.array(z.string()).optional(),
   noteIds: z.array(z.string()).optional(),
 })
