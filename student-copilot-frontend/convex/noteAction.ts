@@ -8,7 +8,7 @@ import {
     internalAction,
 } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph,planLectureNotes } from "./aiAgent/noteAgent";
+import { graph,planLectureNotes, searchYouTubeVideos } from "./aiAgent/noteAgent";
 
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
@@ -112,6 +112,9 @@ const lectureNotePlan = planLectureNotes(
 // Compile the application state graph with memory checkpointing enabled
 const appGraph = graph.compile({ checkpointer: memoryManager });
 
+// Get best video for the lecture
+const link= await searchYouTubeVideos(lectureNotePlan.toString());
+console.log("This is most close video to the lecture:",link);
 // Configuration for the application with a unique thread ID
 const executionConfig = { configurable: { thread_id: uuidv4() } };
 

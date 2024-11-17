@@ -90,6 +90,51 @@ export async function fetchImageLink(query: string): Promise<string> {
     }
 }
 
+const YOUTUBE_API_URL = 'https://www.googleapis.com/youtube/v3/search';
+
+export interface VideoResult {
+  videoUrl:string;
+}
+
+export async function searchYouTubeVideos(plan: string, maxResults: number = 1): Promise<VideoResult[]> {
+  try {
+
+    const query = await generateSearchQueryYoutube(plan);
+    const response = await axios.get(YOUTUBE_API_URL, {
+      params: {
+        part: 'snippet',
+        q: query,
+        type: 'video',
+        videoDefinition: 'high',  // Filter for high-definition videos
+        maxResults,
+        key: GOOGLE_API_KEY,
+      },
+    });
+
+    const items = response.data.items;
+    return items.map((item: any) => ({
+        videoUrl: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+    }));
+
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    return [];
+  }
+}
+
+// Function to generate an image search query based on note context and retrieve an image link
+export async function generateSearchQueryYoutube(plan:string): Promise<string> {
+    const prompt = `
+    Create a succinct search query, that captures the core theme of the following lecture plan to get best youtube vedio which is most closed to this lecture:
+    ${plan}
+    `;
+    const llm = new ChatOpenAI({ model: "gpt-3.5-turbo" });
+    const result = await llm.invoke(prompt);
+    return result.toString();
+}
+
+
+
 // Function to generate an image search query based on note context and retrieve an image link
 async function generateImageSearchQuery(_state: typeof InputAnnotation.State): Promise<typeof OutputAnnotation.State> {
     const prompt = `
