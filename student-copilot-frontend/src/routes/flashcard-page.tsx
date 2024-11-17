@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, KeyboardEvent } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
@@ -23,10 +23,16 @@ export default function FlashcardPage() {
     filter === "all" ? true : card.status === filter
   ) || []
 
+  // Reset current card index when filter changes or cards update
+  useEffect(() => {
+    setCurrentCard(0)
+    setIsFlipped(false)
+  }, [filter, cards])
+
   const handleCardReview = async (difficulty: "easy" | "medium" | "hard") => {
-    if (!cards?.[currentCard]) return
+    if (!filteredCards[currentCard]) return
     await updateCardReview({
-      cardId: cards[currentCard]._id,
+      cardId: filteredCards[currentCard]._id,
       difficulty,
     })
     nextCard()
@@ -42,8 +48,39 @@ export default function FlashcardPage() {
     setIsFlipped(false)
   }
 
+  // Keyboard navigation handlers
+  const handleKeyPress = (e: KeyboardEvent<HTMLDivElement>) => {
+    switch (e.key) {
+      case ' ':
+      case 'Enter':
+        setIsFlipped(!isFlipped)
+        break
+      case 'ArrowLeft':
+        prevCard()
+        break
+      case 'ArrowRight':
+        nextCard()
+        break
+      case '1':
+        handleCardReview('easy')
+        break
+      case '2':
+        handleCardReview('medium')
+        break
+      case '3':
+        handleCardReview('hard')
+        break
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col p-4">
+    <div
+      className="min-h-screen bg-background text-foreground flex flex-col p-4"
+      tabIndex={0}
+      onKeyDown={handleKeyPress}
+      role="application"
+      aria-label="Flashcard Review"
+    >
       <main className="flex-grow flex flex-col items-center justify-center space-y-8">
         <h1 className="text-3xl font-heading font-bold text-foreground">Advanced AI Flashcards</h1>
 
@@ -64,6 +101,10 @@ export default function FlashcardPage() {
           <div
             className="w-full max-w-2xl aspect-video bg-card text-card-foreground rounded-[var(--radius)] shadow-lg flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-muted"
             onClick={() => setIsFlipped(!isFlipped)}
+            onKeyPress={(e) => e.key === 'Enter' && setIsFlipped(!isFlipped)}
+            role="button"
+            tabIndex={0}
+            aria-label={`Flashcard ${currentCard + 1} of ${filteredCards.length}. Press Enter to flip.`}
           >
             <div className="text-center p-8">
               <h2 className="text-2xl font-heading font-bold mb-4">
@@ -82,13 +123,25 @@ export default function FlashcardPage() {
         {filteredCards.length > 0 && (
           <>
             <div className="flex items-center space-x-4">
-              <Button onClick={prevCard} size="icon" variant="outline" className="border-border hover:bg-accent">
+              <Button
+                onClick={prevCard}
+                size="icon"
+                variant="outline"
+                className="border-border hover:bg-accent"
+                aria-label="Previous card"
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-sm text-muted-foreground">
                 Card {currentCard + 1} of {filteredCards.length}
               </span>
-              <Button onClick={nextCard} size="icon" variant="outline" className="border-border hover:bg-accent">
+              <Button
+                onClick={nextCard}
+                size="icon"
+                variant="outline"
+                className="border-border hover:bg-accent"
+                aria-label="Next card"
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -99,21 +152,21 @@ export default function FlashcardPage() {
                 variant="outline"
                 className="bg-primary/10 hover:bg-primary/20 text-primary-foreground"
               >
-                Easy
+                Easy (1)
               </Button>
               <Button
                 onClick={() => handleCardReview("medium")}
                 variant="outline"
                 className="bg-secondary hover:bg-secondary/80"
               >
-                Medium
+                Medium (2)
               </Button>
               <Button
                 onClick={() => handleCardReview("hard")}
                 variant="outline"
                 className="bg-destructive/10 hover:bg-destructive/20 text-destructive-foreground"
               >
-                Hard
+                Hard (3)
               </Button>
             </div>
           </>
