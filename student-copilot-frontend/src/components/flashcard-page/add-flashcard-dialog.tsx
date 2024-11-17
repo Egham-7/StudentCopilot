@@ -36,7 +36,6 @@ export function AddFlashcardDialog({ moduleId, flashCardSetId }: AddFlashcardDia
           </TabsContent>
           <TabsContent value="ai">
             <AIFlashcardForm
-              flashCardSetId={flashCardSetId}
               moduleId={moduleId}
             />
           </TabsContent>
