@@ -154,12 +154,8 @@ export default defineSchema({
     userId: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
-    contentIds: v.array(
-      v.union(
-        v.id("lectures"),
-        v.id("notes")
-      )
-    ),
+    lectureIds: v.array(v.id("lectures")),
+    noteIds: v.array(v.id("notes")),
     lastStudied: v.optional(v.string()),
     totalCards: v.number(),
     masteredCards: v.number(),

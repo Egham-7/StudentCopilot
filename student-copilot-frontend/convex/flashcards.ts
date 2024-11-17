@@ -8,12 +8,8 @@ export const createFlashCardSet = mutation({
     moduleId: v.id("modules"),
     title: v.string(),
     description: v.optional(v.string()),
-    contentIds: v.array(
-      v.union(
-        v.id("lectures"),
-        v.id("notes")
-      )
-    ),
+    noteIds: v.array(v.id("notes")),
+    lectureIds: v.array(v.id("lectures"))
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -29,12 +25,25 @@ export const createFlashCardSet = mutation({
       userId,
       title: args.title,
       description: args.description,
-      contentIds: args.contentIds,
+      lectureIds: args.lectureIds,
+      noteIds: args.noteIds,
       totalCards: 0,
       masteredCards: 0,
     });
   },
 });
+
+export const getFlashCardSet = query({
+
+  args: {
+    flashCardSetId: v.id("flashCardSets")
+  },
+
+  handler: async (ctx, args) => {
+
+    return ctx.db.get(args.flashCardSetId);
+  }
+})
 
 export const addFlashCard = mutation({
   args: {
@@ -139,10 +148,10 @@ export const getDueCards = query({
   },
 });
 
+
 export const updateCardReview = mutation({
   args: {
     cardId: v.id("flashcards"),
-    isCorrect: v.boolean(),
     difficulty: v.union(
       v.literal("easy"),
       v.literal("medium"),
@@ -151,22 +160,19 @@ export const updateCardReview = mutation({
   },
   handler: async (ctx, args) => {
     const card = await ctx.db.get(args.cardId);
-
     if (!card) {
       throw new Error("Card must be present.");
     }
 
-    // Calculate next review date based on spaced repetition algorithm
     const nextReview = calculateNextReview(
       card.status,
-      args.isCorrect,
       args.difficulty
     );
 
     const newStatus = determineNewStatus(
       card.status,
-      args.isCorrect,
-      card.correctCount
+      args.difficulty,
+      card.reviewCount || 0
     );
 
     await ctx.db.patch(args.cardId, {
@@ -175,14 +181,18 @@ export const updateCardReview = mutation({
       nextReviewDate: nextReview.toISOString(),
       lastReviewDate: new Date().toISOString(),
       reviewCount: (card.reviewCount || 0) + 1,
-      correctCount: args.isCorrect ? (card.correctCount || 0) + 1 : card.correctCount,
-      incorrectCount: !args.isCorrect ? (card.incorrectCount || 0) + 1 : card.incorrectCount,
+      // Track success based on difficulty
+      correctCount: ["easy", "medium"].includes(args.difficulty) ?
+        (card.correctCount || 0) + 1 :
+        card.correctCount,
+      incorrectCount: args.difficulty === "hard" ?
+        (card.incorrectCount || 0) + 1 :
+        card.incorrectCount,
     });
 
     // Update mastered cards count if status changed to mastered
     if (newStatus === "mastered" && card.status !== "mastered") {
       const flashCardSet = await ctx.db.get(card.flashCardSetId);
-
       if (!flashCardSet) {
         throw new Error("Flashcard set must be present.");
       }
@@ -193,42 +203,44 @@ export const updateCardReview = mutation({
   },
 });
 
-
 function calculateNextReview(
   currentStatus: string,
-  isCorrect: boolean,
   difficulty: string
 ): Date {
   const now = new Date();
   let intervalDays = 1;
 
-  if (isCorrect) {
-    switch (currentStatus) {
-      case "new":
-        intervalDays = 1;
-        break;
-      case "learning":
-        intervalDays = 3;
-        break;
-      case "review":
-        intervalDays = 7;
-        break;
-      case "mastered":
-        intervalDays = 14;
-        break;
-    }
+  // Base interval based on status
+  switch (currentStatus) {
+    case "new":
+      intervalDays = 1;
+      break;
+    case "learning":
+      intervalDays = 3;
+      break;
+    case "review":
+      intervalDays = 7;
+      break;
+    case "mastered":
+      intervalDays = 14;
+      break;
+  }
 
-    // Adjust interval based on difficulty
-    if (difficulty === "easy") intervalDays *= 1.5;
-    if (difficulty === "hard") intervalDays *= 0.5;
-  } else {
-    // If incorrect, review again in 1 day
-    intervalDays = 1;
+  // Adjust interval based on difficulty
+  switch (difficulty) {
+    case "easy":
+      intervalDays *= 2.0;
+      break;
+    case "medium":
+      intervalDays *= 1.0;
+      break;
+    case "hard":
+      intervalDays *= 0.5;
+      break;
   }
 
   return new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1000);
 }
-
 
 enum FlashCardStatus {
   LEARNING = "learning",
@@ -239,22 +251,41 @@ enum FlashCardStatus {
 
 function determineNewStatus(
   currentStatus: string,
-  isCorrect: boolean,
-  correctCount: number
-): FlashCardStatus | undefined {
-  if (!isCorrect) return FlashCardStatus.LEARNING;
+  difficulty: string,
+  reviewCount: number
+): FlashCardStatus {
+  // Hard responses always keep card in learning
+  if (difficulty === "hard") {
+    return FlashCardStatus.LEARNING;
+  }
 
   switch (currentStatus) {
     case FlashCardStatus.NEW:
       return FlashCardStatus.LEARNING;
+
     case FlashCardStatus.LEARNING:
-      return correctCount >= 2 ? FlashCardStatus.REVIEW : FlashCardStatus.LEARNING;
+      // Progress to review after 2 medium/easy reviews
+      return reviewCount >= 2 && difficulty !== "hard"
+        ? FlashCardStatus.REVIEW
+        : FlashCardStatus.LEARNING;
+
     case FlashCardStatus.REVIEW:
-      return correctCount >= 5 ? FlashCardStatus.MASTERED : FlashCardStatus.REVIEW;
+      // Progress to mastered after 5 medium/easy reviews
+      return reviewCount >= 5 && difficulty === "easy"
+        ? FlashCardStatus.MASTERED
+        : FlashCardStatus.REVIEW;
+
     case FlashCardStatus.MASTERED:
-      return FlashCardStatus.MASTERED;
+      // Stay mastered unless hard response
+      return difficulty === "hard"
+        ? FlashCardStatus.REVIEW
+        : FlashCardStatus.MASTERED;
+
+    default:
+      return FlashCardStatus.LEARNING;
   }
 }
+
 
 
 export const generateFlashCardsClient = mutation({
@@ -262,14 +293,12 @@ export const generateFlashCardsClient = mutation({
     moduleId: v.id("modules"),
     title: v.string(),
     description: v.optional(v.string()),
-    lectureIds: v.optional(v.array(v.id("lectures"))),
-    noteIds: v.optional(v.array(v.id("notes"))),
-
+    lectureIds: v.array(v.id("lectures")),
+    noteIds: v.array(v.id("notes")),
+    flashCardSetId: v.id("flashCardSets")
   },
   handler: async (ctx, args) => {
-
-    const { moduleId, title, description, lectureIds, noteIds } = args;
-
+    const { moduleId, title, description, lectureIds, noteIds, flashCardSetId } = args;
 
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -283,25 +312,38 @@ export const generateFlashCardsClient = mutation({
 
     const userId = identity.subject;
 
+    let setId = flashCardSetId;
 
-    const contentIds = [...(lectureIds ?? []), ...(noteIds ?? [])];
+    if (!setId) {
+      // Create new flashcard set only if one doesn't exist
+      setId = await ctx.db.insert("flashCardSets", {
+        moduleId,
+        userId: identity.subject,
+        title,
+        description,
+        lectureIds,
+        noteIds,
+        totalCards: 0,
+        masteredCards: 0,
+      });
+    } else {
+      // Update existing set's content IDs only
+      const existingSet = await ctx.db.get(setId);
+      if (!existingSet) {
+        throw new Error("Flashcard set not found.");
+      }
 
-
-
-    // Create the flashcard set first
-    const flashCardSetId = await ctx.db.insert("flashCardSets", {
-      moduleId: moduleId,
-      userId: identity.subject,
-      title: title,
-      description: description,
-      contentIds: contentIds,
-      totalCards: 0,
-      masteredCards: 0,
-    });
+      await ctx.db.patch(setId, {
+        lectureIds,
+        noteIds,
+        title,
+        description
+      });
+    }
 
     // Schedule the generation task
     await ctx.scheduler.runAfter(0, internal.flashCardActions.generateFlashCards, {
-      flashCardSetId,
+      flashCardSetId: setId,
       userId,
       lectureIds,
       noteIds,
@@ -310,7 +352,8 @@ export const generateFlashCardsClient = mutation({
       levelOfStudy: user.levelOfStudy,
     });
 
-    return flashCardSetId;
+    return setId;
   },
 });
+
 
