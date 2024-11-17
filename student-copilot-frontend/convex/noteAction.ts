@@ -108,6 +108,7 @@ export const generateNotes = internalAction({
     // Compile the application state graph with memory checkpointing enabled
     const appGraph = graph.compile({ checkpointer: memoryManager });
 
+    
     // Configuration for the application with a unique thread ID
     const executionConfig = { configurable: { thread_id: uuidv4() } };
 
@@ -131,9 +132,9 @@ export const generateNotes = internalAction({
         );
 
         // Extract the generated note from the result and add it to the noteBlocks array
-
         // Convert the processed note into JSON format for storage
         const finalResultJson = JSON.stringify(processingResult.note);
+        console.log(finalResultJson);
 
         // Create a blob from the JSON data for storage
         const noteChunkBlob = new Blob([finalResultJson], {

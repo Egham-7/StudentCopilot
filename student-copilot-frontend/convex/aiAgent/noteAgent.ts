@@ -101,126 +101,92 @@ async function generateImageSearchQuery(_state: typeof InputAnnotation.State): P
     ${_state.chunk}
     `;
 
-  const llm = new ChatOpenAI({ model: "gpt-3.5-turbo" });
+  const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18" });
   const generatedNotes = await generateNotes(_state);
 
-  let imageUrl = "";
-  if (generatedNotes[0].type === "header") {
-    const result = await llm.invoke(prompt);
-    imageUrl = await fetchImageLink(result.content.toString());
-  }
 
   const combinedNotes: TNoteBlock[] = [
-    {
-      type: 'image',
+    ...(Array.isArray(generatedNotes) ? generatedNotes : [generatedNotes]),
+  ];
+  
+  if (Array.isArray(generatedNotes) && generatedNotes[0]?.type === "header") {
+    const result = await llm.invoke(prompt);
+    const imageUrl = await fetchImageLink(result.content.toString());
+  
+    combinedNotes.push({
+      type: "image",
       data: {
         file: {
           url: imageUrl,
         },
-        caption: "Relevant image for note",
+        caption: result.content.toString(),
         withBorder: true,
         withBackground: false,
         stretched: true,
       },
-    },
-    ...(Array.isArray(generatedNotes) ? generatedNotes : [generatedNotes])
-  ];
+    });
+  }
 
   return { note: combinedNotes };
 }
 
 // Function to generate structured lecture notes
 export async function generateNotes(_state: typeof InputAnnotation.State): Promise<TNoteBlock[]> {
-  const prompt = `Generate well-structured, concise, and informative notes based on the provided lecture plan and chunk content, following these instructions to ensure alignment with the user's preferences:
+  const prompt = `Generate concise, well-structured, and visually organized notes based on the provided lecture plan and content chunk. The output should be formatted into **distinct blocks** for easy readability and integration into a note-taking application like Editor.js. Follow these instructions:
 
-                    Context and Structure:
-                    
-                    1.Lecture Plan: Use the plan details provided to shape the structure and flow of the notes. Ensure each section, sub-topic, or point follows the outlined sequence in the plan.
-                    Plan: ${_state.plan}
-                    
-                    2.Current Content: Focus on summarizing and organizing key points from this chunk, weaving them smoothly with previous notes when appropriate.
-                        Content: ${_state.chunk}
-                    Formatting:
-                    
-                    3.Previous Notes: Reference and build on points from prior notes to maintain flow and prevent redundancy. When new content overlaps with previous sections, reinforce rather than repeat, ensuring consistency in terminology and context.
-                    
-                    
-                    Formatting:
-                    1.Section Titles: Use clear, descriptive titles for each section or topic derived from the lecture plan, even if the titles aren’t explicitly in the content. This helps guide the user through each main idea effectively.
+                    ---
 
-                    2.Bullet Points:
 
-                    . Break down information into bullet points for clarity, especially when listing facts, processes, or sequential steps.
-                    . Each bullet point should contain one main idea or fact, keeping sentences concise but informative.
-                        Subsections and Indentation: If a section has multiple sub-points or steps, use indentation or numbered lists for readability. Make sub-sections visually distinct for better understanding.
+                    2. **Chunk Content**: Focus on summarizing the provided content, extracting key points, and ensuring smooth integration with prior notes if applicable.  
+                    Content: ${_state.chunk}
 
-                    4.Keywords and Definitions:
+                    3. **Previous Notes**: Avoid repetition by referencing earlier notes. Use consistent terminology and build on existing points logically.
 
-                    . Bold key terms or phrases for emphasis, especially if they are crucial to understanding the topic.
-                    . Provide brief definitions or explanations of key terms where necessary to ensure clarity, particularly for complex topics.
-                    
-                    
-                        Content Style:
-                    1.Note Style: Adapt the language and tone based on the user's note-taking style. Use plain, straightforward language if the user prefers a more direct style, or add relevant context if they favor in-depth understanding.
+                    ---
 
-                    2.Learning Style:
+                    ### Formatting Instructions:
 
-                    .Auditory: Include brief descriptions or analogies that could be imagined as spoken, as if explaining to a listener.
-                    .Visual: Use more descriptive language and spatial formatting (e.g., bullet points, headings) to create a visually organized structure.
-                    .Kinesthetic: If possible, incorporate action-oriented phrases or real-world applications to aid understanding through association.
-                    .Analytical: Use a logical, fact-based approach; emphasize reasoning, cause-effect relationships, and structured information flow.
-                    
-                    3.Level of Study:
+                    1. **Section Titles (Header Blocks)**:  
+                    - Each section or sub-topic should have a clear and descriptive title.  
+                    - Use the hierarchy of headers to organize main ideas (e.g., 2 for main sections, 3 for subsections).
 
-                    . Bachelors or Associate: Focus on foundational knowledge and essential concepts; avoid overly technical language unless crucial for understanding.
-                    . Masters or PhD: Include advanced terminology and assume a higher level of prior knowledge. Emphasize critical analysis, implications, and any points that suggest further exploration.
-                    
-                    Content Rules:
-                    
-                    1. Conciseness: Condense complex ideas without oversimplifying, ensuring every point is meaningful. Avoid repetition unless it reinforces a critical concept.
+                    2. **Bullet Points (List Blocks)**:  
+                    - Break down key ideas into bullet points for clarity.  
+                    - Ensure each bullet contains only one main idea, keeping it concise and focused.  
+                    - Use nested lists for sub-points or steps, ensuring proper indentation.
 
-                    2. Relevance: Stick closely to the plan and chunk content, excluding unrelated details. Focus on extracting and distilling the most relevant information that directly supports the lecture goals.
+                    3. **Paragraphs (Text Blocks)**:  
+                    - Use paragraphs for explanations or descriptions that don’t fit into bullet points.  
+                    - Ensure each paragraph is short and focused on one idea.
 
-                    3. Clarity and Flow:
+                    4. **Key Terms and Highlights**:  
+                    - Bold important terms or phrases.  
+                    - Provide brief definitions for technical terms or complex concepts.
 
-                    Ensure that each section flows logically into the next, creating a coherent structure.
-                    Summarize each major section in a final summary sentence if possible, to reinforce the key takeaways.
-                    
-                    
-                    
-                    Output Example:
-                    Example based on fictitious content for demonstration purposes only:
+                    5. **Action Items (Optional)**:  
+                    - For kinesthetic learners, include practical steps, applications, or real-world examples when applicable.
 
-                    Introduction to Neural Networks
+                    ---
 
-                        . Definition: Neural networks are computing systems inspired by biological neural networks.
-                        . Key Components:
-                            Neurons: Fundamental units that process and transmit information.
-                            Layers: Organized groups of neurons where data is processed in stages.
-                    
-                    Training Process
+                    ### Content Style:
 
-                        1.Data Input: The model receives input data, which it processes layer by layer.
-                        2.Backpropagation: A method used to adjust weights and minimize error.
-                            . This iterative process helps the model learn from its errors.
-                    
-                    Applications in Image Recognition
+                    1. **Conciseness**:  
+                    - Summarize ideas without oversimplifying. Avoid excessive detail and keep each point meaningful.
 
-                    Facial Recognition: Neural networks are widely used to identify unique facial features.
-                    Medical Imaging: Applications include detecting anomalies in X-rays or MRIs.
-                    
-                Additional Instructions:
-                End the notes with a brief summary if possible, consolidating the major points covered.
-                Ensure the notes remain accessible for future reference, with each point clearly associated with its section or topic.
-                Use this structured approach to create high-quality notes that are well-organized, visually clear, and tailored to the user's preferences.
+                    2. **Clarity and Flow**:  
+                    - Ensure logical progression from one section to the next.  
+                    - Conclude major sections with a summary sentence to reinforce key takeaways.
 
-                Context and Information about the user:
-                    .Learning Style: ${_state.learningStyle}
-                    .Course: ${_state.course}
-                    .Level of Study: ${_state.levelOfStudy}
-                    .Note Taking style: ${_state.noteTakingStyle}`;
+                    3. **User Preferences**:  
+                    - Adapt the tone and style based on the user's preferences:
+                        - **Learning Style**: ${_state.learningStyle}  
+                        - **Level of Study**: ${_state.levelOfStudy}  
+                        - **Note Taking Style**: ${_state.noteTakingStyle}
 
-  const llm = new ChatOpenAI({ model: "gpt-3.5-turbo" });
+                    -
+`;
+
+  const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18" });
   const structuredLlm = llm.withStructuredOutput(NoteBlockSchema);
   const result = await structuredLlm.invoke(prompt);
 
@@ -242,7 +208,7 @@ export async function planLectureNotes(
   course: string,
   lectureContent: string[]
 ): Promise<AIMessage> {
-  const llm = new ChatOpenAI({ model: "gpt-3.5-turbo" });
+  const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18" });
   let fullPlan: string = "";
 
   // Function to process a single batch of lecture content

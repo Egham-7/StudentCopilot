@@ -16,6 +16,7 @@ import type {
 import type * as activities from "../activities.js";
 import type * as ai from "../ai.js";
 import type * as aiAgent_noteAgent from "../aiAgent/noteAgent.js";
+import type * as aiAgent_noteAgent1 from "../aiAgent/noteAgent1.js";
 import type * as aiChats from "../aiChats.js";
 import type * as http from "../http.js";
 import type * as lectures from "../lectures.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   ai: typeof ai;
   "aiAgent/noteAgent": typeof aiAgent_noteAgent;
+  "aiAgent/noteAgent1": typeof aiAgent_noteAgent1;
   aiChats: typeof aiChats;
   http: typeof http;
   lectures: typeof lectures;
