@@ -1,5 +1,5 @@
 
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -84,6 +84,53 @@ export const getFlashCardSet = query({
 
     return ctx.db.get(args.flashCardSetId);
   }
+})
+
+export const addFlashCardInternal = internalMutation({
+
+  args: {
+    flashCardSetId: v.id("flashCardSets"),
+    front: v.string(),
+    back: v.string(),
+    tags: v.optional(v.array(v.string())),
+    sourceContentId: v.optional(
+      v.union(
+        v.id("lectures"),
+        v.id("notes")
+      )
+    ),
+  },
+
+  handler: async (ctx, args) => {
+
+    const cardId = await ctx.db.insert("flashcards", {
+      flashCardSetId: args.flashCardSetId,
+      front: args.front,
+      back: args.back,
+      difficulty: "medium",
+      status: "new",
+      reviewCount: 0,
+      correctCount: 0,
+      incorrectCount: 0,
+      tags: args.tags,
+      sourceContentId: args.sourceContentId,
+    });
+
+    // Update total cards count
+    const flashCardSet = await ctx.db.get(args.flashCardSetId);
+
+    if (!flashCardSet) {
+      throw new Error("Flashcards must be added to a flashcard set.");
+    }
+    await ctx.db.patch(args.flashCardSetId, {
+      totalCards: (flashCardSet.totalCards || 0) + 1,
+    });
+
+    return cardId;
+
+
+  }
+
 })
 
 export const addFlashCard = mutation({
@@ -460,7 +507,7 @@ export const generateFlashCardsClient = mutation({
     description: v.optional(v.string()),
     lectureIds: v.array(v.id("lectures")),
     noteIds: v.array(v.id("notes")),
-    flashCardSetId: v.id("flashCardSets")
+    flashCardSetId: v.optional(v.id("flashCardSets"))
   },
   handler: async (ctx, args) => {
     const { moduleId, title, description, lectureIds, noteIds, flashCardSetId } = args;

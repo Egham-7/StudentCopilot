@@ -2,7 +2,7 @@
 
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { AIMessage } from "@langchain/core/messages";
 import { ChatOpenAI } from "@langchain/openai";
 import { graph } from "./aiAgent/flashCardAgent";
@@ -112,9 +112,8 @@ export const generateFlashCards = internalAction({
 
 
     const flashCardsObjects = flashCardsPromise.flat();
-    console.log("Flashcard objects: ", flashCardsObjects);
 
-    if (!flashCardsObjects[0].flashCards) {
+    if (!flashCardsObjects || !flashCardsObjects.length) {
       throw new Error("Flaschards response cannot be null.");
     }
 
@@ -124,7 +123,7 @@ export const generateFlashCards = internalAction({
 
     for (const flashCard of flashCards) {
 
-      await ctx.runMutation(api.flashcards.addFlashCard, {
+      await ctx.runMutation(internal.flashcards.addFlashCardInternal, {
         front: flashCard.front,
         back: flashCard.back,
         flashCardSetId,

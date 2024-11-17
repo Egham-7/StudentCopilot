@@ -4,7 +4,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, Brain } from "lucide-react";
@@ -76,13 +75,6 @@ export default function FlashcardSetsTab({
 
                 <div className="flex gap-2">
                   <StudyFlashcardsButton setId={set._id} moduleId={moduleId} />
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => window.location.href = `/flashcards/${set._id}`}
-                  >
-                    Edit Cards
-                  </Button>
                 </div>
               </CardContent>
             </Card>
