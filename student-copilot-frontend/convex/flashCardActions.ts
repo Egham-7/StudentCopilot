@@ -113,6 +113,12 @@ export const generateFlashCards = internalAction({
 
     const flashCardsObjects = flashCardsPromise.flat();
     console.log("Flashcard objects: ", flashCardsObjects);
+
+    if (!flashCardsObjects[0].flashCards) {
+      throw new Error("Flaschards response cannot be null.");
+    }
+
+
     const flashCards = flashCardsObjects[0].flashCards;
 
 
@@ -175,8 +181,8 @@ export const getContent = internalAction({
             if (!url) {
               throw new Error("Url cannot be null.");
             }
-            const chunk = await fetch(url);
-            return chunk.toString();
+            const response = await fetch(url);
+            return response.text();
           })
         );
 

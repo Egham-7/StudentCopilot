@@ -18,7 +18,21 @@ export const createFlashCardSet = mutation({
       throw new Error("Must be authenticated to use this function.")
     }
 
-    const userId = identity.subject;
+
+    const moduleUser = await ctx.db.get(args.moduleId);
+
+
+    if (!moduleUser) {
+      throw new Error("Flashcard set must be associated with a module.");
+    }
+
+
+    const userId = moduleUser.userId;
+
+
+    if (userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
 
     return await ctx.db.insert("flashCardSets", {
       moduleId: args.moduleId,
@@ -41,6 +55,33 @@ export const getFlashCardSet = query({
 
   handler: async (ctx, args) => {
 
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Must be authenticated to use this function.");
+    }
+
+    const flashcardSet = await ctx.db.get(args.flashCardSetId);
+
+    if (!flashcardSet) {
+      throw new Error("Flashcard set cannot be null.");
+    }
+
+    const moduleUser = await ctx.db.get(flashcardSet.moduleId);
+
+
+    if (!moduleUser) {
+      throw new Error("Flashcard set must be associated with a module.");
+    }
+
+
+    const userId = moduleUser.userId;
+
+
+    if (userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
     return ctx.db.get(args.flashCardSetId);
   }
 })
@@ -59,6 +100,33 @@ export const addFlashCard = mutation({
     ),
   },
   handler: async (ctx, args) => {
+
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Must be authenticated to use this function.");
+    }
+
+    const flashcardSet = await ctx.db.get(args.flashCardSetId);
+
+    if (!flashcardSet) {
+      throw new Error("Flashcard set cannot be null.");
+    }
+
+    const moduleUser = await ctx.db.get(flashcardSet.moduleId);
+
+
+    if (!moduleUser) {
+      throw new Error("Flashcard set must be associated with a module.");
+    }
+
+    const userId = moduleUser.userId;
+
+
+    if (userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
     const cardId = await ctx.db.insert("flashcards", {
       flashCardSetId: args.flashCardSetId,
       front: args.front,
@@ -91,6 +159,7 @@ export const getFlashCardSets = query({
     moduleId: v.optional(v.id("modules")),
   },
   handler: async (ctx, args) => {
+
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
@@ -99,8 +168,19 @@ export const getFlashCardSets = query({
     const userId = identity.subject;
 
     const moduleId = args.moduleId;
-
     if (moduleId) {
+
+
+      const moduleUser = await ctx.db.get(moduleId);
+
+      if (!moduleUser) {
+        throw new Error("Cannot have flashcard sets with no associated module.");
+      }
+
+      if (moduleUser.userId !== identity.subject) {
+        throw new Error("Forbidden.");
+      }
+
       return await ctx.db
         .query("flashCardSets")
         .withIndex("by_moduleId", (q) => q.eq("moduleId", moduleId))
@@ -120,6 +200,34 @@ export const getFlashCards = query({
     flashCardSetId: v.id("flashCardSets"),
   },
   handler: async (ctx, args) => {
+
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Not authenticated.");
+    }
+
+
+    const flashcardSet = await ctx.db.get(args.flashCardSetId);
+
+    if (!flashcardSet) {
+      throw new Error("Flashcard set cannot be null.");
+    }
+
+    const moduleUser = await ctx.db.get(flashcardSet.moduleId);
+
+
+    if (!moduleUser) {
+      throw new Error("Flashcard set must be associated with a module.");
+    }
+
+    const userId = moduleUser.userId;
+
+
+    if (userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
     return await ctx.db
       .query("flashcards")
       .withIndex("by_flashCardSetId", (q) =>
@@ -134,6 +242,34 @@ export const getDueCards = query({
     flashCardSetId: v.id("flashCardSets"),
   },
   handler: async (ctx, args) => {
+
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Not auhtenticated.");
+    }
+
+    const flashcardSet = await ctx.db.get(args.flashCardSetId);
+
+    if (!flashcardSet) {
+      throw new Error("Flashcard set cannot be null.");
+    }
+
+    const moduleUser = await ctx.db.get(flashcardSet.moduleId);
+
+
+    if (!moduleUser) {
+      throw new Error("Flashcard set must be associated with a module.");
+    }
+
+    const userId = moduleUser.userId;
+
+
+    if (userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
+
     const now = new Date().toISOString();
     return await ctx.db
       .query("flashcards")
@@ -159,10 +295,39 @@ export const updateCardReview = mutation({
     ),
   },
   handler: async (ctx, args) => {
+
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Must be authenticated to use this function.");
+    }
+
+
     const card = await ctx.db.get(args.cardId);
     if (!card) {
       throw new Error("Card must be present.");
     }
+
+    const flashCardSet = await ctx.db.get(card.flashCardSetId);
+
+    if (!flashCardSet) {
+      throw new Error("Flashcards must belong to a flashcard set.");
+    }
+
+    const moduleId = flashCardSet.moduleId;
+
+    const module = await ctx.db.get(moduleId);
+
+
+    if (!module) {
+      throw new Error("FLashcard sets must be associated with a module.");
+    }
+
+
+    if (module.userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
 
     const nextReview = calculateNextReview(
       card.status,
@@ -305,9 +470,23 @@ export const generateFlashCardsClient = mutation({
       throw new Error("Must be authenticated to use this function.");
     }
 
+    const userId = identity.subject;
+
+    const moduleUser = await ctx.db.get(moduleId);
+
+
+    if (!moduleUser) {
+      throw new Error("Flashcard set must be associated with a module.");
+    }
+
+
+    if (moduleUser.userId !== userId) {
+      throw new Error("Forbidden.");
+    }
+
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", userId))
       .first()
 
 
@@ -315,7 +494,7 @@ export const generateFlashCardsClient = mutation({
       throw new Error("User not found.");
     }
 
-    const userId = identity.subject;
+
 
     let setId = flashCardSetId;
 
