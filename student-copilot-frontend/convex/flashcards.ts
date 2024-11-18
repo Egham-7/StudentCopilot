@@ -1,5 +1,6 @@
 
 import { internalMutation, mutation, query } from "./_generated/server";
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -201,46 +202,52 @@ export const addFlashCard = mutation({
   },
 });
 
+
 export const getFlashCardSets = query({
   args: {
     moduleId: v.optional(v.id("modules")),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
       throw new Error("Must be authenticated to use this function.");
     }
+
     const userId = identity.subject;
-
     const moduleId = args.moduleId;
+
+
+    let baseQuery = ctx.db.query("flashCardSets");
+
     if (moduleId) {
-
-
       const moduleUser = await ctx.db.get(moduleId);
 
+
       if (!moduleUser) {
-        throw new Error("Cannot have flashcard sets with no associated module.");
+        throw new Error("Flashcard sets must be associated with the user.");
       }
 
       if (moduleUser.userId !== identity.subject) {
         throw new Error("Forbidden.");
       }
 
-      return await ctx.db
-        .query("flashCardSets")
-        .withIndex("by_moduleId", (q) => q.eq("moduleId", moduleId))
-        .filter((q) => q.eq(q.field("userId"), userId))
-        .collect();
+      return await baseQuery
+        .withIndex("by_moduleId", (q) =>
+          q.eq("moduleId", moduleId)
+        )
+        .order("desc")
+        .paginate(args.paginationOpts);
     }
 
-    return await ctx.db
-      .query("flashCardSets")
+    return await baseQuery
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .collect();
+      .order("desc")
+      .paginate(args.paginationOpts);
   },
 });
+
+
 
 export const getFlashCards = query({
   args: {
