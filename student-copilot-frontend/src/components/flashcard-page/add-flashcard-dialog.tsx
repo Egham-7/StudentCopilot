@@ -11,30 +11,31 @@ interface AddFlashcardDialogProps {
   moduleId: Id<"modules">
 }
 
-
-
 export function AddFlashcardDialog({ moduleId, flashCardSetId }: AddFlashcardDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button aria-label="Open flashcard creation dialog">
+          <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
           Add Flashcard
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent aria-describedby="dialog-description">
         <DialogHeader>
           <DialogTitle>Add New Flashcard</DialogTitle>
         </DialogHeader>
+        <div id="dialog-description" className="sr-only">
+          Create a new flashcard either manually or using AI generation
+        </div>
         <Tabs defaultValue="manual" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2" aria-label="Flashcard creation methods">
             <TabsTrigger value="manual">Manual</TabsTrigger>
             <TabsTrigger value="ai">AI Generated</TabsTrigger>
           </TabsList>
-          <TabsContent value="manual">
+          <TabsContent value="manual" role="tabpanel" aria-label="Manual flashcard creation form">
             <ManualFlashcardForm flashCardSetId={flashCardSetId} />
           </TabsContent>
-          <TabsContent value="ai">
+          <TabsContent value="ai" role="tabpanel" aria-label="AI-generated flashcard creation form">
             <AIFlashcardForm
               moduleId={moduleId}
             />
