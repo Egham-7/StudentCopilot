@@ -2,9 +2,6 @@
 import { chunk } from 'lodash-es';
 export type UploadProgressSetter = (progress: number) => void;
 
-
-
-
 export const TEXT_SPLITTER_CONFIG = {
   chunkSize: 1000,
   chunkOverlap: 200,
