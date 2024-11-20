@@ -64,12 +64,15 @@ export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) 
         title: "Generating flashcards.",
         description: "We will let you know when its done!"
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
 
-      toast({
-        title: "Failed to generate flashcards.",
-        description: error.message
-      })
+      if (error instanceof Error) {
+
+        toast({
+          title: "Failed to generate flashcards.",
+          description: error.message
+        })
+      }
     }
   }
 

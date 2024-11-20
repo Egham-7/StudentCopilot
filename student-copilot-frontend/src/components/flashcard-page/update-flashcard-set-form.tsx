@@ -62,11 +62,14 @@ export function AIFlashcardUpdateForm({ moduleId, flashCardSetId }: AIFlashcardU
 
       form.reset()
 
-    } catch (error: any) {
-      toast({
-        title: "Failed to generate flashcards.",
-        description: error.message
-      })
+    } catch (error: unknown) {
+
+      if (error instanceof Error) {
+        toast({
+          title: "Failed to generate flashcards.",
+          description: error.message
+        });
+      }
     }
   }
 

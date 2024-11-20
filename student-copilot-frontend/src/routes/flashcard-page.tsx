@@ -37,12 +37,15 @@ export default function FlashcardPage() {
         difficulty,
       })
       nextCard()
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Review Failed",
-        description: error.message
-      })
+    } catch (error: unknown) {
+
+      if (error instanceof Error) {
+        toast({
+          variant: "destructive",
+          title: "Review Failed",
+          description: error.message
+        })
+      }
     }
   }
 

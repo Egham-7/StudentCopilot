@@ -31,12 +31,15 @@ export default function DeleteFlashcardSetDialog({ setId }: DeleteFlashcardSetDi
         title: "Success",
         description: "Flashcard set deleted successfully",
       });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete flashcard set",
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+
+      if (error instanceof Error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     }
     setIsOpen(false);
   };
