@@ -117,6 +117,8 @@ export const createFlashCardSetInternal = internalMutation({
       type: "flashcard_set_created",
       flashCardSetId,
     });
+
+    return flashCardSetId;
   },
 });
 
