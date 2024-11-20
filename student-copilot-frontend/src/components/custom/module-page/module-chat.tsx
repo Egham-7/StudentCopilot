@@ -208,7 +208,7 @@ export default function ModuleChat({ lectures, module }: ModuleChatProps) {
         <PopoverTrigger asChild>
           <TriggerButton />
         </PopoverTrigger>
-        <PopoverContent className="w-[600px] mr-5 mb-5 bg-background border border-border rounded-md shadow-lg">
+        <PopoverContent className="w-[600px] max-h-full mr-5 mb-5 bg-background border border-border rounded-md shadow-lg">
           <ChatContent />
         </PopoverContent>
       </Popover>

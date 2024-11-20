@@ -40,12 +40,12 @@ const NotificationsDropDownMenu = () => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80" align="end">
+      <DropdownMenuContent className="w-full" align="end">
         <div className="flex items-center justify-between px-3 py-2 border-b">
           <h4 className="font-heading text-sm">Notifications</h4>
           <DeleteNotificationsDialog />
         </div>
-        <div className="max-h-[calc(100vh-10rem)] overflow-y-auto">
+        <div className="max-h-96 overflow-y-auto">
           {userNotifications.map((notification) => (
             <DropdownMenuItem
               key={notification._id}

@@ -148,18 +148,62 @@ export default defineSchema({
     buttonText: v.string(),
   }).index("byStripeProductId", ["stripeId"]),
 
+
+  flashCardSets: defineTable({
+    moduleId: v.id("modules"),
+    userId: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    lectureIds: v.optional(v.array(v.id("lectures"))),
+    noteIds: v.optional(v.array(v.id("notes"))),
+    lastStudied: v.optional(v.string()),
+    totalCards: v.number(),
+    masteredCards: v.number(),
+  })
+    .index("by_moduleId", ["moduleId"])
+    .index("by_userId", ["userId"]),
+
+  flashcards: defineTable({
+    flashCardSetId: v.id("flashCardSets"),
+    front: v.string(),
+    back: v.string(),
+    difficulty: v.union(
+      v.literal("easy"),
+      v.literal("medium"),
+      v.literal("hard")
+    ),
+    status: v.union(
+      v.literal("new"),
+      v.literal("learning"),
+      v.literal("review"),
+      v.literal("mastered")
+    ),
+    nextReviewDate: v.optional(v.string()),
+    lastReviewDate: v.optional(v.string()),
+    reviewCount: v.number(),
+    correctCount: v.number(),
+    incorrectCount: v.number(),
+    tags: v.optional(v.array(v.string())),
+    sourceContentId: v.optional(
+      v.union(
+        v.id("lectures"),
+        v.id("notes")
+      )
+    ),
+  })
+    .index("by_flashCardSetId", ["flashCardSetId"])
+    .index("by_status", ["status"])
+    .index("by_nextReviewDate", ["nextReviewDate"])
+    .index("by_tags", ["tags"]),
+
   activities: defineTable({
     userId: v.string(),
     date: v.string(), // Store date as ISO string
-    type: v.union(
-      v.literal("lecture_created"),
-      v.literal("note_created"),
-      v.literal("module_created"),
-      v.literal("lecture_completed"),
-    ),
+    type: v.string(),
     count: v.number(),
     moduleId: v.optional(v.id("modules")),
     lectureId: v.optional(v.id("lectures")),
+    flashCardSetId: v.optional(v.id("flashCardSets")),
     noteId: v.optional(v.id("notes")),
     metadata: v.optional(v.string()),
   })

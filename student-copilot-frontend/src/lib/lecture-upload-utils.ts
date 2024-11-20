@@ -3,7 +3,6 @@ import { chunk } from 'lodash-es';
 export type UploadProgressSetter = (progress: number) => void;
 
 
-
 export const CHUNK_SIZE = 200;
 
 

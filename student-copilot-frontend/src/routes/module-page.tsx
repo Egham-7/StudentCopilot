@@ -31,6 +31,13 @@ export default function ModulePage() {
     api.notifications.getUserNotifications,
     "skip",
   );
+
+  const flashCardSets = useQuery(api.flashcards.getFlashcardsByModuleId, moduleId ? {
+    moduleId: moduleId as Id<"modules">
+
+  } : "skip");
+
+
   const latestNotification = userNotifications?.[0];
   const { toast } = useToast();
 
@@ -73,6 +80,7 @@ export default function ModulePage() {
           notes={notes}
           selectedLectures={selectedLectures}
           setSelectedLectures={setSelectedLectures}
+          flashCardSets={flashCardSets}
         />
       )}
 

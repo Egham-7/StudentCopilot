@@ -1,11 +1,23 @@
-const defaultTheme = require("tailwindcss/defaultTheme");
-const {
-  default: flattenColorPalette,
-} = require("tailwindcss/lib/util/flattenColorPalette");
+import defaultTheme from "tailwindcss/defaultTheme";
+import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
+import tailwindScrollbar from "tailwind-scrollbar";
+import tailwindAnimate from "tailwindcss-animate";
+import typography from "@tailwindcss/typography";
+
+// This plugin adds each Tailwind color as a global CSS variable, e.g. var(--gray-200).
+function addVariablesForColors({ addBase, theme }) {
+  let allColors = flattenColorPalette(theme("colors"));
+  let newVars = Object.fromEntries(
+    Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
+  );
+  addBase({
+    ":root": newVars,
+  });
+}
 
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  plugins: [require("tailwind-scrollbar")],
+export default {
+  plugins: [tailwindScrollbar],
   darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
@@ -69,20 +81,12 @@ module.exports = {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
         gradient: {
           to: {
@@ -104,37 +108,13 @@ module.exports = {
               "rotate(360deg) translateY(calc(var(--radius) * 1px)) rotate(-360deg)",
           },
         },
-        "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
-        },
-        "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
-        },
         "collapsible-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-collapsible-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-collapsible-content-height)" },
         },
         "collapsible-up": {
-          from: {
-            height: "var(--radix-collapsible-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-collapsible-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
@@ -143,28 +123,11 @@ module.exports = {
         gradient: "gradient 8s linear infinite",
         "border-beam": "border-beam calc(var(--duration)*1s) infinite linear",
         orbit: "orbit calc(var(--duration)*1s) linear infinite",
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
         "collapsible-down": "collapsible-down 0.2s ease-out",
         "collapsible-up": "collapsible-up 0.2s ease-out",
       },
     },
   },
-  plugins: [
-    require("tailwindcss-animate"),
-    addVariablesForColors,
-    require("@tailwindcss/typography"),
-  ],
+  plugins: [tailwindAnimate, addVariablesForColors, typography],
 };
 
-// This plugin adds each Tailwind color as a global CSS variable, e.g. var(--gray-200).
-function addVariablesForColors({ addBase, theme }) {
-  let allColors = flattenColorPalette(theme("colors"));
-  let newVars = Object.fromEntries(
-    Object.entries(allColors).map(([key, val]) => [`--${key}`, val]),
-  );
-
-  addBase({
-    ":root": newVars,
-  });
-}
