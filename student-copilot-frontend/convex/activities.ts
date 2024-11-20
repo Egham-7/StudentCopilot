@@ -44,14 +44,10 @@ export const getYearlyActivity = query({
 export const store = internalAction({
   args: {
     userId: v.string(),
-    type: v.union(
-      v.literal("lecture_created"),
-      v.literal("note_created"),
-      v.literal("module_created"),
-      v.literal("lecture_completed"),
-    ),
+    type: v.string(),
     moduleId: v.optional(v.id("modules")),
     lectureId: v.optional(v.id("lectures")),
+    flashCardSetId: v.optional(v.id("flashCardSets")),
     noteId: v.optional(v.id("notes")),
     metadata: v.optional(v.string()),
   },
@@ -65,15 +61,11 @@ export const store = internalAction({
 export const add = internalMutation({
   args: {
     userId: v.string(),
-    type: v.union(
-      v.literal("lecture_created"),
-      v.literal("note_created"),
-      v.literal("module_created"),
-      v.literal("lecture_completed"),
-    ),
+    type: v.string(),
     moduleId: v.optional(v.id("modules")),
     lectureId: v.optional(v.id("lectures")),
     noteId: v.optional(v.id("notes")),
+    flashCardSetId: v.optional(v.id("flashCardSets")),
     metadata: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -107,6 +99,7 @@ export const add = internalMutation({
         moduleId: args.moduleId,
         lectureId: args.lectureId,
         metadata: args.metadata,
+        flashCardSetId: args.flashCardSetId
       });
     }
   },

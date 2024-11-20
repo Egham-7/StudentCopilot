@@ -16,6 +16,8 @@ import ModulePage from "./routes/module-page";
 import NotePage from "./routes/note-page";
 import LecturesPage from "./routes/lectures-page";
 import NotesPage from "./routes/notes-page";
+import FlashcardPage from "./routes/flashcard-page";
+import FlashcardSetsPage from "./routes/flashcard-sets-page";
 
 const router = createBrowserRouter([
   {
@@ -43,6 +45,8 @@ const router = createBrowserRouter([
           { path: "note/:noteId", element: <NotePage /> },
           { path: "lectures/:moduleId", element: <LecturesPage /> },
           { path: "notes/:moduleId", element: <NotesPage /> },
+          { path: "flashcards/:moduleId", element: <FlashcardSetsPage /> },
+          { path: "flashcards/:moduleId/:flashCardSetId", element: <FlashcardPage /> }
         ],
       },
     ],

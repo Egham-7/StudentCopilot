@@ -211,6 +211,3 @@ export const deleteNote = mutation({
   },
 });
 
-
-
-

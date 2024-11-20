@@ -3,14 +3,16 @@ import { internal } from "./_generated/api";
 
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
-import { action, internalAction } from "./_generated/server";
+import {
+  action,
+  internalAction,
+} from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph, planLectureNotes, TNoteBlock } from "./aiAgent/noteAgent1";
+import { graph, planLectureNotes, TNoteBlock } from "./aiAgent/noteAgent";
 
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
 import { MemorySaver } from "@langchain/langgraph";
-import{chunker} from "./aiAgent/chunkingData";
 
 export const fetchAndProcessTranscriptions = internalAction({
   args: {
@@ -43,7 +45,7 @@ export const fetchAndProcessTranscriptions = internalAction({
       }
 
       for (const chunkId of lecture.lectureTranscription) {
-        const chunkUrl = await ctx.storage.getUrl(chunkId);
+        const chunkUrl = await ctx.storage.getUrl(chunkId as Id<"_storage">);
         if (!chunkUrl) {
           throw new Error(`Transcription chunk with ID ${chunkId} not found.`);
         }
@@ -105,21 +107,17 @@ export const generateNotes = internalAction({
       course,
       transcriptionChunks
     );
-    transcriptionChunks
+
     // Compile the application state graph with memory checkpointing enabled
     const appGraph = graph.compile({ checkpointer: memoryManager });
-    
+
     // Configuration for the application with a unique thread ID
     const executionConfig = { configurable: { thread_id: uuidv4() } };
 
-    // Chunking:
-    const combinedText: string = transcriptionChunks.join(" ");  
-    const transcriptionChunks1=await chunker(combinedText);
-    
-    let noteArr:string[]=[];
     // Process each transcription chunk in parallel
-    const chunkProcessingPromises = transcriptionChunks1.map(async (chunk) => {
+    const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
+
         // Prepare input data for each chunk, including user preferences and plan details
         const processingData = {
           chunk: chunk,
@@ -127,33 +125,29 @@ export const generateNotes = internalAction({
           learningStyle: learningStyle,
           levelOfStudy: levelOfStudy,
           course: course,
-          plan: lectureNotePlan,
-          noteArr:noteArr,
+          plan: lectureNotePlan
         };
 
         // Invoke the application graph with the current chunk data and config
-        const processingResult = await appGraph.invoke(
-          processingData,
-          executionConfig
-        );
+        const processingResult = await appGraph.invoke(processingData, executionConfig);
 
         // Extract the generated note from the result and add it to the noteBlocks array
+
+
         // Convert the processed note into JSON format for storage
-        const finalResultJson = JSON.stringify(processingResult.note);
-        console.log(noteArr);
-        noteArr.push(finalResultJson);
-        // Create a blob from the JSON data for storage
-        const noteChunkBlob = new Blob([finalResultJson], {
-          type: "application/json",
+        const finalResultJson = JSON.stringify({
+          type: 'note',
+          blocks: processingResult.note
         });
+
+        // Create a blob from the JSON data for storage
+        const noteChunkBlob = new Blob([finalResultJson], { type: "application/json" });
 
         // Store the blob in storage and retrieve the storage ID
         const storageId = await ctx.storage.store(noteChunkBlob);
 
         // Generate an embedding for the current chunk and return the storage ID with the embedding
-        const chunkEmbedding = await generateEmbedding(
-          processingResult.toString()
-        );
+        const chunkEmbedding = await generateEmbedding(JSON.stringify(processingResult));
 
         return { storageId, chunkEmbedding };
       });
@@ -206,6 +200,7 @@ export const getNoteById = action({
   handler: async (ctx, args): Promise<Doc<"notes" & { content: string }>> => {
     const identity = await ctx.auth.getUserIdentity();
 
+
     if (!identity) {
       throw new Error("Not authorized to use this action.");
     }
@@ -232,8 +227,8 @@ export const getNoteById = action({
 
     // Fetch content for each text chunk
     const textContent = await Promise.all(
-      note.textChunks.map(async (chunkId) => {
-        const url = await ctx.storage.getUrl(chunkId);
+      note.textChunks.map(async (chunkId: string) => {
+        const url = await ctx.storage.getUrl(chunkId as Id<"_storage">);
         if (!url) {
           throw new Error(`Failed to get URL for chunk ${chunkId}`);
         }

@@ -5,11 +5,20 @@ import { Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
+import { TbCards } from "react-icons/tb"
+
+
 interface TreeNode {
   id: string;
   name: string;
   children?: TreeNode[];
   isModule?: boolean;
+  isOpen?: boolean;
+}
+
+interface NodeProps extends NodeRendererProps<TreeNode> {
+  isSidebarOpen: boolean;
+  onToggle: (nodeId: string) => void;
 }
 
 export default function TreeView({
@@ -26,6 +35,7 @@ export default function TreeView({
         id: module._id,
         name: module.name,
         isModule: true,
+        isOpen: false,
         children: isSidebarOpen
           ? [
             {
@@ -36,12 +46,17 @@ export default function TreeView({
               id: `${module._id}-notes`,
               name: "Notes",
             },
+
+            {
+              id: `${module._id}-flashcards`,
+              name: "Flashcard Sets"
+            }
           ]
           : [],
       }));
       setTreeData(formattedData);
     }
-  }, [modules, isSidebarOpen]);
+  }, [modules]);
 
   const isModuleNode = (nodes: TreeNode[], id: string): boolean => {
     const node = findNode(nodes, id);
@@ -122,67 +137,124 @@ export default function TreeView({
     return false;
   };
 
+  const toggleNode = (nodeId: string) => {
+    setTreeData((prevData) => {
+      const newData = JSON.parse(JSON.stringify(prevData));
+      const node = findNode(newData, nodeId);
+      if (node && node.isModule) {
+        node.isOpen = !node.isOpen;
+        // Update children when toggling
+        if (node.isOpen) {
+          node.children = [
+            {
+              id: `${node.id}-lectures`,
+              name: "Lectures",
+            },
+            {
+              id: `${node.id}-notes`,
+              name: "Notes",
+            },
+            {
+              id: `${node.id}-flashcards`,
+              name: "Flashcard Sets"
+            }
+          ];
+        } else {
+          node.children = [];
+        }
+      }
+      return newData;
+    });
+  };
+
   return (
     <div className="flex-grow overflow-hidden">
       <Tree
         data={treeData}
         onMove={onMove}
         width={isSidebarOpen ? 300 : 60}
-        height={window.innerHeight - 64} // Subtract header height
+        height={window.innerHeight - 64}
         indent={24}
         rowHeight={36}
         overscanCount={5}
         paddingTop={10}
         paddingBottom={10}
         padding={25}
+        openByDefault={true}
+
       >
-        {(nodeProps) => <Node {...nodeProps} isSidebarOpen={isSidebarOpen} />}
+        {(props) => (
+          <Node {...props} isSidebarOpen={isSidebarOpen} onToggle={toggleNode} />
+        )}
       </Tree>
     </div>
   );
 }
-function Node({
-  node,
-  dragHandle,
-  isSidebarOpen,
-}: NodeRendererProps<TreeNode> & { isSidebarOpen: boolean }) {
-  const isLecture = node.data.name === "Lectures";
-  const isNotes = node.data.name === "Notes";
 
-  let icon;
-  if (isLecture) {
-    icon = <PiBookOpenTextFill className="text-primary" />;
-  } else if (isNotes) {
-    icon = <PiNoteFill className="text-primary" />;
-  } else {
-    icon = <PiStackFill className="text-primary" />;
-  }
+function Node({ node, dragHandle, isSidebarOpen, onToggle }: NodeProps) {
+  const nodeType = node.data.name;
+  const isModule = node.data.isModule;
+  const isOpen = node.data.isOpen;
 
-  let linkTo;
-  if (isLecture) {
-    linkTo = `/dashboard/lectures/${node.parent?.id}`;
-  } else if (isNotes) {
-    linkTo = `/dashboard/notes/${node.parent?.id}`;
-  } else {
-    linkTo = `/dashboard/module/${node.id}`;
-  }
+  const iconMap = {
+    'Lectures': <PiBookOpenTextFill className="text-primary" />,
+    'Notes': <PiNoteFill className="text-primary" />,
+    'Flashcard Sets': <TbCards className="text-primary" />,
+    'default': <PiStackFill className="text-primary" />
+  };
+
+  const routeMap = {
+    'Lectures': `/dashboard/lectures/${node.parent?.id}`,
+    'Notes': `/dashboard/notes/${node.parent?.id}`,
+    'Flashcard Sets': `/dashboard/flashcards/${node.parent?.id}`,
+    'default': `/dashboard/module/${node.id}`
+  };
+
+  const icon = iconMap[nodeType as keyof typeof iconMap] || iconMap.default;
+  const linkTo = routeMap[nodeType as keyof typeof routeMap] || routeMap.default;
 
   return (
     <div
       className={cn(
-        "flex items-center p-2 rounded-md transition-colors duration-200",
+        "flex items-center p-2 rounded-md transition-all duration-300 ease-in-out",
         {
           "hover:bg-accent": isSidebarOpen,
-          "pl-8": isLecture || isNotes,
+          "pl-8": nodeType === "Lectures" || nodeType === "Notes" || nodeType === "Flashcard Sets",
+          "opacity-100": true,
         }
       )}
       ref={dragHandle}
     >
-      {icon}
+      {isModule && isSidebarOpen && (
+        <button
+          onClick={() => onToggle(node.id)}
+          className="mr-1 w-4 h-4 flex items-center justify-center hover:bg-accent rounded-sm transition-colors duration-200"
+        >
+          <svg
+            className={cn(
+              "w-3 h-3 transform transition-transform duration-300 ease-in-out",
+              isOpen ? "rotate-90" : "rotate-0"
+            )}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      )}
+      <div className="transition-transform duration-300 ease-in-out">
+        {icon}
+      </div>
       {isSidebarOpen && (
         <Link
           to={linkTo}
-          className="ml-3 truncate whitespace-nowrap overflow-hidden max-w-[200px] inline-block text-sm text-foreground hover:text-primary"
+          className="ml-3 truncate whitespace-nowrap overflow-hidden max-w-[200px] inline-block text-sm text-foreground hover:text-primary transition-colors duration-200"
         >
           {node.data.name}
         </Link>
@@ -190,3 +262,4 @@ function Node({
     </div>
   );
 }
+
