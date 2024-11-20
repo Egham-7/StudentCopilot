@@ -7,13 +7,12 @@ import pdfToText from 'react-pdftotext';
 import * as z from 'zod';
 import useAudioExtractor from './use-audio-extractor';
 import { useWebsiteUploaders } from './use-website-uploaders';
-import { chunkAndProcess, UploadProgressSetter } from '@/lib/lecture-upload-utils';
-
-
+import { UploadProgressSetter } from '@/lib/lecture-upload-utils';
 import { createFormSchema } from '@/lib/ui_utils';
+import { TEXT_SPLITTER_CONFIG } from '@/lib/lecture-upload-utils';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 
-
-const PDF_CHUNK_SIZE = 500; // 500 words
+const AUDIO_CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
 
 export const useLectureUpload = () => {
   const { toast } = useToast();
@@ -48,26 +47,41 @@ export const useLectureUpload = () => {
     return text;
   };
 
-  const processTextChunk = async (
-    chunkText: string,
-    index: number,
-    setUploadProgress: UploadProgressSetter,
-    totalChunks: number
-  ): Promise<{ storageId: Id<"_storage">; embedding: number[] }> => {
-    const uploadChunkUrl = await generateUploadUrl();
-    const uploadChunkResult = await fetch(uploadChunkUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: chunkText
-    });
-    if (!uploadChunkResult.ok) {
-      throw new Error(`Failed to upload text chunk ${index}.`);
-    }
-    const { storageId } = await uploadChunkResult.json();
-    const chunkEmbedding = await getEmbedding({ text: chunkText });
-    setUploadProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 100)));
-    return { storageId, embedding: chunkEmbedding };
-  };
+  const processText = async (
+    text: string,
+    setProgress: UploadProgressSetter
+  ) => {
+    const textSplitter = new RecursiveCharacterTextSplitter(TEXT_SPLITTER_CONFIG);
+    const chunks = await textSplitter.splitText(text);
+
+    const results = await Promise.all(
+      chunks.map(async (chunk, index) => {
+
+        const chunkFile = new File(
+          [chunk],
+          `chunk-${index}.txt`,
+          { type: 'text/plain' }
+        );
+        const storageId = await uploadFile(chunkFile, 'text/plain');
+        const embedding = await getEmbedding({ text: chunk });
+
+        setProgress(Math.min(100, Math.floor(((index + 1) / chunks.length) * 100)));
+
+        return { storageId, embedding };
+      })
+    );
+
+    const storageIds = results.map(r => r.storageId);
+    const embeddings = results.map(r => r.embedding);
+
+    const averageEmbedding = new Array(1536).fill(0)
+      .map((_, i) => embeddings.reduce((sum, emb) => sum + emb[i], 0) / embeddings.length);
+
+    const magnitude = Math.sqrt(averageEmbedding.reduce((sum, val) => sum + val * val, 0));
+    const normalizedEmbedding = averageEmbedding.map(val => val / magnitude);
+
+    return { storageIds, normalizedEmbedding };
+  }
 
 
 
@@ -80,67 +94,55 @@ export const useLectureUpload = () => {
   ): Promise<void> => {
     const storageId = await uploadFile(file, file.type);
     const rawText = await parsePdf(file);
-    const results = await chunkAndProcess(
-      rawText,
-      PDF_CHUNK_SIZE,
-      processTextChunk,
-      setUploadProgress
-    );
 
-    const textChunkStorageIds: Id<"_storage">[] = results.map(result => result.storageId);
-    const allEmbeddings: number[][] = results.map(result => result.embedding);
-    const concatenatedEmbedding: number[] = [];
-    for (let i = 0; i < 1536; i++) {
-      const sum = allEmbeddings.reduce((acc, embedding) => acc + (embedding[i] || 0), 0);
-      concatenatedEmbedding.push(sum / allEmbeddings.length);
-    }
-    const magnitude = Math.sqrt(concatenatedEmbedding.reduce((sum, val) => sum + val * val, 0));
-    const normalizedEmbedding = concatenatedEmbedding.map(val => val / magnitude);
+
+    const { storageIds, normalizedEmbedding } = await processText(rawText, setUploadProgress);
 
     await storeLecture({
       title: values.title,
       description: values.description,
       completed: false,
       lectureTranscriptionEmbedding: normalizedEmbedding,
-      lectureTranscription: textChunkStorageIds,
+      lectureTranscription: storageIds,
       contentStorageId: storageId,
-      moduleId: moduleId,
+      moduleId,
       fileType: "pdf",
       image: undefined
     });
+
+
   };
 
 
-  const processAudio = async (audioBuffer: ArrayBuffer, setUploadProgress: UploadProgressSetter) => {
-    const results = await chunkAndProcess(
-      audioBuffer,
-      5 * 1024 * 1024, // 5MB chunks
-      async (chunk, index, setProgress, totalChunks) => {
+  const processAudio = async (
+    audioBuffer: ArrayBuffer,
+    setProgress: UploadProgressSetter
+  ) => {
+    const chunks = [];
+    for (let i = 0; i < audioBuffer.byteLength; i += AUDIO_CHUNK_SIZE) {
+      chunks.push(audioBuffer.slice(i, i + AUDIO_CHUNK_SIZE));
+    }
+
+    const results = await Promise.all(
+      chunks.map(async (chunk, index) => {
         const { storageId, embedding } = await transcribeAudio({
           audioChunk: chunk,
           chunkIndex: index,
         });
-        setProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 100)));
+        setProgress(Math.min(100, Math.floor(((index + 1) / chunks.length) * 100)));
         return { storageId, embedding };
-      },
-      setUploadProgress
+      })
     );
 
-    const allStorageIds: Id<"_storage">[] = results.map(r => r.storageId);
-    const combinedEmbedding = results.reduce((acc, { embedding }) =>
-      acc.map((val, i) => val + embedding[i]),
-      new Array(1536).fill(0)
-    );
+    const storageIds = results.map(r => r.storageId);
+    const averageEmbedding = new Array(1536).fill(0)
+      .map((_, i) => results.reduce((sum, r) => sum + r.embedding[i], 0) / results.length);
 
-    const magnitude = Math.sqrt(combinedEmbedding.reduce((sum, val) => sum + val * val, 0));
-    const normalizedEmbedding = combinedEmbedding.map(val => val / magnitude);
+    const magnitude = Math.sqrt(averageEmbedding.reduce((sum, val) => sum + val * val, 0));
+    const normalizedEmbedding = averageEmbedding.map(val => val / magnitude);
 
-    return {
-      allStorageIds,
-      normalizedEmbedding
-    };
+    return { storageIds, normalizedEmbedding };
   };
-
 
   const handleAudioUpload = async (
     file: File,
@@ -149,7 +151,7 @@ export const useLectureUpload = () => {
     setUploadProgress: UploadProgressSetter
   ): Promise<void> => {
     const audioBuffer = await file.arrayBuffer();
-    const { allStorageIds, normalizedEmbedding } = await processAudio(audioBuffer, setUploadProgress);
+    const { storageIds, normalizedEmbedding } = await processAudio(audioBuffer, setUploadProgress);
 
     const storageId = await uploadFile(file, file.type);
 
@@ -158,7 +160,7 @@ export const useLectureUpload = () => {
       description: values.description,
       completed: false,
       lectureTranscriptionEmbedding: normalizedEmbedding,
-      lectureTranscription: allStorageIds,
+      lectureTranscription: storageIds,
       contentStorageId: storageId,
       moduleId: moduleId,
       fileType: "audio",
@@ -175,7 +177,7 @@ export const useLectureUpload = () => {
     const audioBuffer = await extractAudioFromVideo(file);
     setUploadProgress(25);
 
-    const { allStorageIds, normalizedEmbedding } = await processAudio(audioBuffer, (progress) => {
+    const { storageIds, normalizedEmbedding } = await processAudio(audioBuffer, (progress) => {
       setUploadProgress(25 + progress * 0.5);
     });
 
@@ -187,7 +189,7 @@ export const useLectureUpload = () => {
       description: values.description,
       completed: false,
       lectureTranscriptionEmbedding: normalizedEmbedding,
-      lectureTranscription: allStorageIds,
+      lectureTranscription: storageIds,
       contentStorageId: videoId,
       moduleId: moduleId,
       fileType: "video",
