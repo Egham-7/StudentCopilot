@@ -35,7 +35,7 @@ export default function TreeView({
         id: module._id,
         name: module.name,
         isModule: true,
-        isOpen: false,
+        isOpen: true,
         children: isSidebarOpen
           ? [
             {
@@ -137,14 +137,19 @@ export default function TreeView({
     return false;
   };
 
+
+
   const toggleNode = (nodeId: string) => {
     setTreeData((prevData) => {
       const newData = JSON.parse(JSON.stringify(prevData));
       const node = findNode(newData, nodeId);
+
       if (node && node.isModule) {
+        // Toggle the open state
         node.isOpen = !node.isOpen;
-        // Update children when toggling
-        if (node.isOpen) {
+
+        // If node has no children and we're opening it, add children
+        if (node.isOpen && (!node.children || node.children.length === 0)) {
           node.children = [
             {
               id: `${node.id}-lectures`,
@@ -159,10 +164,13 @@ export default function TreeView({
               name: "Flashcard Sets"
             }
           ];
-        } else {
+        }
+        // If node is being closed, clear children
+        else if (!node.isOpen) {
           node.children = [];
         }
       }
+
       return newData;
     });
   };
@@ -180,7 +188,6 @@ export default function TreeView({
         paddingTop={10}
         paddingBottom={10}
         padding={25}
-        openByDefault={true}
 
       >
         {(props) => (
