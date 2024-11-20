@@ -9,6 +9,7 @@ import { graph } from "./aiAgent/flashCardAgent";
 import { MemorySaver } from "@langchain/langgraph";
 import { flashCardPlanGenerationPrompt } from "./aiAgent/prompts/flashCardAgent";
 import { v4 as uuidv4 } from "uuid";
+import { Id } from "./_generated/dataModel";
 
 
 export async function planFlashcardNotes(
@@ -80,8 +81,6 @@ export const generateFlashCards = internalAction({
         course
       });
 
-      console.log("FlashCards:", flashCardsObject);
-
       if (flashCardsObject && flashCardsObject.flashCards) {
         allFlashCards.push(...flashCardsObject.flashCards);
       }
@@ -91,7 +90,7 @@ export const generateFlashCards = internalAction({
       throw new Error("Flashcards response cannot be null.");
     }
 
-    let setId;
+    let setId: Id<"flashCardSets">;
 
     if (!flashCardSetId) {
       const response = await ctx.runMutation(internal.flashcards.createFlashCardSetInternal, {
@@ -130,9 +129,32 @@ export const generateFlashCards = internalAction({
       await ctx.runMutation(internal.flashcards.addFlashCardInternal, {
         front: flashCard.front,
         back: flashCard.back,
-        flashCardSetId: setId
+        flashCardSetId: setId,
+        userId
       });
     }
+
+    const flashCardSet = await ctx.runQuery(internal.flashcards.getFlashCardSetInternal, {
+      flashCardSetId: setId
+    });
+
+    if (!flashCardSet) {
+      throw new Error("Flashcard set must have been successfully created.");
+    }
+
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId: flashCardSet.userId,
+      message: `Flashcards have been successfully generated for ${flashCardSet.title}`,
+      type: "flashcards_generated",
+      relatedId: flashCardSet._id
+    });
+
+    // Track activity
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId: flashCardSet.userId,
+      type: "flashcards_generated",
+      flashCardSetId: flashCardSet._id
+    });
   }
 });
 
@@ -162,7 +184,6 @@ export const executeGraphLogic = internalAction({
 
     const response = await flashCardGraph.invoke(graphParams, executionConfig);
 
-    console.log("Response: ", response);
 
     if (!response.flashCardsObject) {
       throw new Error("Failed to get response from the model.");

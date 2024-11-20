@@ -1,5 +1,5 @@
 
-import { internalMutation, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -185,6 +185,7 @@ export const addFlashCardInternal = internalMutation({
 
   args: {
     flashCardSetId: v.id("flashCardSets"),
+    userId: v.string(),
     front: v.string(),
     back: v.string(),
     tags: v.optional(v.array(v.string())),
@@ -221,11 +222,36 @@ export const addFlashCardInternal = internalMutation({
       totalCards: (flashCardSet.totalCards || 0) + 1,
     });
 
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId: args.userId,
+      message: `New flashcard added "${args.front}"`,
+      type: "flashcard_created",
+      relatedId: flashCardSet._id,
+    });
+
+    // Track activity
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId: args.userId,
+      type: "flashcard_created",
+      flashCardSetId: flashCardSet._id
+    });
+
     return cardId;
 
 
   }
 
+})
+
+export const getFlashCardSetInternal = internalQuery({
+
+  args: {
+    flashCardSetId: v.id("flashCardSets")
+  },
+
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.flashCardSetId);
+  }
 })
 
 export const addFlashCard = mutation({
@@ -290,6 +316,20 @@ export const addFlashCard = mutation({
     }
     await ctx.db.patch(args.flashCardSetId, {
       totalCards: (flashCardSet.totalCards || 0) + 1,
+    });
+
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId,
+      message: `New flashcard added "${args.front}"`,
+      type: "flashcard_created",
+      relatedId: flashCardSet._id,
+    });
+
+    // Track activity
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId,
+      type: "flashcard_created",
+      flashCardSetId: flashCardSet._id
     });
 
     return cardId;
