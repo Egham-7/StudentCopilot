@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as activities from "../activities.js";
 import type * as ai from "../ai.js";
+import type * as aiAgent_chunkingData from "../aiAgent/chunkingData.js";
 import type * as aiAgent_noteAgent from "../aiAgent/noteAgent.js";
 import type * as aiAgent_noteAgent1 from "../aiAgent/noteAgent1.js";
 import type * as aiChats from "../aiChats.js";
@@ -46,6 +47,7 @@ import type * as websites_youtube from "../websites/youtube.js";
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   ai: typeof ai;
+  "aiAgent/chunkingData": typeof aiAgent_chunkingData;
   "aiAgent/noteAgent": typeof aiAgent_noteAgent;
   "aiAgent/noteAgent1": typeof aiAgent_noteAgent1;
   aiChats: typeof aiChats;

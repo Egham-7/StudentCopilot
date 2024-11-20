@@ -111,7 +111,8 @@ async function generateImageSearchQuery(_state: typeof InputAnnotation.State): P
   
   if (Array.isArray(generatedNotes) && generatedNotes[0]?.type === "header") {
     const result = await llm.invoke(prompt);
-    const imageUrl = await fetchImageLink(result.content.toString());
+    const resStr=result.content as string
+    const imageUrl = await fetchImageLink(resStr);
   
     combinedNotes.push({
       type: "image",
@@ -119,10 +120,10 @@ async function generateImageSearchQuery(_state: typeof InputAnnotation.State): P
         file: {
           url: imageUrl,
         },
-        caption: result.content.toString(),
+        caption: resStr,
         withBorder: true,
         withBackground: false,
-        stretched: true,
+        stretched: false,
       },
     });
   }

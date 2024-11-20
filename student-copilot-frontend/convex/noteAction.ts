@@ -5,11 +5,12 @@ import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph, planLectureNotes, TNoteBlock } from "./aiAgent/noteAgent";
+import { graph, planLectureNotes, TNoteBlock } from "./aiAgent/noteAgent1";
 
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
 import { MemorySaver } from "@langchain/langgraph";
+import{chunker} from "./aiAgent/chunkingData";
 
 export const fetchAndProcessTranscriptions = internalAction({
   args: {
@@ -104,16 +105,20 @@ export const generateNotes = internalAction({
       course,
       transcriptionChunks
     );
-
+    transcriptionChunks
     // Compile the application state graph with memory checkpointing enabled
     const appGraph = graph.compile({ checkpointer: memoryManager });
-
     
     // Configuration for the application with a unique thread ID
     const executionConfig = { configurable: { thread_id: uuidv4() } };
 
+    // Chunking:
+    const combinedText: string = transcriptionChunks.join(" ");  
+    const transcriptionChunks1=await chunker(combinedText);
+    
+    let noteArr:string[]=[];
     // Process each transcription chunk in parallel
-    const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
+    const chunkProcessingPromises = transcriptionChunks1.map(async (chunk) => {
       return exponentialBackoff(async () => {
         // Prepare input data for each chunk, including user preferences and plan details
         const processingData = {
@@ -123,6 +128,7 @@ export const generateNotes = internalAction({
           levelOfStudy: levelOfStudy,
           course: course,
           plan: lectureNotePlan,
+          noteArr:noteArr,
         };
 
         // Invoke the application graph with the current chunk data and config
@@ -134,8 +140,8 @@ export const generateNotes = internalAction({
         // Extract the generated note from the result and add it to the noteBlocks array
         // Convert the processed note into JSON format for storage
         const finalResultJson = JSON.stringify(processingResult.note);
-        console.log(finalResultJson);
-
+        console.log(noteArr);
+        noteArr.push(finalResultJson);
         // Create a blob from the JSON data for storage
         const noteChunkBlob = new Blob([finalResultJson], {
           type: "application/json",

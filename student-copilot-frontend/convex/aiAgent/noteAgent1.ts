@@ -3,8 +3,9 @@ import { AIMessage } from "@langchain/core/messages";
 import { Annotation, END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
 import axios from 'axios';
+import { Url } from "url";
 import { z } from 'zod';
-
+import { marked } from "marked";
 // Define schema for image block data
 const ImageBlockSchema = z.object({
   file: z.object({
@@ -52,6 +53,7 @@ const InputAnnotation = Annotation.Root({
   levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
   course: Annotation<string>,
   plan: Annotation<string>,
+  noteArr: Annotation<string[]>,
 });
 
 // Define output annotation structure
@@ -72,7 +74,6 @@ export async function fetchImageLink(query: string): Promise<string> {
     const imageLink = response?.data?.items?.[0]?.link;
 
     if (imageLink) {
-      console.log('Fetched image link:', imageLink);
       return imageLink;
     } else {
       console.error('Unexpected response structure:', response.data);
@@ -102,7 +103,6 @@ async function generateImageSearchQuery(_state: typeof InputAnnotation.State): P
     `;
   const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18" });
   const result = await llm.invoke(prompt);
-
   return {messages:result};
 }
 // Function to generate an image search query based on note context and retrieve an image link
@@ -111,46 +111,46 @@ async function collector(_state: typeof InputAnnotation.State): Promise<typeof O
 
     //const imageUrl = await fetchImageLink(result.content.toString());
   
-    let index=0;
+   
     // Check if _state.messages[0] exists and print it
-    while (_state.messages[index]) {
-        console.log(_state.messages[index]);
-        if(index==1){
+    for (let index = 0; index < _state.messages.length; index++) {
+        const message = _state.messages[index];
+        const msgStr = message.content as string;
+        const htmlContent = await marked(msgStr);
+        console.log(htmlContent);
+        if (index === _state.messages.length-3 && index==1 ) {
             combinedNotes.push({
-                type:"header",
+                type: "image",
                 data: {
-                text: _state.messages[1].content.toString(),
-                level: "1",
-              },
-        })
+                  file: {
+                    url: await fetchImageLink(msgStr),
+                  },
+                  caption: msgStr,
+                  withBorder: true,
+                  withBackground: false,
+                  stretched: false,
+                },
+              });
+        } else if (index === _state.messages.length-2) {
+              combinedNotes.push({
+                type: "header",
+                data: {
+                    text: htmlContent,
+                    level: "1",
+                },
+            });
+        } else if (index === _state.messages.length-2) {
+
+            combinedNotes.push({
+                type: "paragraph",
+                data: {
+                    text: htmlContent,
+                    alignment: 'center',
+                },
+            });
         }
-        index=index+1;
     }
     
-
-      /*
-      combinedNotes.push({
-          type: "paragraph",
-        data: {
-          text:_state.messages[0].content.toString(),
-          alignment:'center'
-        },
-      })
-  
-      combinedNotes.push({
-        type: "image",
-        data: {
-          file: {
-            url: "",
-          },
-          caption: "",
-          withBorder: true,
-          withBackground: false,
-          stretched: true,
-        },
-      });
-      */
-  
     return { note: combinedNotes };
   }
   
@@ -184,87 +184,58 @@ Analyze the chunk carefully and generate a title that captures its core idea. Re
 
 // Function to generate structured lecture notes
 export async function generateParagraph(_state: typeof InputAnnotation.State): Promise<{messages:AIMessage}> {
-    const sysPrompt = `You are an AI tasked with generating concise, well-structured, and visually organized notes based on a provided lecture plan and chunk of content. The output should be formatted in distinct blocks for easy readability and integration into note-taking applications like Editor.js. Ensure that the content is clear, brief, and organized into sections (with titles, bullet points, and paragraphs where necessary). Avoid markdown formatting that will result in large paragraph blocks. The result should look like the following structure:
+    const prompt = `Generate concise, well-structured, and visually organized notes based on the provided lecture plan and content chunk. The output should be formatted into **distinct blocks** for easy readability and integration into a note-taking application like Editor.js. Follow these instructions:
 
-Overview:
+                    ---
 
-Provide a brief summary of the chunk content.
-Avoid repeating prior notes unless reinforcing essential concepts.
-Section Titles (Header Blocks):
 
-Use clear, concise titles for each main idea or section.
-Use Header 2 (H2) for main sections and Header 3 (H3) for sub-sections.
-Bullet Points (List Blocks):
+                    1. **Chunk Content**: Focus on summarizing the provided content, extracting key points, and ensuring smooth integration with prior notes if applicable.  
+                        Content: ${_state.chunk}
+                    2. **previous chunks content: 
+                        previous Content to avoid repition: ${_state.noteArr}
 
-Organize key ideas into brief, concise bullet points.
-Each bullet should present one key idea.
-Use nested bullet points for additional sub-points or details.
-Paragraphs (Text Blocks):
-
-If necessary, include short paragraphs that explain a concept.
-Each paragraph should focus on one clear idea.
-Key Terms and Highlights:
-
-Bold key terms or important phrases.
-Include brief definitions for complex or technical terms.
-Action Items (Optional):
-
-For kinesthetic learners, add practical steps or real-world examples.
-The output should focus on conciseness without oversimplification and maintain clarity and logical flow. Ensure each section flows smoothly from one to the next.
-                      
-  `;
-
-  const userPrompt = `You are tasked with summarizing the following chunk of content based on the lecture plan. Your goal is to generate concise, well-structured, and visually organized notes. The output should follow these guidelines:
-
-Content Chunk:
-Focus on summarizing the provided content, extracting key points, and keeping the summary brief and to the point. Ensure smooth integration with any prior notes if applicable.
-
-Formatting:
-
-Use section titles (H2 or H3) to separate main ideas.
-Break down key points into bullet points for clarity.
-Use short paragraphs to explain complex ideas without unnecessary detail.
-Bold key terms or phrases where necessary, and provide brief definitions when complex concepts are mentioned.
-Learning Style and User Preferences:
-
-Learning Style: ${_state.learningStyle}
-Level of Study: ${_state.levelOfStudy}
-Note-Taking Style: ${_state.noteTakingStyle}
-Your summary should focus on conciseness, clarity, and logical flow, keeping each point meaningful and ensuring the notes are easily readable and ready for integration into a note-taking app like Editor.js.
-
-`;
+                    
+                    
+                    ### Formatting Rules:
+                    1. **Section Titles**: Use clear titles to organize the content into distinct sections. Avoid using any symbols or Markdown-like formatting (e.g., no ** for bold text).
+                    2. **Key Points**: 
+                    - Write key points in short sentences or bullet points.
+                    - Use plain text to emphasize important terms or ideas.
+                    - Avoid overly technical terms unless necessary, and briefly define them when used.
+                    3. **Action Items**: Clearly outline any steps or actions in a numbered list or as plain text to ensure they are actionable and easy to follow.
+                    4. *>*Avoid Markdown or Complex Formatting**: Output should look clean and simple, focusing purely on text clarity and organization.
+                        
+                    ### Important Rule:
+                    1. Don't make it bigger than 1/3 of the chunk.`;
   
-    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18" });
-    const result = await llm.invoke(   [
-        { role: "system", content: sysPrompt },
-        { role: "user", content: userPrompt },
-      ]);
+    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18"});
+    const result = await llm.invoke(prompt);
    
     return {messages:result};
   }
 
   export const decideIfTitleNeeded = async (state: typeof InputAnnotation.State) => {
 
-    const CATEGORIZATION_SYSTEM_TEMPLATE = `You are an expert decision-making system for determining title necessity.
-  Analyze the text and use memory of previous chat provide a clear answer if a title is required.`;
+     
+    const CATEGORIZATION_HUMAN_TEMPLATE = `
+    You are an expert decision-making system for determining image necessity in a block of notes.
+    Analyze the text and use memory of previous chat provide a clear answer if a title is required.
   
-    const CATEGORIZATION_HUMAN_TEMPLATE = `The provided text is as follows:
-  Chunk: ${state.chunk}
-  
-  Decide if the text chunk requires a title based on the following:
-  - Consistency with prior responses.
-  - Clarity of structure and organization.
-  - Continuity and flow.
-  
-  Respond with "Yes" if a title is required, otherwise "No".`;
+    The provided text is as follows:
+    Chunk: ${state.chunk}
+    
+    Decide if the text chunk requires an image based on the following:
+    - Consistency with prior responses :${state.noteArr}.
+    - Clarity of structure and organization.
+    - Continuity and flow.
+    
+    Respond with "Yes" if a title is required, otherwise "No".`;
   
     // Invoke the model
-    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18" });
+    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18",
+                                temperature:0.4 });
     const categorizationResponse = await llm.invoke(
-      [
-        { role: "system", content: CATEGORIZATION_SYSTEM_TEMPLATE },
-        { role: "user", content: CATEGORIZATION_HUMAN_TEMPLATE },
-      ]
+      CATEGORIZATION_HUMAN_TEMPLATE
     );
   
     // Use zod to validate the response
@@ -315,7 +286,6 @@ export async function planLectureNotes(
     const batchPlan = await generateBatchPlan(batchContent);
     fullPlan += `\n### Batch ${i + 1} Plan\n${batchPlan.content}`;
   }
-
   // Return combined plan as a single AIMessage
   return new AIMessage(fullPlan.trim());
 }
@@ -323,9 +293,9 @@ export async function planLectureNotes(
 const decisionLogic = (state: typeof InputAnnotation.State) => {
     // Check if the first message content is "Yes"
     if (state.messages[0]?.content === "Yes") {
-        return "generate_title";  // Transition to generate_title
+        return "generate_image";  // Transition to generate_title
     } else {
-        return "generate_paragraph";  // Transition to generate_paragraph
+        return "generate_title";  // Transition to generate_paragraph
     }
 };
 
@@ -334,19 +304,19 @@ export const graph = new StateGraph({
   input: InputAnnotation,
   output: OutputAnnotation,
 })
-.addNode("title_decision",decideIfTitleNeeded)
+.addNode("img_decision",decideIfTitleNeeded)
 .addNode("generate_title",generateTitle)
 .addNode("generate_image", generateImageSearchQuery)
 .addNode("generate_paragraph",generateParagraph)
 .addNode("collector",collector)
-.addEdge("__start__", "title_decision")
-.addConditionalEdges("title_decision", (state: typeof InputAnnotation.State) => {
+.addEdge("__start__", "img_decision")
+.addConditionalEdges("img_decision", (state: typeof InputAnnotation.State) => {
     // Call the synchronous logic function to get the transition
     const nextStep = decisionLogic(state);
     return nextStep;  // This will return either "generate_title" or "generate_paragraph"
 })
-.addEdge("generate_title","generate_image")
-.addEdge("generate_image","generate_paragraph")
+.addEdge("generate_image","generate_title")
+.addEdge("generate_title","generate_paragraph")
 .addEdge("generate_paragraph","collector")
 .addEdge("collector",END)
 
