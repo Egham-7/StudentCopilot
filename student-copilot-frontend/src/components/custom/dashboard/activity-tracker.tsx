@@ -18,6 +18,9 @@ const activityTypes = {
   lecture_completed: "Completed a lecture",
 } as const;
 
+type ActivityType = keyof typeof activityTypes;
+
+
 export default function ActivityTracker() {
   const currentYear = new Date().getFullYear();
 
@@ -192,8 +195,8 @@ export default function ActivityTracker() {
                                 <TooltipTrigger asChild>
                                   <div
                                     className={`w-4 h-4 m-px rounded-sm transition-colors ${day
-                                        ? getActivityColor(day.count)
-                                        : "bg-muted"
+                                      ? getActivityColor(day.count)
+                                      : "bg-muted"
                                       }`}
                                   />
                                 </TooltipTrigger>
@@ -220,7 +223,7 @@ export default function ActivityTracker() {
                                             key={index}
                                             className="text-xs text-muted-foreground"
                                           >
-                                            {activityTypes[activity.type]}:{" "}
+                                            {activityTypes[activity.type as ActivityType]}:{" "}
                                             {activity.count}
                                           </p>
                                         ))}
