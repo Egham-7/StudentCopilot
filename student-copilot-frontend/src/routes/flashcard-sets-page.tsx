@@ -1,4 +1,4 @@
-import { usePaginatedQuery } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -9,15 +9,13 @@ import { Id } from 'convex/_generated/dataModel';
 
 export default function FlashcardSetsPage() {
   const { moduleId } = useParams();
-  const ITEMS_PER_PAGE = 6;
 
-  const { results: flashcardSets, status, loadMore } = usePaginatedQuery(
-    api.flashcards.getFlashCardSets,
-    moduleId ? { moduleId: moduleId as Id<"modules"> } : {},
-    { initialNumItems: ITEMS_PER_PAGE }
+  const flashcardSets = useQuery(
+    api.flashcards.getFlashcardsByModuleId,
+    moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip",
   );
 
-  if (!flashcardSets && status === "LoadingFirstPage") {
+  if (!flashcardSets) {
     return <LoadingSkeleton />;
   }
 
@@ -68,7 +66,6 @@ export default function FlashcardSetsPage() {
         {status === "CanLoadMore" && (
           <div className="mt-8 flex justify-center">
             <Button
-              onClick={() => loadMore(ITEMS_PER_PAGE)}
               variant="outline"
               className="w-48"
             >

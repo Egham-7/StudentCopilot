@@ -48,7 +48,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "convex": "^1.15.0",
-    "framer-motion": "^11.3.30",
+    "framer-motion": "^11.11.17",
     "katex": "^0.16.11",
     "langchain": "^0.3.2",
     "lodash-es": "^4.17.21",

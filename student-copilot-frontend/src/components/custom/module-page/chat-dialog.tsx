@@ -113,39 +113,41 @@ const ChatDialog = ({ lectures, sessionId, moduleId }: ChatDialogProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
-
         <ScrollArea
           className=" min-h-[250px] md:min-h-[400px] w-full rounded-md border border-border p-4 bg-muted"
           id="message-list"
         >
-          <AnimatePresence>
-            {messages?.map((message) => (
-              <motion.div
-                key={message._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className={`mb-4 p-3 rounded-lg ${message.isViewer === true
-                  ? "bg-primary text-primary-foreground ml-auto"
-                  : "bg-secondary text-secondary-foreground mr-auto"
-                  } max-w-[80%]`}
-              >
-                <strong className="block mb-1">
-                  {message.isViewer === true ? "You" : "AI"}
-                </strong>
+          <div className="max-h-96">
+            <AnimatePresence>
+              {messages?.map((message) => (
+                <motion.div
+                  key={message._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className={`mb-4 p-3 rounded-lg ${message.isViewer === true
+                    ? "bg-primary text-primary-foreground ml-auto"
+                    : "bg-secondary text-secondary-foreground mr-auto"
+                    } max-w-[80%]`}
+                >
+                  <strong className="block mb-1">
+                    {message.isViewer === true ? "You" : "AI"}
+                  </strong>
 
-                {message.body === "" && <p> Lecture Assistant is thinking. </p>}
-                {message.body}
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          {isLoading && (
-            <div className="">
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              AI is thinking...
-            </div>
-          )}
-          {error && <div className="text-destructive">Error: {error}</div>}
+                  {message.body === "" && <p> Lecture Assistant is thinking. </p>}
+                  {message.body}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {isLoading && (
+              <div className="">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                AI is thinking...
+              </div>
+            )}
+            {error && <div className="text-destructive">Error: {error}</div>}
+
+          </div>
         </ScrollArea>
       </CardContent>
       <CardFooter>

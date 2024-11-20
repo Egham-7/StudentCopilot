@@ -32,7 +32,7 @@ export default function ModulePage() {
     "skip",
   );
 
-  const flashCardSets = useQuery(api.flashcards.getFlashCardSets, moduleId ? {
+  const flashCardSets = useQuery(api.flashcards.getFlashcardsByModuleId, moduleId ? {
     moduleId: moduleId as Id<"modules">
 
   } : "skip");

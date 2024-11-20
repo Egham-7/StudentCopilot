@@ -39,33 +39,27 @@ export async function planFlashcardNotes(
 }
 
 
-
-
-
 export const generateFlashCards = internalAction({
   args: {
     userId: v.string(),
     lectureIds: v.optional(v.array(v.id("lectures"))),
     noteIds: v.optional(v.array(v.id("notes"))),
-    flashCardSetId: v.id("flashCardSets"),
+    flashCardSetId: v.optional(v.id("flashCardSets")),
     learningStyle: v.string(),
     course: v.string(),
-    levelOfStudy: v.string()
-
-
+    levelOfStudy: v.string(),
+    description: v.optional(v.string()),
+    title: v.string(),
+    moduleId: v.id("modules")
   },
-
   handler: async (ctx, args) => {
-
-    const { userId, lectureIds, noteIds, flashCardSetId, learningStyle, course, levelOfStudy } = args;
-
+    const { userId, lectureIds, noteIds, flashCardSetId, learningStyle, course, levelOfStudy, title, description, moduleId } = args;
 
     const contentData = await ctx.runAction(internal.flashCardActions.getContent, {
       lectureIds,
       noteIds,
       userId
-    })
-
+    });
 
     if (!contentData) {
       throw new Error("Content must not be null or undefined.");
@@ -75,66 +69,108 @@ export const generateFlashCards = internalAction({
       throw new Error("Content is empty.");
     }
 
-
     const plan = await planFlashcardNotes(learningStyle, levelOfStudy, course, contentData);
 
-
-    const memoryManager = new MemorySaver();
-
-
-    const flashCardGraph = graph.compile({
-      checkpointer: memoryManager
-    })
-
-    const executionConfig = { configurable: { thread_id: uuidv4() } };
-
-
-    const flashCardPromises = contentData.map(async (contentChunk) => {
-
-
-      const graphParams = {
+    const allFlashCards = [];
+    for (const contentChunk of contentData) {
+      const flashCardsObject = await ctx.runAction(internal.flashCardActions.executeGraphLogic, {
         contentChunk,
         learningStyle,
-        plan,
-        course,
-      };
+        plan: plan.content as string,
+        course
+      });
 
+      console.log("FlashCards:", flashCardsObject);
 
-      const response = await flashCardGraph.invoke(graphParams, executionConfig);
-
-      return response.flashCardsObject;
-
-
-    })
-
-
-    const flashCardsPromise = await Promise.all(flashCardPromises);
-
-
-    const flashCardsObjects = flashCardsPromise.flat();
-
-    if (!flashCardsObjects || !flashCardsObjects.length) {
-      throw new Error("Flaschards response cannot be null.");
+      if (flashCardsObject && flashCardsObject.flashCards) {
+        allFlashCards.push(...flashCardsObject.flashCards);
+      }
     }
 
+    if (!allFlashCards.length) {
+      throw new Error("Flashcards response cannot be null.");
+    }
 
-    const flashCards = flashCardsObjects[0].flashCards;
+    let setId;
 
+    if (!flashCardSetId) {
+      const response = await ctx.runMutation(internal.flashcards.createFlashCardSetInternal, {
+        title,
+        description,
+        lectureIds,
+        noteIds,
+        moduleId,
+        userId
+      })
 
-    for (const flashCard of flashCards) {
+      if (!response) {
+        throw new Error("Failed to create flashcard set.");
+      }
 
+      setId = response;
+
+    } else {
+
+      const response = await ctx.runMutation(internal.flashcards.updateFlashCardSet, {
+        title,
+        description,
+        lectureIds,
+        noteIds,
+        flashCardSetId
+      })
+
+      if (!response) {
+        throw new Error("Failed to update flashcard set.");
+      }
+
+      setId = response;
+    }
+
+    for (const flashCard of allFlashCards) {
       await ctx.runMutation(internal.flashcards.addFlashCardInternal, {
         front: flashCard.front,
         back: flashCard.back,
-        flashCardSetId,
-      })
-
+        flashCardSetId: setId
+      });
     }
-
-
-
   }
-})
+});
+
+
+export const executeGraphLogic = internalAction({
+  args: {
+    contentChunk: v.string(),
+    learningStyle: v.string(),
+    plan: v.string(),
+    course: v.string()
+  },
+  handler: async (_ctx, args) => {
+    const { contentChunk, learningStyle, plan, course } = args;
+
+    const memoryManager = new MemorySaver();
+    const flashCardGraph = graph.compile({
+      checkpointer: memoryManager
+    });
+
+    const executionConfig = { configurable: { thread_id: uuidv4() } };
+    const graphParams = {
+      contentChunk,
+      learningStyle,
+      plan,
+      course,
+    };
+
+    const response = await flashCardGraph.invoke(graphParams, executionConfig);
+
+    console.log("Response: ", response);
+
+    if (!response.flashCardsObject) {
+      throw new Error("Failed to get response from the model.");
+    }
+    return response.flashCardsObject;
+  }
+});
+
 
 
 

@@ -1,6 +1,5 @@
 
 import { internalMutation, mutation, query } from "./_generated/server";
-import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -35,7 +34,10 @@ export const createFlashCardSet = mutation({
       throw new Error("Forbidden");
     }
 
-    return await ctx.db.insert("flashCardSets", {
+
+
+
+    const flashCardSetId = await ctx.db.insert("flashCardSets", {
       moduleId: args.moduleId,
       userId,
       title: args.title,
@@ -44,6 +46,98 @@ export const createFlashCardSet = mutation({
       noteIds: args.noteIds,
       totalCards: 0,
       masteredCards: 0,
+    });
+
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId,
+      message: `New flashcard set "${args.title}" has been created`,
+      type: "flashcard_set_created",
+      relatedId: flashCardSetId,
+    });
+
+    // Track activity
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId,
+      type: "flashcard_set_created",
+      flashCardSetId,
+    });
+
+
+  },
+});
+
+
+export const createFlashCardSetInternal = internalMutation({
+  args: {
+    moduleId: v.id("modules"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    noteIds: v.optional(v.array(v.id("notes"))),
+    lectureIds: v.optional(v.array(v.id("lectures"))),
+    userId: v.string()
+  },
+  handler: async (ctx, args) => {
+
+    const moduleUser = await ctx.db.get(args.moduleId);
+
+
+    if (!moduleUser) {
+      throw new Error("Flashcard set must be associated with a module.");
+    }
+
+    const userId = moduleUser.userId;
+
+
+    if (userId !== args.userId) {
+      throw new Error("Forbidden");
+    }
+
+    const flashCardSetId = await ctx.db.insert("flashCardSets", {
+      moduleId: args.moduleId,
+      userId: args.userId,
+      title: args.title,
+      description: args.description,
+      lectureIds: args.lectureIds,
+      noteIds: args.noteIds,
+      totalCards: 0,
+      masteredCards: 0,
+    });
+
+
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId,
+      message: `New flashcard set "${args.title}" has been created`,
+      type: "flashcard_set_created",
+      relatedId: flashCardSetId,
+    });
+
+    // Track activity
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId,
+      type: "flashcard_set_created",
+      flashCardSetId,
+    });
+  },
+});
+
+
+
+export const updateFlashCardSet = internalMutation({
+  args: {
+    flashCardSetId: v.id("flashCardSets"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    noteIds: v.optional(v.array(v.id("notes"))),
+    lectureIds: v.optional(v.array(v.id("lectures")))
+  },
+  handler: async (ctx, args) => {
+    const { flashCardSetId, title, description, noteIds, lectureIds } = args;
+
+    await ctx.db.patch(flashCardSetId, {
+      title,
+      description,
+      noteIds,
+      lectureIds
     });
   },
 });
@@ -201,52 +295,6 @@ export const addFlashCard = mutation({
     return cardId;
   },
 });
-
-
-export const getFlashCardSets = query({
-  args: {
-    moduleId: v.optional(v.id("modules")),
-    paginationOpts: paginationOptsValidator,
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Must be authenticated to use this function.");
-    }
-
-    const userId = identity.subject;
-    const moduleId = args.moduleId;
-
-
-    let baseQuery = ctx.db.query("flashCardSets");
-
-    if (moduleId) {
-      const moduleUser = await ctx.db.get(moduleId);
-
-
-      if (!moduleUser) {
-        throw new Error("Flashcard sets must be associated with the user.");
-      }
-
-      if (moduleUser.userId !== identity.subject) {
-        throw new Error("Forbidden.");
-      }
-
-      return await baseQuery
-        .withIndex("by_moduleId", (q) =>
-          q.eq("moduleId", moduleId)
-        )
-        .order("desc")
-        .paginate(args.paginationOpts);
-    }
-
-    return await baseQuery
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .order("desc")
-      .paginate(args.paginationOpts);
-  },
-});
-
 
 
 export const getFlashCards = query({
@@ -547,56 +595,32 @@ export const generateFlashCardsClient = mutation({
     if (!user) {
       throw new Error("User not found.");
     }
-
-
-
-    let setId = flashCardSetId;
-
-    if (!setId) {
-      // Create new flashcard set only if one doesn't exist
-      setId = await ctx.db.insert("flashCardSets", {
-        moduleId,
-        userId: identity.subject,
-        title,
-        description,
-        lectureIds,
-        noteIds,
-        totalCards: 0,
-        masteredCards: 0,
-      });
-    } else {
-      // Update existing set's content IDs only
-      const existingSet = await ctx.db.get(setId);
-      if (!existingSet) {
-        throw new Error("Flashcard set not found.");
-      }
-
-      await ctx.db.patch(setId, {
-        lectureIds,
-        noteIds,
-        title,
-        description
-      });
-    }
-
     // Schedule the generation task
     await ctx.scheduler.runAfter(0, internal.flashCardActions.generateFlashCards, {
-      flashCardSetId: setId,
+      flashCardSetId,
       userId,
       lectureIds,
       noteIds,
+      title,
+      description,
       learningStyle: user.learningStyle,
       course: user.course,
       levelOfStudy: user.levelOfStudy,
+      moduleId
     });
 
-    return setId;
   },
 });
 
 export const deleteFlashcardSet = mutation({
   args: { id: v.id("flashCardSets") },
   handler: async (ctx, args) => {
+
+    const flashCardSet = await ctx.db.get(args.id);
+    if (!flashCardSet) {
+      throw new Error("Flashcard set not found");
+    }
+
     const flashcards = await ctx.db
       .query("flashcards")
       .withIndex("by_flashCardSetId", (q) => q.eq("flashCardSetId", args.id))
@@ -608,6 +632,45 @@ export const deleteFlashcardSet = mutation({
 
     await ctx.db.delete(args.id);
 
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId: flashCardSet.userId,
+      message: `Flashcard set "${flashCardSet.title}" has been deleted`,
+      type: "flashcard_set_deleted",
+      relatedId: args.id,
+    });
+
+    // Track activity
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId: flashCardSet.userId,
+      type: "flashcard_set_deleted",
+      flashCardSetId: args.id,
+    });
+
     return { success: true };
   },
 })
+
+export const getFlashcardsByModuleId = query({
+  args: {
+    moduleId: v.id("modules"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Must be authenticated to use this function.");
+    }
+
+    const module = await ctx.db.get(args.moduleId);
+    if (!module || module.userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
+    const flashcardSets = await ctx.db
+      .query("flashCardSets")
+      .withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId))
+      .collect();
+
+
+    return flashcardSets;
+  },
+});

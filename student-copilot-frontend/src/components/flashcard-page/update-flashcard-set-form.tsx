@@ -1,3 +1,5 @@
+
+
 import { useState } from 'react'
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -7,65 +9,60 @@ import { api } from '../../../convex/_generated/api'
 import { Button } from "@/components/ui/button"
 import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Id } from 'convex/_generated/dataModel'
-import { Input } from "@/components/ui/input"
 import { toast } from '../ui/use-toast';
 
 const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
   lectureIds: z.array(z.string()),
   noteIds: z.array(z.string())
 });
 
-interface AIFlashcardFormProps {
+interface AIFlashcardUpdateFormProps {
   moduleId: Id<"modules">
-  onComplete: () => void;
-
+  flashCardSetId: Id<"flashCardSets">
 }
 
-export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) {
+export function AIFlashcardUpdateForm({ moduleId, flashCardSetId }: AIFlashcardUpdateFormProps) {
   const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>([])
   const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([])
+
   const lectures = useQuery(api.lectures.getLecturesByModuleId, { moduleId })
   const notes = useQuery(api.notes.getNotesForModule, { moduleId })
   const generateFlashCard = useMutation(api.flashcards.generateFlashCardsClient)
+  const flashCardSet = useQuery(api.flashcards.getFlashCardSet, {
+    flashCardSetId
+  })
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      description: "",
       lectureIds: [],
       noteIds: [],
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-
     try {
-      const { title, description, lectureIds, noteIds } = values
+      const { lectureIds, noteIds } = values
 
       if (!lectureIds?.length && !noteIds?.length) {
         return
       }
 
+      if (!flashCardSet) {
+        throw new Error("Flashcard set must be available.");
+      }
+
       await generateFlashCard({
         moduleId,
-        title,
-        description,
+        title: flashCardSet.title,
+        description: flashCardSet.description,
         lectureIds: lectureIds as Id<"lectures">[],
         noteIds: noteIds as Id<"notes">[]
       })
 
       form.reset()
-      onComplete?.();
 
-      toast({
-        title: "Generating flashcards.",
-        description: "We will let you know when its done!"
-      })
     } catch (error: any) {
-
       toast({
         title: "Failed to generate flashcards.",
         description: error.message
@@ -76,29 +73,6 @@ export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <Input placeholder="Enter flashcard set title" {...field} />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <Input placeholder='Enter what this flashcard set is about$a' {...field} />
-            </FormItem>
-          )}
-        />
-
         <FormField
           control={form.control}
           name="lectureIds"

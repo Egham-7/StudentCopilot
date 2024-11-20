@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Id } from 'convex/_generated/dataModel';
-import { AIFlashcardForm } from './ai-flashcard-form';
 import { ManualFlashcardForm } from './manual-flashcard-form';
+import { AIFlashcardUpdateForm } from './update-flashcard-set-form';
 
 interface AddFlashcardDialogProps {
   flashCardSetId: Id<"flashCardSets">
@@ -36,9 +36,7 @@ export function AddFlashcardDialog({ moduleId, flashCardSetId }: AddFlashcardDia
             <ManualFlashcardForm flashCardSetId={flashCardSetId} />
           </TabsContent>
           <TabsContent value="ai" role="tabpanel" aria-label="AI-generated flashcard creation form">
-            <AIFlashcardForm
-              moduleId={moduleId}
-            />
+            <AIFlashcardUpdateForm moduleId={moduleId} flashCardSetId={flashCardSetId} />
           </TabsContent>
         </Tabs>
       </DialogContent>

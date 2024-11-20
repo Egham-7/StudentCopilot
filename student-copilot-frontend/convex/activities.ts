@@ -49,9 +49,12 @@ export const store = internalAction({
       v.literal("note_created"),
       v.literal("module_created"),
       v.literal("lecture_completed"),
+      v.literal("flashcard_set_created"),
+      v.literal("flashcard_set_deleted"),
     ),
     moduleId: v.optional(v.id("modules")),
     lectureId: v.optional(v.id("lectures")),
+    flashCardSetId: v.optional(v.id("flashCardSets")),
     noteId: v.optional(v.id("notes")),
     metadata: v.optional(v.string()),
   },
@@ -70,10 +73,13 @@ export const add = internalMutation({
       v.literal("note_created"),
       v.literal("module_created"),
       v.literal("lecture_completed"),
+      v.literal("flashcard_set_created"),
+      v.literal("flashcard_set_deleted")
     ),
     moduleId: v.optional(v.id("modules")),
     lectureId: v.optional(v.id("lectures")),
     noteId: v.optional(v.id("notes")),
+    flashCardSetId: v.optional(v.id("flashCardSets")),
     metadata: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -107,6 +113,7 @@ export const add = internalMutation({
         moduleId: args.moduleId,
         lectureId: args.lectureId,
         metadata: args.metadata,
+        flashCardSetId: args.flashCardSetId
       });
     }
   },

@@ -204,10 +204,13 @@ export default defineSchema({
       v.literal("note_created"),
       v.literal("module_created"),
       v.literal("lecture_completed"),
+      v.literal("flashcard_set_created"),
+      v.literal("flashcard_set_deleted")
     ),
     count: v.number(),
     moduleId: v.optional(v.id("modules")),
     lectureId: v.optional(v.id("lectures")),
+    flashCardSetId: v.optional(v.id("flashCardSets")),
     noteId: v.optional(v.id("notes")),
     metadata: v.optional(v.string()),
   })
