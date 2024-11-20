@@ -7,4 +7,6 @@ export const TEXT_SPLITTER_CONFIG = {
   separators: ["\n\n", "\n", " ", ""],
 };
 
+// Make sure object is not modifiable at runtime.
 
+Object.freeze(TEXT_SPLITTER_CONFIG);
