@@ -8,6 +8,10 @@ public class AudioSegmentationController : ControllerBase
 {
     private readonly IAudioSegmentationService _audioSegmentationService;
     private readonly ILogger<AudioSegmentationController> _logger;
+    private readonly string[] _allowedFileExtensions = new[] { ".wav", ".mp3", ".aac", ".m4a" };
+
+    private const int AUDIO_FILE_LIMIT = 100 * 1024 * 1024;
+    private const int DEFAULT_MAX_TOKENS_SEGMENT = 16384;
 
     public AudioSegmentationController(
         IAudioSegmentationService audioSegmentationService,
@@ -21,10 +25,10 @@ public class AudioSegmentationController : ControllerBase
     [HttpPost("segment")]
     [ProducesResponseType(typeof(IEnumerable<AudioSegment>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [RequestSizeLimit(100 * 1024 * 1024)] // 100MB limit
+    [RequestSizeLimit(AUDIO_FILE_LIMIT)] // 100MB limit
     public async Task<IActionResult> SegmentAudio(
         [FromForm] IFormFile audioFile,
-        [FromQuery] int maxTokensPerSegment = 1000
+        [FromQuery] int maxTokensPerSegment = DEFAULT_MAX_TOKENS_SEGMENT
     )
     {
         if (audioFile == null || audioFile.Length == 0)
@@ -32,10 +36,9 @@ public class AudioSegmentationController : ControllerBase
             return BadRequest("No audio file provided");
         }
 
-        var allowedExtensions = new[] { ".wav", ".mp3", ".aac", ".m4a" };
         var fileExtension = Path.GetExtension(audioFile.FileName).ToLowerInvariant();
 
-        if (!allowedExtensions.Contains(fileExtension))
+        if (!_allowedFileExtensions.Contains(fileExtension))
         {
             return BadRequest("Unsupported audio format. Supported formats: WAV, MP3, AAC, M4A");
         }
