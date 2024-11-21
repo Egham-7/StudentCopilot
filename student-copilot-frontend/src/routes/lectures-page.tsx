@@ -8,14 +8,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import {
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Users,
-  Book,
-  Check,
-} from "lucide-react";
+import { Calendar, Users, Book, Check } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useParams } from "react-router-dom";
@@ -27,6 +20,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import LecturePlayer from "@/components/custom/module-page/lecture-player";
 import UploadLectureDialog from "@/components/custom/module-page/upload-lecture-dialog";
 import { LectureSearchBar } from "@/components/custom/module-page/lecture-search-bar";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 
 export default function LecturesPage() {
   const { moduleId } = useParams();
@@ -51,9 +54,7 @@ export default function LecturesPage() {
 
   const filteredLectures = useMemo(() => {
     if (searchResults && searchResults.length > 0) {
-      return lectures.filter((lecture) =>
-        searchResults.includes(lecture._id),
-      );
+      return lectures.filter((lecture) => searchResults.includes(lecture._id));
     }
     return lectures;
   }, [lectures, searchResults]);
@@ -66,17 +67,10 @@ export default function LecturesPage() {
     return filteredLectures.slice(indexOfFirstLecture, indexOfLastLecture);
   }, [filteredLectures, currentPage, lecturesPerPage]);
 
-  const nextPage = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-
-  const handleSearchResults = useCallback(
-    (results: Id<"lectures">[]) => {
-      setSearchResults(results);
-      setCurrentPage(1); // Reset to first page when search results change
-    },
-    [],
-  );
+  const handleSearchResults = useCallback((results: Id<"lectures">[]) => {
+    setSearchResults(results);
+    setCurrentPage(1); // Reset to first page when search results change
+  }, []);
 
   if (!moduleId) {
     return <ErrorPage />;
@@ -122,9 +116,7 @@ export default function LecturesPage() {
 
         <LectureSearchBar
           moduleId={moduleId as Id<"modules">}
-          onSearchResults={(results) =>
-            handleSearchResults(results)
-          }
+          onSearchResults={(results) => handleSearchResults(results)}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -175,24 +167,77 @@ export default function LecturesPage() {
           <UploadLectureDialog moduleId={moduleId as Id<"modules">} />
         </div>
 
-        <div className="mt-12 flex justify-between items-center">
-          <Button
-            onClick={prevPage}
-            disabled={currentPage === 1}
-            variant="outline"
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" /> Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            onClick={nextPage}
-            disabled={currentPage === totalPages}
-            variant="outline"
-          >
-            Next <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
+        <div className="mt-12">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  className={cn(
+                    "transition-all",
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer hover:bg-accent",
+                  )}
+                />
+              </PaginationItem>
+
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+                const isFirstPage = pageNumber === 1;
+                const isLastPage = pageNumber === totalPages;
+                const isWithinRange =
+                  pageNumber >= currentPage - 1 &&
+                  pageNumber <= currentPage + 1;
+                const needsLeftEllipsis = pageNumber === 2 && currentPage > 4;
+                const needsRightEllipsis =
+                  pageNumber === totalPages - 1 && currentPage < totalPages - 3;
+
+                if (isFirstPage || isLastPage || isWithinRange) {
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className={cn(
+                          "transition-all hover:bg-accent",
+                          currentPage === pageNumber &&
+                            "bg-primary text-primary-foreground hover:bg-primary/90",
+                        )}
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }
+
+                if (needsLeftEllipsis || needsRightEllipsis) {
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationEllipsis className="text-muted-foreground" />
+                    </PaginationItem>
+                  );
+                }
+
+                return null;
+              })}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  className={cn(
+                    "transition-all",
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer hover:bg-accent",
+                  )}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </main>
     </div>
