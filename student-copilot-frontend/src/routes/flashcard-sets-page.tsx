@@ -6,9 +6,23 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Calendar, Book } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Id } from 'convex/_generated/dataModel';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+import { useState } from 'react';
+import CreateFlashCardsForm from '@/components/custom/module-page/create-flashcards-form';
+
+const ITEMS_PER_PAGE = 9;
 
 export default function FlashcardSetsPage() {
   const { moduleId } = useParams();
+  const [currentPage, setCurrentPage] = useState(1);
 
   const flashcardSets = useQuery(
     api.flashcards.getFlashcardsByModuleId,
@@ -18,6 +32,11 @@ export default function FlashcardSetsPage() {
   if (!flashcardSets) {
     return <LoadingSkeleton />;
   }
+
+  const totalPages = Math.ceil(flashcardSets.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentItems = flashcardSets.slice(startIndex, endIndex);
 
   return (
     <div className="bg-background min-h-screen w-full overflow-hidden">
@@ -31,14 +50,13 @@ export default function FlashcardSetsPage() {
       </header>
 
       <main className="container mx-auto py-12 px-6 max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {flashcardSets?.map((set) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-8">
+          {currentItems.map((set) => (
             <Card key={set._id} className="flex flex-col hover:shadow-lg transition-shadow duration-300">
               <CardHeader>
                 <CardTitle className="text-xl">{set.title}</CardTitle>
                 <CardDescription>{set.description}</CardDescription>
               </CardHeader>
-
               <CardContent className="flex-grow">
                 <div className="flex flex-col space-y-3 text-sm text-muted-foreground">
                   <div className="flex items-center">
@@ -51,7 +69,6 @@ export default function FlashcardSetsPage() {
                   </div>
                 </div>
               </CardContent>
-
               <CardFooter className="flex justify-between">
                 <Button variant="outline" className="w-full" asChild>
                   <a href={`/flashcards/${moduleId}/${set._id}`}>
@@ -61,18 +78,42 @@ export default function FlashcardSetsPage() {
               </CardFooter>
             </Card>
           ))}
+          {moduleId && (
+                    <CreateFlashCardsForm moduleId={moduleId as Id<"modules">}/>
+
+          )}
+
         </div>
 
-        {status === "CanLoadMore" && (
-          <div className="mt-8 flex justify-center">
-            <Button
-              variant="outline"
-              className="w-48"
-            >
-              Load More
-            </Button>
-          </div>
-        )}
+        <Pagination className="justify-center">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            
+            {[...Array(totalPages)].map((_, index) => (
+              <PaginationItem key={index + 1}>
+                <PaginationLink
+                  onClick={() => setCurrentPage(index + 1)}
+                  isActive={currentPage === index + 1}
+                  className="cursor-pointer"
+                >
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </main>
     </div>
   );
@@ -87,7 +128,6 @@ function LoadingSkeleton() {
           <Skeleton className="h-4 w-3/4 mb-4" />
         </div>
       </header>
-
       <main className="container mx-auto py-8 px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {[...Array(6)].map((_, index) => (

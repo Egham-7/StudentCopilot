@@ -9,12 +9,15 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import {
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Users,
-  FileText,
-} from "lucide-react";
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Calendar, Users, FileText } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useParams } from "react-router-dom";
@@ -26,25 +29,22 @@ import { NotesSearchBar } from "@/components/custom/module-page/notes-search-bar
 import CreateNotesDialog from "@/components/custom/notes-page/create-notes-dialog";
 import { useNavigate } from "react-router-dom";
 
-
 export default function NotesPage() {
   const { moduleId } = useParams();
   const navigate = useNavigate();
   const module = useQuery(
     api.modules.getById,
-    moduleId ? { id: moduleId as Id<"modules"> } : "skip",
+    moduleId ? { id: moduleId as Id<"modules"> } : "skip"
   );
   const notesQuery = useQuery(
     api.notes.getNotesForModule,
-    moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip",
+    moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip"
   );
 
   const notes = useMemo(() => notesQuery ?? [], [notesQuery]);
   const [currentPage, setCurrentPage] = useState(1);
   const notesPerPage = 6;
-  const [searchResults, setSearchResults] = useState<Id<"notes">[] | null>(
-    null,
-  );
+  const [searchResults, setSearchResults] = useState<Id<"notes">[] | null>(null);
 
   const filteredNotes = useMemo(() => {
     if (searchResults && searchResults.length > 0) {
@@ -61,19 +61,13 @@ export default function NotesPage() {
     return filteredNotes.slice(indexOfFirstNote, indexOfLastNote);
   }, [filteredNotes, currentPage, notesPerPage]);
 
-  const nextPage = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-
   const handleSearchResults = useCallback(
     (results: Id<"notes">[]) => {
       setSearchResults(results);
-      setCurrentPage(1); // Reset to first page when search results change
-
-
+      setCurrentPage(1);
     },
     [setSearchResults, setCurrentPage]
-  )
+  );
 
   const goToNote = (noteId: string) => {
     navigate(`/dashboard/note/${noteId}`, { replace: true });
@@ -108,12 +102,10 @@ export default function NotesPage() {
       </header>
 
       <main className="container mx-auto py-12 px-6 max-w-6xl">
-
         <NotesSearchBar
           moduleId={moduleId as Id<"modules">}
           onSearchResults={(results) => handleSearchResults(results)}
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {currentNotes.map((note) => (
             <Card
@@ -150,28 +142,61 @@ export default function NotesPage() {
           <CreateNotesDialog moduleId={moduleId as Id<"modules">} />
         </div>
 
-        <div className="mt-12 flex justify-between items-center">
-          <Button
-            onClick={prevPage}
-            disabled={currentPage === 1}
-            variant="outline"
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" /> Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            onClick={nextPage}
-            disabled={currentPage === totalPages}
-            variant="outline"
-          >
-            Next <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
+        <div className="mt-12">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+                // Show first page, current page, last page, and pages around current
+                if (
+                  pageNumber === 1 ||
+                  pageNumber === totalPages ||
+                  (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                ) {
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(pageNumber)}
+                        isActive={currentPage === pageNumber}
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                } else if (
+                  pageNumber === currentPage - 2 ||
+                  pageNumber === currentPage + 2
+                ) {
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  );
+                }
+                return null;
+              })}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </main>
     </div>
   );
+}
+
 
   function LoadingSkeleton() {
     return (
@@ -214,4 +239,4 @@ export default function NotesPage() {
       </div>
     );
   }
-}
+

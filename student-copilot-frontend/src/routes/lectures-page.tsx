@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/card";
 import {
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   Users,
   Book,
   Check,
@@ -27,6 +25,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import LecturePlayer from "@/components/custom/module-page/lecture-player";
 import UploadLectureDialog from "@/components/custom/module-page/upload-lecture-dialog";
 import { LectureSearchBar } from "@/components/custom/module-page/lecture-search-bar";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export default function LecturesPage() {
   const { moduleId } = useParams();
@@ -66,9 +73,6 @@ export default function LecturesPage() {
     return filteredLectures.slice(indexOfFirstLecture, indexOfLastLecture);
   }, [filteredLectures, currentPage, lecturesPerPage]);
 
-  const nextPage = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
 
   const handleSearchResults = useCallback(
     (results: Id<"lectures">[]) => {
@@ -175,25 +179,55 @@ export default function LecturesPage() {
           <UploadLectureDialog moduleId={moduleId as Id<"modules">} />
         </div>
 
-        <div className="mt-12 flex justify-between items-center">
-          <Button
-            onClick={prevPage}
-            disabled={currentPage === 1}
-            variant="outline"
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" /> Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            onClick={nextPage}
-            disabled={currentPage === totalPages}
-            variant="outline"
-          >
-            Next <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
+  <div className="mt-12">
+  <Pagination>
+    <PaginationContent>
+      <PaginationItem>
+        <PaginationPrevious
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+        />
+      </PaginationItem>
+      
+      {[...Array(totalPages)].map((_, index) => {
+        const pageNumber = index + 1;
+        if (
+          pageNumber === 1 ||
+          pageNumber === totalPages ||
+          (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+        ) {
+          return (
+            <PaginationItem key={pageNumber}>
+              <PaginationLink
+                onClick={() => setCurrentPage(pageNumber)}
+                isActive={currentPage === pageNumber}
+              >
+                {pageNumber}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        } else if (
+          pageNumber === currentPage - 2 ||
+          pageNumber === currentPage + 2
+        ) {
+          return (
+            <PaginationItem key={pageNumber}>
+              <PaginationEllipsis />
+            </PaginationItem>
+          );
+        }
+        return null;
+      })}
+
+      <PaginationItem>
+        <PaginationNext
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+        />
+      </PaginationItem>
+    </PaginationContent>
+  </Pagination>
+</div>
       </main>
     </div>
   );
