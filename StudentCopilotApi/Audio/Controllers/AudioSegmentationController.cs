@@ -1,61 +1,66 @@
-using Audio.Interfaces;
-using Audio.Models;
 using Microsoft.AspNetCore.Mvc;
+using StudentCopilotApi.Audio.Interfaces;
+using StudentCopilotApi.Audio.Models;
 
-[ApiController]
-[Route("api/[controller]")]
-public class AudioSegmentationController : ControllerBase
+namespace StudentCopilotApi.Audio.Controllers
 {
-    private readonly IAudioSegmentationService _audioSegmentationService;
-    private readonly ILogger<AudioSegmentationController> _logger;
-    private readonly string[] _allowedFileExtensions = new[] { ".wav", ".mp3", ".aac", ".m4a" };
-
-    private const int AUDIO_FILE_LIMIT = 100 * 1024 * 1024;
-    private const int DEFAULT_MAX_TOKENS_SEGMENT = 16384;
-
-    public AudioSegmentationController(
-        IAudioSegmentationService audioSegmentationService,
-        ILogger<AudioSegmentationController> logger
-    )
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AudioSegmentationController : ControllerBase
     {
-        _audioSegmentationService = audioSegmentationService;
-        _logger = logger;
-    }
+        private readonly IAudioSegmentationService _audioSegmentationService;
+        private readonly ILogger<AudioSegmentationController> _logger;
+        private readonly string[] _allowedFileExtensions = new[] { ".wav", ".mp3", ".aac", ".m4a" };
 
-    [HttpPost("segment")]
-    [ProducesResponseType(typeof(IEnumerable<AudioSegment>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [RequestSizeLimit(AUDIO_FILE_LIMIT)] // 100MB limit
-    public async Task<IActionResult> SegmentAudio(
-        [FromForm] IFormFile audioFile,
-        [FromQuery] int maxTokensPerSegment = DEFAULT_MAX_TOKENS_SEGMENT
-    )
-    {
-        if (audioFile == null || audioFile.Length == 0)
+        private const int AUDIO_FILE_LIMIT = 100 * 1024 * 1024;
+        private const int DEFAULT_MAX_TOKENS_SEGMENT = 16384;
+
+        public AudioSegmentationController(
+            IAudioSegmentationService audioSegmentationService,
+            ILogger<AudioSegmentationController> logger
+        )
         {
-            return BadRequest("No audio file provided");
+            _audioSegmentationService = audioSegmentationService;
+            _logger = logger;
         }
 
-        var fileExtension = Path.GetExtension(audioFile.FileName).ToLowerInvariant();
-
-        if (!_allowedFileExtensions.Contains(fileExtension))
+        [HttpPost("segment")]
+        [ProducesResponseType(typeof(IEnumerable<AudioSegment>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [RequestSizeLimit(AUDIO_FILE_LIMIT)] // 100MB limit
+        public async Task<IActionResult> SegmentAudio(
+            [FromForm] IFormFile audioFile,
+            [FromQuery] int maxTokensPerSegment = DEFAULT_MAX_TOKENS_SEGMENT
+        )
         {
-            return BadRequest("Unsupported audio format. Supported formats: WAV, MP3, AAC, M4A");
-        }
+            if (audioFile == null || audioFile.Length == 0)
+            {
+                return BadRequest("No audio file provided");
+            }
 
-        try
-        {
-            var segments = await _audioSegmentationService.SegmentAudioAsync(
-                audioFile,
-                maxTokensPerSegment
-            );
+            var fileExtension = Path.GetExtension(audioFile.FileName).ToLowerInvariant();
 
-            return Ok(segments);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing audio file: {FileName}", audioFile.FileName);
-            return BadRequest("Error processing audio file");
+            if (!_allowedFileExtensions.Contains(fileExtension))
+            {
+                return BadRequest(
+                    "Unsupported audio format. Supported formats: WAV, MP3, AAC, M4A"
+                );
+            }
+
+            try
+            {
+                var segments = await _audioSegmentationService.SegmentAudioAsync(
+                    audioFile,
+                    maxTokensPerSegment
+                );
+
+                return Ok(segments);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing audio file: {FileName}", audioFile.FileName);
+                return BadRequest("Error processing audio file");
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-namespace Audio.Models
+namespace StudentCopilotApi.Audio.Models
 {
     public class AudioSegment
     {

@@ -1,6 +1,6 @@
-using Audio.Models;
+using StudentCopilotApi.Audio.Models;
 
-namespace Audio.Interfaces
+namespace StudentCopilotApi.Audio.Interfaces
 {
     public interface IAudioSegmentationService
     {
