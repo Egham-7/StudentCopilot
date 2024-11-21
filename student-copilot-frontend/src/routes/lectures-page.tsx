@@ -8,12 +8,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import {
-  Calendar,
-  Users,
-  Book,
-  Check,
-} from "lucide-react";
+import { Calendar, Users, Book, Check } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useParams } from "react-router-dom";
@@ -34,6 +29,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 
 export default function LecturesPage() {
   const { moduleId } = useParams();
@@ -58,9 +54,7 @@ export default function LecturesPage() {
 
   const filteredLectures = useMemo(() => {
     if (searchResults && searchResults.length > 0) {
-      return lectures.filter((lecture) =>
-        searchResults.includes(lecture._id),
-      );
+      return lectures.filter((lecture) => searchResults.includes(lecture._id));
     }
     return lectures;
   }, [lectures, searchResults]);
@@ -73,14 +67,10 @@ export default function LecturesPage() {
     return filteredLectures.slice(indexOfFirstLecture, indexOfLastLecture);
   }, [filteredLectures, currentPage, lecturesPerPage]);
 
-
-  const handleSearchResults = useCallback(
-    (results: Id<"lectures">[]) => {
-      setSearchResults(results);
-      setCurrentPage(1); // Reset to first page when search results change
-    },
-    [],
-  );
+  const handleSearchResults = useCallback((results: Id<"lectures">[]) => {
+    setSearchResults(results);
+    setCurrentPage(1); // Reset to first page when search results change
+  }, []);
 
   if (!moduleId) {
     return <ErrorPage />;
@@ -126,9 +116,7 @@ export default function LecturesPage() {
 
         <LectureSearchBar
           moduleId={moduleId as Id<"modules">}
-          onSearchResults={(results) =>
-            handleSearchResults(results)
-          }
+          onSearchResults={(results) => handleSearchResults(results)}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -179,55 +167,78 @@ export default function LecturesPage() {
           <UploadLectureDialog moduleId={moduleId as Id<"modules">} />
         </div>
 
-  <div className="mt-12">
-  <Pagination>
-    <PaginationContent>
-      <PaginationItem>
-        <PaginationPrevious
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-        />
-      </PaginationItem>
-      
-      {[...Array(totalPages)].map((_, index) => {
-        const pageNumber = index + 1;
-        if (
-          pageNumber === 1 ||
-          pageNumber === totalPages ||
-          (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-        ) {
-          return (
-            <PaginationItem key={pageNumber}>
-              <PaginationLink
-                onClick={() => setCurrentPage(pageNumber)}
-                isActive={currentPage === pageNumber}
-              >
-                {pageNumber}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        } else if (
-          pageNumber === currentPage - 2 ||
-          pageNumber === currentPage + 2
-        ) {
-          return (
-            <PaginationItem key={pageNumber}>
-              <PaginationEllipsis />
-            </PaginationItem>
-          );
-        }
-        return null;
-      })}
+        <div className="mt-12">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  className={cn(
+                    "transition-all",
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer hover:bg-accent",
+                  )}
+                />
+              </PaginationItem>
 
-      <PaginationItem>
-        <PaginationNext
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-        />
-      </PaginationItem>
-    </PaginationContent>
-  </Pagination>
-</div>
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+                const isFirstPage = pageNumber === 1;
+                const isLastPage = pageNumber === totalPages;
+                const isWithinRange =
+                  pageNumber >= currentPage - 1 &&
+                  pageNumber <= currentPage + 1;
+                const needsLeftEllipsis = pageNumber === 2 && currentPage > 4;
+                const needsRightEllipsis =
+                  pageNumber === totalPages - 1 && currentPage < totalPages - 3;
+
+                if (isFirstPage || isLastPage || isWithinRange) {
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className={cn(
+                          "transition-all hover:bg-accent",
+                          currentPage === pageNumber &&
+                            "bg-primary text-primary-foreground hover:bg-primary/90",
+                        )}
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }
+
+                if (needsLeftEllipsis || needsRightEllipsis) {
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationEllipsis className="text-muted-foreground" />
+                    </PaginationItem>
+                  );
+                }
+
+                return null;
+              })}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  className={cn(
+                    "transition-all",
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer hover:bg-accent",
+                  )}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </main>
     </div>
   );

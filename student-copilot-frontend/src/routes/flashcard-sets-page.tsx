@@ -1,11 +1,18 @@
-import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
-import { useParams } from 'react-router-dom';
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Calendar, Book } from 'lucide-react';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Calendar, Book } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Id } from 'convex/_generated/dataModel';
+import { Id } from "convex/_generated/dataModel";
 import {
   Pagination,
   PaginationContent,
@@ -13,10 +20,12 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 
-import { useState } from 'react';
-import CreateFlashCardsForm from '@/components/custom/module-page/create-flashcards-form';
+import { useState } from "react";
+import CreateFlashCardsForm from "@/components/custom/module-page/create-flashcards-form";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -52,7 +61,10 @@ export default function FlashcardSetsPage() {
       <main className="container mx-auto py-12 px-6 max-w-6xl">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-8">
           {currentItems.map((set) => (
-            <Card key={set._id} className="flex flex-col hover:shadow-lg transition-shadow duration-300">
+            <Card
+              key={set._id}
+              className="flex flex-col hover:shadow-lg transition-shadow duration-300"
+            >
               <CardHeader>
                 <CardTitle className="text-xl">{set.title}</CardTitle>
                 <CardDescription>{set.description}</CardDescription>
@@ -79,37 +91,73 @@ export default function FlashcardSetsPage() {
             </Card>
           ))}
           {moduleId && (
-                    <CreateFlashCardsForm moduleId={moduleId as Id<"modules">}/>
-
+            <CreateFlashCardsForm moduleId={moduleId as Id<"modules">} />
           )}
-
         </div>
 
         <Pagination className="justify-center">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              <PaginationPrevious
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className={cn(
+                  "transition-all",
+                  currentPage === 1
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer hover:bg-accent",
+                )}
               />
             </PaginationItem>
-            
-            {[...Array(totalPages)].map((_, index) => (
-              <PaginationItem key={index + 1}>
-                <PaginationLink
-                  onClick={() => setCurrentPage(index + 1)}
-                  isActive={currentPage === index + 1}
-                  className="cursor-pointer"
-                >
-                  {index + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
+
+            {[...Array(totalPages)].map((_, index) => {
+              const pageNumber = index + 1;
+              const isFirstPage = pageNumber === 1;
+              const isLastPage = pageNumber === totalPages;
+              const isWithinRange =
+                pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1;
+              const needsLeftEllipsis = pageNumber === 2 && currentPage > 4;
+              const needsRightEllipsis =
+                pageNumber === totalPages - 1 && currentPage < totalPages - 3;
+
+              if (isFirstPage || isLastPage || isWithinRange) {
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={cn(
+                        "transition-all hover:bg-accent",
+                        currentPage === pageNumber &&
+                          "bg-primary text-primary-foreground hover:bg-primary/90",
+                      )}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              }
+
+              if (needsLeftEllipsis || needsRightEllipsis) {
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationEllipsis className="text-muted-foreground" />
+                  </PaginationItem>
+                );
+              }
+
+              return null;
+            })}
 
             <PaginationItem>
               <PaginationNext
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                className={cn(
+                  "transition-all",
+                  currentPage === totalPages
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer hover:bg-accent",
+                )}
               />
             </PaginationItem>
           </PaginationContent>
@@ -150,4 +198,3 @@ function LoadingSkeleton() {
     </div>
   );
 }
-

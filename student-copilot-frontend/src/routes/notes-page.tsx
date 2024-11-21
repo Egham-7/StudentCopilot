@@ -28,23 +28,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { NotesSearchBar } from "@/components/custom/module-page/notes-search-bar";
 import CreateNotesDialog from "@/components/custom/notes-page/create-notes-dialog";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 export default function NotesPage() {
   const { moduleId } = useParams();
   const navigate = useNavigate();
   const module = useQuery(
     api.modules.getById,
-    moduleId ? { id: moduleId as Id<"modules"> } : "skip"
+    moduleId ? { id: moduleId as Id<"modules"> } : "skip",
   );
   const notesQuery = useQuery(
     api.notes.getNotesForModule,
-    moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip"
+    moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip",
   );
 
   const notes = useMemo(() => notesQuery ?? [], [notesQuery]);
   const [currentPage, setCurrentPage] = useState(1);
   const notesPerPage = 6;
-  const [searchResults, setSearchResults] = useState<Id<"notes">[] | null>(null);
+  const [searchResults, setSearchResults] = useState<Id<"notes">[] | null>(
+    null,
+  );
 
   const filteredNotes = useMemo(() => {
     if (searchResults && searchResults.length > 0) {
@@ -66,7 +69,7 @@ export default function NotesPage() {
       setSearchResults(results);
       setCurrentPage(1);
     },
-    [setSearchResults, setCurrentPage]
+    [setSearchResults, setCurrentPage],
   );
 
   const goToNote = (noteId: string) => {
@@ -141,52 +144,73 @@ export default function NotesPage() {
           ))}
           <CreateNotesDialog moduleId={moduleId as Id<"modules">} />
         </div>
-
         <div className="mt-12">
           <Pagination>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  className={cn(
+                    "transition-all",
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer hover:bg-accent",
+                  )}
                 />
               </PaginationItem>
-              
+
               {[...Array(totalPages)].map((_, index) => {
                 const pageNumber = index + 1;
-                // Show first page, current page, last page, and pages around current
-                if (
-                  pageNumber === 1 ||
-                  pageNumber === totalPages ||
-                  (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                ) {
+                const isFirstPage = pageNumber === 1;
+                const isLastPage = pageNumber === totalPages;
+                const isWithinRange =
+                  pageNumber >= currentPage - 1 &&
+                  pageNumber <= currentPage + 1;
+                const needsLeftEllipsis = pageNumber === 2 && currentPage > 4;
+                const needsRightEllipsis =
+                  pageNumber === totalPages - 1 && currentPage < totalPages - 3;
+
+                if (isFirstPage || isLastPage || isWithinRange) {
                   return (
                     <PaginationItem key={pageNumber}>
                       <PaginationLink
                         onClick={() => setCurrentPage(pageNumber)}
-                        isActive={currentPage === pageNumber}
+                        className={cn(
+                          "transition-all hover:bg-accent",
+                          currentPage === pageNumber &&
+                            "bg-primary text-primary-foreground hover:bg-primary/90",
+                        )}
                       >
                         {pageNumber}
                       </PaginationLink>
                     </PaginationItem>
                   );
-                } else if (
-                  pageNumber === currentPage - 2 ||
-                  pageNumber === currentPage + 2
-                ) {
+                }
+
+                if (needsLeftEllipsis || needsRightEllipsis) {
                   return (
                     <PaginationItem key={pageNumber}>
-                      <PaginationEllipsis />
+                      <PaginationEllipsis className="text-muted-foreground" />
                     </PaginationItem>
                   );
                 }
+
                 return null;
               })}
 
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  className={cn(
+                    "transition-all",
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer hover:bg-accent",
+                  )}
                 />
               </PaginationItem>
             </PaginationContent>
@@ -197,46 +221,44 @@ export default function NotesPage() {
   );
 }
 
-
-  function LoadingSkeleton() {
-    return (
-      <div className="bg-background min-h-screen w-full overflow-hidden">
-        <header className="bg-primary text-primary-foreground py-8 px-4">
-          <div className="container mx-auto">
-            <Skeleton className="h-8 w-1/2 mb-2" />
-            <Skeleton className="h-4 w-3/4 mb-4" />
-            <div className="flex items-center space-x-4">
-              <Skeleton className="h-6 w-24" />
-              <Skeleton className="h-6 w-24" />
-            </div>
+function LoadingSkeleton() {
+  return (
+    <div className="bg-background min-h-screen w-full overflow-hidden">
+      <header className="bg-primary text-primary-foreground py-8 px-4">
+        <div className="container mx-auto">
+          <Skeleton className="h-8 w-1/2 mb-2" />
+          <Skeleton className="h-4 w-3/4 mb-4" />
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-6 w-24" />
           </div>
-        </header>
-        <main className="container mx-auto py-8 px-4">
-          <div className="mb-8">
-            <Skeleton className="h-6 w-1/4 mb-2" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, index) => (
-              <Card key={index} className="flex flex-col">
-                <CardHeader>
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-full" />
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
-                </CardContent>
-                <CardFooter>
-                  <Skeleton className="h-10 w-full" />
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </main>
-      </div>
-    );
-  }
-
+        </div>
+      </header>
+      <main className="container mx-auto py-8 px-4">
+        <div className="mb-8">
+          <Skeleton className="h-6 w-1/4 mb-2" />
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, index) => (
+            <Card key={index} className="flex flex-col">
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-full" />
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-10 w-full" />
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
