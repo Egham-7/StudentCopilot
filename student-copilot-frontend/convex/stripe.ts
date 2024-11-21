@@ -23,7 +23,7 @@ export const createSubscriptionSession = action({
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-10-28.acacia",
+      apiVersion: "2024-11-20.acacia",
     });
 
     const user = await ctx.runQuery(internal.users.getUserInfoInternal, {
@@ -75,7 +75,7 @@ export const cancelSubscription = internalAction({
   },
   handler: async (ctx, { subscriptionId, userId }) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-10-28.acacia",
+      apiVersion: "2024-11-20.acacia",
     });
 
     try {
@@ -100,7 +100,7 @@ export const handleSubscriptionWebhook = internalAction({
   },
   handler: async (ctx, { signature, payload }) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-10-28.acacia",
+      apiVersion: "2024-11-20.acacia",
     });
 
     let event;
@@ -201,7 +201,7 @@ export const handleFreeSubscription = internalAction({
     },
   ) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-10-28.acacia",
+      apiVersion: "2024-11-20.acacia",
     });
 
     const customer = await stripe.customers.create({
@@ -243,7 +243,7 @@ export const getPlans = action({
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: "2024-10-28.acacia",
+      apiVersion: "2024-11-20.acacia",
     });
 
     const prices = await stripe.prices.list({
@@ -282,15 +282,15 @@ export const getPlans = action({
         prices: {
           monthly: monthlyPrice
             ? {
-              priceId: monthlyPrice.id,
-              amount: monthlyPrice.unit_amount! / FLOAT_TO_INT,
-            }
+                priceId: monthlyPrice.id,
+                amount: monthlyPrice.unit_amount! / FLOAT_TO_INT,
+              }
             : undefined,
           annual: annualPrice
             ? {
-              priceId: annualPrice.id,
-              amount: annualPrice.unit_amount! / FLOAT_TO_INT,
-            }
+                priceId: annualPrice.id,
+                amount: annualPrice.unit_amount! / FLOAT_TO_INT,
+              }
             : undefined,
         },
         features: features,
