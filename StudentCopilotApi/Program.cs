@@ -1,8 +1,11 @@
 using Clerk.Net.DependencyInjection;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using StudentCopilotApi.Audio.Services;
+using StudentCopilotApi.Audio.Validators;
 using StudentCopilotApi.youtube.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +18,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddLogging();
+
+// Validators for Controllers
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<AudioSegmentationRequestValidator>();
 
 // HTTP and API services
 builder.Services.AddHttpClient();
