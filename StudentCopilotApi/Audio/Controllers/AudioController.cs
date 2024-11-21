@@ -6,18 +6,18 @@ namespace StudentCopilotApi.Audio.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AudioSegmentationController : ControllerBase
+    public class AudioController : ControllerBase
     {
         private readonly IAudioSegmentationService _audioSegmentationService;
-        private readonly ILogger<AudioSegmentationController> _logger;
+        private readonly ILogger<AudioController> _logger;
         private readonly string[] _allowedFileExtensions = new[] { ".wav", ".mp3", ".aac", ".m4a" };
 
         private const int AUDIO_FILE_LIMIT = 100 * 1024 * 1024;
         private const int DEFAULT_MAX_TOKENS_SEGMENT = 16384;
 
-        public AudioSegmentationController(
+        public AudioController(
             IAudioSegmentationService audioSegmentationService,
-            ILogger<AudioSegmentationController> logger
+            ILogger<AudioController> logger
         )
         {
             _audioSegmentationService = audioSegmentationService;
