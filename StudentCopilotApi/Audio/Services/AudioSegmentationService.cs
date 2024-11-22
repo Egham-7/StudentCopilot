@@ -70,7 +70,7 @@ namespace StudentCopilotApi.Audio.Services
             }
         }
 
-        private async Task<List<float>> ReadWavFileAsync(string wavPath)
+        private async Task<float[]> ReadWavFileAsync(string wavPath)
         {
             var samples = new List<float>();
 
@@ -104,19 +104,19 @@ namespace StudentCopilotApi.Audio.Services
                 }
             }
 
-            return samples;
+            return samples.ToArray();
         }
 
         private List<(TimeSpan Start, TimeSpan End)> FindSegmentBoundariesParallel(
-            List<float> samples,
+            float[] samples,
             double maxSegmentDuration
         )
         {
             var boundaries = new ConcurrentBag<(TimeSpan Start, TimeSpan End)>();
-            var chunkSize = samples.Count / Environment.ProcessorCount;
+            var chunkSize = samples.Length / Environment.ProcessorCount;
 
             Parallel.ForEach(
-                Partitioner.Create(0, samples.Count, chunkSize),
+                Partitioner.Create(0, samples.Length, chunkSize),
                 _parallelOptions,
                 range =>
                 {
@@ -168,7 +168,7 @@ namespace StudentCopilotApi.Audio.Services
         }
 
         private async Task<IEnumerable<AudioSegment>> CreateSegmentsParallel(
-            List<float> samples,
+            float[] samples,
             List<(TimeSpan Start, TimeSpan End)> boundaries
         )
         {
@@ -181,16 +181,20 @@ namespace StudentCopilotApi.Audio.Services
                 {
                     var startIndex = (int)(boundary.Start.TotalSeconds * _sampleRate);
                     var endIndex = (int)(boundary.End.TotalSeconds * _sampleRate);
-                    var segmentSamples = samples
-                        .Skip(startIndex)
-                        .Take(endIndex - startIndex)
-                        .ToList();
+
+                    var segmentSamples = await Task.Run(
+                        () =>
+                        {
+                            return samples.AsSpan(startIndex, endIndex - startIndex).ToArray();
+                        },
+                        ct
+                    );
 
                     var segment = new AudioSegment
                     {
                         StartTime = boundary.Start,
                         EndTime = boundary.End,
-                        AudioData = await Task.Run(() => ConvertToByteArray(segmentSamples), ct),
+                        AudioData = segmentSamples,
                     };
                     segments.Add(segment);
                 }
@@ -202,18 +206,6 @@ namespace StudentCopilotApi.Audio.Services
         public int EstimateTokenCount(string text)
         {
             return text.Length / 4;
-        }
-
-        private byte[] ConvertToByteArray(List<float> samples)
-        {
-            using var memoryStream = new MemoryStream();
-            using var writer = new BinaryWriter(memoryStream);
-            foreach (var sample in samples)
-            {
-                short pcmValue = (short)(sample * 32767f);
-                writer.Write(pcmValue);
-            }
-            return memoryStream.ToArray();
         }
     }
 }
