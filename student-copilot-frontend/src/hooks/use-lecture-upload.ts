@@ -1,18 +1,16 @@
-import { useState } from 'react';
-import { useToast } from '@/components/ui/use-toast';
-import { useAction, useMutation } from 'convex/react';
-import { api } from '../../convex/_generated/api';
-import { Id } from 'convex/_generated/dataModel';
-import pdfToText from 'react-pdftotext';
-import * as z from 'zod';
-import useAudioExtractor from './use-audio-extractor';
-import { useWebsiteUploaders } from './use-website-uploaders';
-import { UploadProgressSetter } from '@/lib/lecture-upload-utils';
-import { createFormSchema } from '@/lib/ui_utils';
-import { TEXT_SPLITTER_CONFIG } from '@/lib/lecture-upload-utils';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-
-const AUDIO_CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { useAction, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Id } from "convex/_generated/dataModel";
+import pdfToText from "react-pdftotext";
+import * as z from "zod";
+import useAudioExtractor from "./use-audio-extractor";
+import { useWebsiteUploaders } from "./use-website-uploaders";
+import { UploadProgressSetter } from "@/lib/lecture-upload-utils";
+import { createFormSchema } from "@/lib/ui_utils";
+import { TEXT_SPLITTER_CONFIG } from "@/lib/lecture-upload-utils";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 
 export const useLectureUpload = () => {
   const { toast } = useToast();
@@ -25,15 +23,17 @@ export const useLectureUpload = () => {
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
   const { getUploader } = useWebsiteUploaders();
 
-
   const { extractAudioFromVideo } = useAudioExtractor();
 
-  const uploadFile = async (file: File, contentType: string): Promise<Id<"_storage">> => {
+  const uploadFile = async (
+    file: File,
+    contentType: string,
+  ): Promise<Id<"_storage">> => {
     const uploadUrl = await generateUploadUrl();
     const uploadResult = await fetch(uploadUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': contentType },
-      body: file
+      method: "POST",
+      headers: { "Content-Type": contentType },
+      body: file,
     });
     if (!uploadResult.ok) {
       throw new Error(`Failed to upload ${contentType}`);
@@ -49,54 +49,60 @@ export const useLectureUpload = () => {
 
   const processText = async (
     text: string,
-    setProgress: UploadProgressSetter
+    setProgress: UploadProgressSetter,
   ) => {
-    const textSplitter = new RecursiveCharacterTextSplitter(TEXT_SPLITTER_CONFIG);
+    const textSplitter = new RecursiveCharacterTextSplitter(
+      TEXT_SPLITTER_CONFIG,
+    );
     const chunks = await textSplitter.splitText(text);
 
     const results = await Promise.all(
       chunks.map(async (chunk, index) => {
-
-        const chunkFile = new File(
-          [chunk],
-          `chunk-${index}.txt`,
-          { type: 'text/plain' }
-        );
-        const storageId = await uploadFile(chunkFile, 'text/plain');
+        const chunkFile = new File([chunk], `chunk-${index}.txt`, {
+          type: "text/plain",
+        });
+        const storageId = await uploadFile(chunkFile, "text/plain");
         const embedding = await getEmbedding({ text: chunk });
 
-        setProgress(Math.min(100, Math.floor(((index + 1) / chunks.length) * 100)));
+        setProgress(
+          Math.min(100, Math.floor(((index + 1) / chunks.length) * 100)),
+        );
 
         return { storageId, embedding };
-      })
+      }),
     );
 
-    const storageIds = results.map(r => r.storageId);
-    const embeddings = results.map(r => r.embedding);
+    const storageIds = results.map((r) => r.storageId);
+    const embeddings = results.map((r) => r.embedding);
 
-    const averageEmbedding = new Array(1536).fill(0)
-      .map((_, i) => embeddings.reduce((sum, emb) => sum + emb[i], 0) / embeddings.length);
+    const averageEmbedding = new Array(1536)
+      .fill(0)
+      .map(
+        (_, i) =>
+          embeddings.reduce((sum, emb) => sum + emb[i], 0) / embeddings.length,
+      );
 
-    const magnitude = Math.sqrt(averageEmbedding.reduce((sum, val) => sum + val * val, 0));
-    const normalizedEmbedding = averageEmbedding.map(val => val / magnitude);
+    const magnitude = Math.sqrt(
+      averageEmbedding.reduce((sum, val) => sum + val * val, 0),
+    );
+    const normalizedEmbedding = averageEmbedding.map((val) => val / magnitude);
 
     return { storageIds, normalizedEmbedding };
-  }
-
-
-
+  };
 
   const handlePdfUpload = async (
     file: File,
     values: z.infer<ReturnType<typeof createFormSchema>>,
     moduleId: Id<"modules">,
-    setUploadProgress: UploadProgressSetter
+    setUploadProgress: UploadProgressSetter,
   ): Promise<void> => {
     const storageId = await uploadFile(file, file.type);
     const rawText = await parsePdf(file);
 
-
-    const { storageIds, normalizedEmbedding } = await processText(rawText, setUploadProgress);
+    const { storageIds, normalizedEmbedding } = await processText(
+      rawText,
+      setUploadProgress,
+    );
 
     await storeLecture({
       title: values.title,
@@ -107,51 +113,48 @@ export const useLectureUpload = () => {
       contentStorageId: storageId,
       moduleId,
       fileType: "pdf",
-      image: undefined
+      image: undefined,
     });
-
-
-  };
-
-
-  const processAudio = async (
-    audioBuffer: ArrayBuffer,
-    setProgress: UploadProgressSetter
-  ) => {
-    const chunks = [];
-    for (let i = 0; i < audioBuffer.byteLength; i += AUDIO_CHUNK_SIZE) {
-      chunks.push(audioBuffer.slice(i, i + AUDIO_CHUNK_SIZE));
-    }
-
-    const results = await Promise.all(
-      chunks.map(async (chunk, index) => {
-        const { storageId, embedding } = await transcribeAudio({
-          audioChunk: chunk,
-          chunkIndex: index,
-        });
-        setProgress(Math.min(100, Math.floor(((index + 1) / chunks.length) * 100)));
-        return { storageId, embedding };
-      })
-    );
-
-    const storageIds = results.map(r => r.storageId);
-    const averageEmbedding = new Array(1536).fill(0)
-      .map((_, i) => results.reduce((sum, r) => sum + r.embedding[i], 0) / results.length);
-
-    const magnitude = Math.sqrt(averageEmbedding.reduce((sum, val) => sum + val * val, 0));
-    const normalizedEmbedding = averageEmbedding.map(val => val / magnitude);
-
-    return { storageIds, normalizedEmbedding };
   };
 
   const handleAudioUpload = async (
     file: File,
     values: z.infer<ReturnType<typeof createFormSchema>>,
     moduleId: Id<"modules">,
-    setUploadProgress: UploadProgressSetter
+    setUploadProgress: UploadProgressSetter,
   ): Promise<void> => {
-    const audioBuffer = await file.arrayBuffer();
-    const { storageIds, normalizedEmbedding } = await processAudio(audioBuffer, setUploadProgress);
+    const audioSegments = await extractAudioFromVideo(file);
+
+    const results = await Promise.all(
+      audioSegments.map(async (segment, index) => {
+        const { storageId, embedding } = await transcribeAudio({
+          audioChunk: segment.audioData,
+          chunkIndex: index,
+        });
+
+        setUploadProgress(
+          25 +
+            Math.min(50, Math.floor(((index + 1) / audioSegments.length) * 50)),
+        );
+
+        return { storageId, embedding };
+      }),
+    );
+
+    const storageIds = results.map((r) => r.storageId);
+
+    const averageEmbedding = new Array(1536)
+      .fill(0)
+      .map(
+        (_, i) =>
+          results.reduce((sum, r) => sum + r.embedding[i], 0) / results.length,
+      );
+
+    const magnitude = Math.sqrt(
+      averageEmbedding.reduce((sum, val) => sum + val * val, 0),
+    );
+
+    const normalizedEmbedding = averageEmbedding.map((val) => val / magnitude);
 
     const storageId = await uploadFile(file, file.type);
 
@@ -164,7 +167,7 @@ export const useLectureUpload = () => {
       contentStorageId: storageId,
       moduleId: moduleId,
       fileType: "audio",
-      image: undefined
+      image: undefined,
     });
   };
 
@@ -172,14 +175,41 @@ export const useLectureUpload = () => {
     file: File,
     values: z.infer<ReturnType<typeof createFormSchema>>,
     moduleId: Id<"modules">,
-    setUploadProgress: UploadProgressSetter
+    setUploadProgress: UploadProgressSetter,
   ) => {
-    const audioBuffer = await extractAudioFromVideo(file);
+    const audioSegments = await extractAudioFromVideo(file);
     setUploadProgress(25);
 
-    const { storageIds, normalizedEmbedding } = await processAudio(audioBuffer, (progress) => {
-      setUploadProgress(25 + progress * 0.5);
-    });
+    const results = await Promise.all(
+      audioSegments.map(async (segment, index) => {
+        const { storageId, embedding } = await transcribeAudio({
+          audioChunk: segment.audioData,
+          chunkIndex: index,
+        });
+
+        setUploadProgress(
+          25 +
+            Math.min(50, Math.floor(((index + 1) / audioSegments.length) * 50)),
+        );
+
+        return { storageId, embedding };
+      }),
+    );
+
+    const storageIds = results.map((r) => r.storageId);
+
+    const averageEmbedding = new Array(1536)
+      .fill(0)
+      .map(
+        (_, i) =>
+          results.reduce((sum, r) => sum + r.embedding[i], 0) / results.length,
+      );
+
+    const magnitude = Math.sqrt(
+      averageEmbedding.reduce((sum, val) => sum + val * val, 0),
+    );
+
+    const normalizedEmbedding = averageEmbedding.map((val) => val / magnitude);
 
     const videoId = await uploadFile(file, file.type);
     setUploadProgress(90);
@@ -193,7 +223,7 @@ export const useLectureUpload = () => {
       contentStorageId: videoId,
       moduleId: moduleId,
       fileType: "video",
-      image: undefined
+      image: undefined,
     });
 
     setUploadProgress(100);
@@ -202,15 +232,19 @@ export const useLectureUpload = () => {
   const uploadLecture = async (
     values: z.infer<ReturnType<typeof createFormSchema>>,
     moduleId: Id<"modules">,
-    fileType: 'pdf' | 'audio' | 'video' | 'website'
+    fileType: "pdf" | "audio" | "video" | "website",
   ) => {
     setIsLoading(true);
     try {
       let success = false;
 
-      if (values.type === 'website') {
+      if (values.type === "website") {
         success = await handleWebsiteUpload(values, moduleId);
-      } else if (values.type === 'file' && values.file && fileType !== "website") {
+      } else if (
+        values.type === "file" &&
+        values.file &&
+        fileType !== "website"
+      ) {
         success = await handleFileUpload(values, moduleId, fileType);
       } else {
         throw new Error("Invalid form data");
@@ -222,7 +256,7 @@ export const useLectureUpload = () => {
 
       return success;
     } catch (error) {
-      console.error('Upload failed:', error);
+      console.error("Upload failed:", error);
       showErrorToast();
       return false;
     } finally {
@@ -232,9 +266,8 @@ export const useLectureUpload = () => {
 
   const handleWebsiteUpload = async (
     values: z.infer<ReturnType<typeof createFormSchema>>,
-    moduleId: Id<"modules">
+    moduleId: Id<"modules">,
   ): Promise<boolean> => {
-
     if (values.type !== "website") throw new Error("Has to be a website.");
 
     try {
@@ -242,7 +275,6 @@ export const useLectureUpload = () => {
 
       return await uploader.upload(values, moduleId, setUploadProgress);
     } catch (err) {
-
       if (err instanceof Error) {
         showErrorToast(err.message);
       }
@@ -251,28 +283,40 @@ export const useLectureUpload = () => {
     return false;
   };
 
-
   const handleFileUpload = async (
-    values: z.infer<ReturnType<typeof createFormSchema>> & { type: 'file', file: File },
+    values: z.infer<ReturnType<typeof createFormSchema>> & {
+      type: "file";
+      file: File;
+    },
     moduleId: Id<"modules">,
-    fileType: 'pdf' | 'audio' | 'video'
+    fileType: "pdf" | "audio" | "video",
   ): Promise<boolean> => {
     switch (fileType) {
-      case 'pdf':
+      case "pdf":
         await handlePdfUpload(values.file, values, moduleId, setUploadProgress);
         break;
-      case 'audio':
-        await handleAudioUpload(values.file, values, moduleId, setUploadProgress);
+      case "audio":
+        await handleAudioUpload(
+          values.file,
+          values,
+          moduleId,
+          setUploadProgress,
+        );
         break;
-      case 'video':
-        await handleVideoUpload(values.file, values, moduleId, setUploadProgress);
+      case "video":
+        await handleVideoUpload(
+          values.file,
+          values,
+          moduleId,
+          setUploadProgress,
+        );
         break;
       default:
         throw new Error("Unsupported file type");
     }
     setUploadProgress(100);
     return true;
-  }
+  };
 
   const showSuccessToast = () => {
     toast({
@@ -289,11 +333,9 @@ export const useLectureUpload = () => {
     });
   };
 
-
   return {
     isLoading,
     uploadProgress,
     uploadLecture,
   };
 };
-

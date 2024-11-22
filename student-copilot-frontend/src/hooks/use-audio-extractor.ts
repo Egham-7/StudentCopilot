@@ -1,29 +1,36 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from "react";
+
+interface AudioSegment {
+  id: number;
+  startTime: string;
+  endTime: string;
+  audioData: ArrayBufferLike;
+}
 
 const useAudioExtractor = () => {
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const extractAudioFromVideo = useCallback(
+    async (videoFile: File): Promise<AudioSegment[]> => {
+      const formData = new FormData();
+      formData.append("audioFile", videoFile);
 
-  const extractAudioFromVideo = useCallback(async (videoFile: File): Promise<ArrayBuffer> => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext();
-    }
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/audio/segment`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
-    // Use Web Workers for audio processing
-    const worker = new Worker('/audio-worker.js');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    return new Promise((resolve, reject) => {
-      worker.onmessage = (e) => {
-        resolve(e.data.audioBuffer);
-        worker.terminate();
-      };
-
-      worker.onerror = reject;
-      worker.postMessage({ videoFile });
-    });
-  }, []);
+      return await response.json();
+    },
+    [],
+  );
 
   return { extractAudioFromVideo };
 };
 
 export default useAudioExtractor;
-
