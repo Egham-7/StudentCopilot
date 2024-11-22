@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using StudentCopilotApi.Audio.Interfaces;
+using StudentCopilotApi.Audio.Services;
 using StudentCopilotApi.Audio.Validators;
 using StudentCopilotApi.youtube.Services;
 
@@ -33,8 +34,8 @@ builder.Services.AddClerkApiClient(config =>
 
 // Register application services
 builder.Services.AddScoped<YoutubeTranscriptService>();
-builder.Services.AddScoped<IAudioSegmentationService>();
-builder.Services.AddScoped<IVideoToAudioService>();
+builder.Services.AddScoped<IAudioSegmentationService, AudioSegmentationService>();
+builder.Services.AddScoped<IVideoToAudioService, VideoToAudioService>();
 
 // Authentication
 builder
