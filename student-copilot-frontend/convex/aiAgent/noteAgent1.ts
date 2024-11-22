@@ -3,9 +3,9 @@ import { AIMessage } from "@langchain/core/messages";
 import { Annotation, END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
 import axios from 'axios';
-import { Url } from "url";
 import { z } from 'zod';
 import { marked } from "marked";
+import {titlePrompt, paragraphPrompt, categorizationPrompt} from "./prompts/noteAgent.ts"
 // Define schema for image block data
 const ImageBlockSchema = z.object({
   file: z.object({
@@ -113,144 +113,119 @@ async function collector(_state: typeof InputAnnotation.State): Promise<typeof O
   
    
     // Check if _state.messages[0] exists and print it
+    // Iterate through _state.messages and process them
     for (let index = 0; index < _state.messages.length; index++) {
-        const message = _state.messages[index];
-        const msgStr = message.content as string;
-        const htmlContent = await marked(msgStr);
-        console.log(htmlContent);
-        if (index === _state.messages.length-3 && index==1 ) {
-            combinedNotes.push({
-                type: "image",
-                data: {
-                  file: {
-                    url: await fetchImageLink(msgStr),
-                  },
-                  caption: msgStr,
-                  withBorder: true,
-                  withBackground: false,
-                  stretched: false,
-                },
-              });
-        } else if (index === _state.messages.length-2) {
-              combinedNotes.push({
-                type: "header",
-                data: {
-                    text: htmlContent,
-                    level: "1",
-                },
-            });
-        } else if (index === _state.messages.length-2) {
+      const message = _state.messages[index];
+      const msgStr = message.content as string;
+      const htmlContent = await marked(msgStr);
+      console.log(htmlContent);
 
-            combinedNotes.push({
-                type: "paragraph",
-                data: {
-                    text: htmlContent,
-                    alignment: 'center',
-                },
-            });
-        }
-    }
+      if (index === _state.messages.length - 3 && index == 1) {
+        // Add an image block
+        combinedNotes.push({
+          type: "image",
+          data: {
+            file: {
+              url: await fetchImageLink(msgStr),
+            },
+            caption: msgStr,
+            withBorder: true,
+            withBackground: false,
+            stretched: false,
+          },
+        });
+      } else if (index === _state.messages.length - 2) {
+        // Add a header block
+        combinedNotes.push({
+          type: "header",
+          data: {
+            text: htmlContent,
+            level: "1",
+          },
+        });
+      }
+    else if (index === _state.messages.length -1){
+        // Add a paragraph block
+        combinedNotes.push({
+          type: "paragraph",
+          data: {
+            text: htmlContent,
+            alignment: "center",
+          },
+        });
+      }
+      }
+    
+
     
     return { note: combinedNotes };
   }
   
 // Function to generate structured lecture notes
 export async function generateTitle(_state: typeof InputAnnotation.State): Promise<{messages:AIMessage}> {
-    const prompt = `You are an expert at creating concise and impactful titles. Based on the provided text chunk, generate a suitable title that aligns with the following criteria:
-
-Relevance: The title must reflect the main topic or purpose of the chunk.
-
-Clarity: The title should be straightforward, easy to understand, and not ambiguous.
-
-Brevity: Keep the title concise, ideally between 3 to 8 words.
-
-Tone: Match the tone of the content—professional, academic, casual, or creative—based on the text style.
-Structure: Use keywords or phrases that summarize the main idea, avoiding overly generic or vague titles.
-
-Chunk:
-${_state.chunk}
-
-Instructions:
-Analyze the chunk carefully and generate a title that captures its core idea. Respond with the title only, without any explanation or additional text.
-                    
-  `;
+    
   
     const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18" });
-    const result = await llm.invoke(prompt);
-   
+  
+    const chain = titlePrompt.pipe(llm);
+    
+    const chunk = _state.chunk;
+
+    const result = await chain.invoke({
+      chunk
+   })
     return {messages:result};
+
   }
 
 
 // Function to generate structured lecture notes
 export async function generateParagraph(_state: typeof InputAnnotation.State): Promise<{messages:AIMessage}> {
-    const prompt = `Generate concise, well-structured, and visually organized notes based on the provided lecture plan and content chunk. The output should be formatted into **distinct blocks** for easy readability and integration into a note-taking application like Editor.js. Follow these instructions:
-
-                    ---
-
-
-                    1. **Chunk Content**: Focus on summarizing the provided content, extracting key points, and ensuring smooth integration with prior notes if applicable.  
-                        Content: ${_state.chunk}
-                    2. **previous chunks content: 
-                        previous Content to avoid repition: ${_state.noteArr}
-
-                    
-                    
-                    ### Formatting Rules:
-                    1. **Section Titles**: Use clear titles to organize the content into distinct sections. Avoid using any symbols or Markdown-like formatting (e.g., no ** for bold text).
-                    2. **Key Points**: 
-                    - Write key points in short sentences or bullet points.
-                    - Use plain text to emphasize important terms or ideas.
-                    - Avoid overly technical terms unless necessary, and briefly define them when used.
-                    3. **Action Items**: Clearly outline any steps or actions in a numbered list or as plain text to ensure they are actionable and easy to follow.
-                    4. *>*Avoid Markdown or Complex Formatting**: Output should look clean and simple, focusing purely on text clarity and organization.
-                        
-                    ### Important Rule:
-                    1. Don't make it bigger than 1/3 of the chunk.`;
+    
   
-    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18"});
-    const result = await llm.invoke(prompt);
+    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18", temperature:0.3});
+
+    const chain = paragraphPrompt.pipe(llm);
+
+    const {  chunk , noteArr } = _state;
+
+    const result = await chain.invoke({
+      chunk,
+      noteArr,
+    });
    
     return {messages:result};
   }
 
-  export const decideIfTitleNeeded = async (state: typeof InputAnnotation.State) => {
-
-     
-    const CATEGORIZATION_HUMAN_TEMPLATE = `
-    You are an expert decision-making system for determining image necessity in a block of notes.
-    Analyze the text and use memory of previous chat provide a clear answer if a title is required.
-  
-    The provided text is as follows:
-    Chunk: ${state.chunk}
-    
-    Decide if the text chunk requires an image based on the following:
-    - Consistency with prior responses :${state.noteArr}.
-    - Clarity of structure and organization.
-    - Continuity and flow.
-    
-    Respond with "Yes" if a title is required, otherwise "No".`;
+  export const decideIfImageNeeded = async (state: typeof InputAnnotation.State) => {
   
     // Invoke the model
-    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18",
-                                temperature:0.4 });
-    const categorizationResponse = await llm.invoke(
-      CATEGORIZATION_HUMAN_TEMPLATE
-    );
-  
-    // Use zod to validate the response
-    const schema = z.object({
-      requiresTitle: z.enum(["Yes", "No"]),
-    });
-  
-    // Validate response content
-    const validatedResponse = schema.parse({ requiresTitle: categorizationResponse.content});
-    return { messages: validatedResponse.requiresTitle};
+    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18"});
 
+    const chain = categorizationPrompt.pipe(llm);
+
+    const {  chunk , noteArr } = state;
+    
+    try {
+      // Invoke the model
+      const categorizationResponse = await chain.invoke({ chunk, noteArr });
+  
+      // Validate response using Zod
+      const schema = z.object({
+        requiresTitle: z.enum(["Yes", "No"]),
+      });
+  
+      const validatedResponse = schema.parse({
+        requiresTitle: categorizationResponse.content,
+      });
+  
+      // Return parsed result
+      return { requiresTitle: validatedResponse.requiresTitle };
+    } catch (error) {
+      console.error("Error in decideIfImageNeeded:", error);
+      throw new Error("Failed to determine if a title is needed.");
+    }
   };
-  
-  
-  
 
 
 // Function to create a lecture plan based on preferences and lecture content
@@ -292,11 +267,12 @@ export async function planLectureNotes(
 
 const decisionLogic = (state: typeof InputAnnotation.State) => {
     // Check if the first message content is "Yes"
+    /*
     if (state.messages[0]?.content === "Yes") {
         return "generate_image";  // Transition to generate_title
-    } else {
+    } else {*/
         return "generate_title";  // Transition to generate_paragraph
-    }
+    
 };
 
 // Set up the state graph to control annotation processing flow
@@ -304,7 +280,7 @@ export const graph = new StateGraph({
   input: InputAnnotation,
   output: OutputAnnotation,
 })
-.addNode("img_decision",decideIfTitleNeeded)
+.addNode("img_decision",decideIfImageNeeded)
 .addNode("generate_title",generateTitle)
 .addNode("generate_image", generateImageSearchQuery)
 .addNode("generate_paragraph",generateParagraph)
@@ -319,6 +295,3 @@ export const graph = new StateGraph({
 .addEdge("generate_title","generate_paragraph")
 .addEdge("generate_paragraph","collector")
 .addEdge("collector",END)
-
-
-

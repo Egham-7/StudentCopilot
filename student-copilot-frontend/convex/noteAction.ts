@@ -8,7 +8,7 @@ import {
   internalAction,
 } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph, planLectureNotes, TNoteBlock } from "./aiAgent/noteAgent";
+import { graph, planLectureNotes, TNoteBlock } from "./aiAgent/noteAgent1";
 
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
@@ -55,7 +55,7 @@ export const fetchAndProcessTranscriptions = internalAction({
         transcriptionChunks.push(chunkText);
       }
     }
-
+    console.log(transcriptionChunks);
     // Schedule the note generation task
     await ctx.scheduler.runAfter(0, internal.noteAction.generateNotes, {
       transcriptionChunks,
@@ -140,9 +140,14 @@ export const generateNotes = internalAction({
           blocks: processingResult.note
         });
 
-        // Create a blob from the JSON data for storage
-        const noteChunkBlob = new Blob([finalResultJson], { type: "application/json" });
+        const finalRes = flattenNotes(processingResult.note);
+        
 
+        // Create a blob from the JSON data for storage
+        const noteChunkBlob = new Blob(finalRes, { type: "application/json" });
+        const noteChunkBlob1 = new Blob([finalResultJson], {type:"application/json"});
+        console.log(noteChunkBlob);
+        console.log(noteChunkBlob1);
         // Store the blob in storage and retrieve the storage ID
         const storageId = await ctx.storage.store(noteChunkBlob);
 
