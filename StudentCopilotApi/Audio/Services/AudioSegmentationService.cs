@@ -86,7 +86,7 @@ namespace StudentCopilotApi.Audio.Services
             }
         }
 
-        private async Task<float[]> ReadWavFileAsync(string wavPath)
+        private async Task<List<float>> ReadWavFileAsync(string wavPath)
         {
             var samples = new List<float>();
 
@@ -120,19 +120,19 @@ namespace StudentCopilotApi.Audio.Services
                 }
             }
 
-            return samples.ToArray();
+            return samples;
         }
 
         private List<(TimeSpan Start, TimeSpan End)> FindSegmentBoundariesParallel(
-            float[] samples,
+            List<float> samples,
             double maxSegmentDuration
         )
         {
             var boundaries = new ConcurrentBag<(TimeSpan Start, TimeSpan End)>();
-            var chunkSize = samples.Length / Environment.ProcessorCount;
+            var chunkSize = samples.Count / Environment.ProcessorCount;
 
             Parallel.ForEach(
-                Partitioner.Create(0, samples.Length, chunkSize),
+                Partitioner.Create(0, samples.Count, chunkSize),
                 _parallelOptions,
                 range =>
                 {
@@ -184,11 +184,13 @@ namespace StudentCopilotApi.Audio.Services
         }
 
         private async Task<IEnumerable<AudioSegment>> CreateSegmentsParallel(
-            float[] samples,
+            List<float> samples,
             List<(TimeSpan Start, TimeSpan End)> boundaries
         )
         {
             var segments = new ConcurrentBag<AudioSegment>();
+
+            var samplesArray = samples.ToArray();
 
             await Parallel.ForEachAsync(
                 boundaries,
@@ -201,7 +203,7 @@ namespace StudentCopilotApi.Audio.Services
                     var segmentSamples = await Task.Run(
                         () =>
                         {
-                            return samples.AsSpan(startIndex, endIndex - startIndex).ToArray();
+                            return samplesArray.AsSpan(startIndex, endIndex - startIndex).ToArray();
                         },
                         ct
                     );
