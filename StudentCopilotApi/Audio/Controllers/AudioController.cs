@@ -1,47 +1,69 @@
 using Microsoft.AspNetCore.Mvc;
 using StudentCopilotApi.Audio.Interfaces;
-using StudentCopilotApi.Audio.Models;
 
 namespace StudentCopilotApi.Audio.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class AudioController : ControllerBase
     {
         private readonly IAudioSegmentationService _audioSegmentationService;
-        private readonly ILogger<AudioController> _logger;
+        private readonly IVideoToAudioService _videoToAudioService;
 
         public AudioController(
             IAudioSegmentationService audioSegmentationService,
-            ILogger<AudioController> logger
+            IVideoToAudioService videoToAudioService
         )
         {
             _audioSegmentationService = audioSegmentationService;
-            _logger = logger;
+            _videoToAudioService = videoToAudioService;
         }
 
         [HttpPost("segment")]
-        [ProducesResponseType(typeof(IEnumerable<AudioSegment>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> SegmentAudio([FromForm] AudioSegmentationRequest request)
+        public async Task<IActionResult> SegmentMedia(IFormFile file, int maxTokensPerSegment)
         {
+            string? audioPath = null;
             try
             {
-                var segments = await _audioSegmentationService.SegmentAudioAsync(
-                    request.AudioFile,
-                    request.MaxTokensPerSegment
+                // Check if the file is a video
+                if (IsVideoFile(file.FileName))
+                {
+                    audioPath = await _videoToAudioService.ConvertVideoToAudioAsync(file);
+                    // Create new FormFile from the audio file
+                    using var audioStream = System.IO.File.OpenRead(audioPath);
+                    var audioFile = new FormFile(
+                        audioStream,
+                        0,
+                        audioStream.Length,
+                        "audio",
+                        Path.GetFileName(audioPath)
+                    );
+                    return Ok(
+                        await _audioSegmentationService.SegmentAudioAsync(
+                            audioFile,
+                            maxTokensPerSegment
+                        )
+                    );
+                }
+
+                // Process audio file directly
+                return Ok(
+                    await _audioSegmentationService.SegmentAudioAsync(file, maxTokensPerSegment)
                 );
-                return Ok(segments);
             }
-            catch (Exception ex)
+            finally
             {
-                _logger.LogError(
-                    ex,
-                    "Error processing audio file: {FileName}",
-                    request.AudioFile.FileName
-                );
-                return BadRequest("Error processing audio file");
+                if (audioPath != null && System.IO.File.Exists(audioPath))
+                {
+                    System.IO.File.Delete(audioPath);
+                }
             }
+        }
+
+        private bool IsVideoFile(string fileName)
+        {
+            var videoExtensions = new[] { ".mp4", ".avi", ".mkv", ".mov", ".wmv" };
+            return videoExtensions.Contains(Path.GetExtension(fileName).ToLower());
         }
     }
 }
