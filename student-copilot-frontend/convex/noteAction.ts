@@ -133,31 +133,19 @@ export const generateNotes = internalAction({
 
         // Extract the generated note from the result and add it to the noteBlocks array
 
-
-        // Convert the processed note into JSON format for storage
-        const finalResultJson = JSON.stringify({
-          type: 'note',
-          blocks: processingResult.note
-        });
-
-        const finalRes = flattenNotes(processingResult.note);
-        
-
         // Create a blob from the JSON data for storage
-        const noteChunkBlob = new Blob(finalRes, { type: "application/json" });
-        const noteChunkBlob1 = new Blob([finalResultJson], {type:"application/json"});
-        console.log(noteChunkBlob);
-        console.log(noteChunkBlob1);
+        const noteChunkBlob = new Blob(processingResult.note, {type:"application/json"});
+        
         // Store the blob in storage and retrieve the storage ID
         const storageId = await ctx.storage.store(noteChunkBlob);
 
         // Generate an embedding for the current chunk and return the storage ID with the embedding
-        const chunkEmbedding = await generateEmbedding(JSON.stringify(processingResult));
+        const chunkEmbedding = await generateEmbedding(JSON.stringify(processingResult.note));
 
         return { storageId, chunkEmbedding };
       });
     });
-
+    
     const processedChunks = await Promise.all(chunkProcessingPromises);
 
     const noteChunkIds: Id<"_storage">[] = [];
