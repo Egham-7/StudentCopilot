@@ -25,6 +25,8 @@ namespace StudentCopilotApi.Audio.Controllers
         }
 
         [HttpPost("segment")]
+        [RequestSizeLimit(200_000_000)] // 100MB in bytes
+        [RequestFormLimits(MultipartBodyLengthLimit = 200_000_000)]
         public async Task<IActionResult> SegmentMedia(
             IFormFile file,
             [FromQuery] int maxTokensPerSegment
@@ -52,6 +54,7 @@ namespace StudentCopilotApi.Audio.Controllers
                         "audio",
                         Path.GetFileName(audioPath)
                     );
+                    audioStream.Close();
 
                     _logger.LogInformation(
                         "Video converted to audio successfully. Processing audio segmentation"
