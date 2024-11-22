@@ -205,7 +205,7 @@ namespace StudentCopilotApi.Audio.Services
                         },
                         ct
                     );
-                    var audioData = samples.Select(s => (double)s).ToList().AsReadOnly();
+                    var audioData = segmentSamples.Select(s => (double)s).ToList().AsReadOnly();
 
                     var segment = new AudioSegment
                     {
