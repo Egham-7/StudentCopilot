@@ -5,12 +5,12 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "convex/_generated/dataModel";
 import pdfToText from "react-pdftotext";
 import * as z from "zod";
-import useAudioExtractor from "./use-audio-extractor";
 import { useWebsiteUploaders } from "./use-website-uploaders";
 import { UploadProgressSetter } from "@/lib/lecture-upload-utils";
 import { createFormSchema } from "@/lib/ui_utils";
 import { TEXT_SPLITTER_CONFIG } from "@/lib/lecture-upload-utils";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import useAudioExtractor from "./use-audio-extractor";
 
 export const useLectureUpload = () => {
   const { toast } = useToast();
@@ -23,7 +23,7 @@ export const useLectureUpload = () => {
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
   const { getUploader } = useWebsiteUploaders();
 
-  const { extractAudioFromVideo } = useAudioExtractor();
+  const { extractAudioFromVideo, isReady } = useAudioExtractor();
 
   const uploadFile = async (
     file: File,
@@ -123,52 +123,60 @@ export const useLectureUpload = () => {
     moduleId: Id<"modules">,
     setUploadProgress: UploadProgressSetter,
   ): Promise<void> => {
-    const audioSegments = await extractAudioFromVideo(file);
+    if (isReady) {
+      const audioSegments = await extractAudioFromVideo(file);
 
-    const results = await Promise.all(
-      audioSegments.map(async (segment, index) => {
-        const { storageId, embedding } = await transcribeAudio({
-          audioChunk: segment.audioData,
-          chunkIndex: index,
-        });
+      const results = await Promise.all(
+        audioSegments.map(async (segment, index) => {
+          const { storageId, embedding } = await transcribeAudio({
+            audioChunk: segment.audioData,
+            chunkIndex: index,
+          });
 
-        setUploadProgress(
-          25 +
-            Math.min(50, Math.floor(((index + 1) / audioSegments.length) * 50)),
-        );
+          setUploadProgress(
+            25 +
+              Math.min(
+                50,
+                Math.floor(((index + 1) / audioSegments.length) * 50),
+              ),
+          );
 
-        return { storageId, embedding };
-      }),
-    );
-
-    const storageIds = results.map((r) => r.storageId);
-
-    const averageEmbedding = new Array(1536)
-      .fill(0)
-      .map(
-        (_, i) =>
-          results.reduce((sum, r) => sum + r.embedding[i], 0) / results.length,
+          return { storageId, embedding };
+        }),
       );
 
-    const magnitude = Math.sqrt(
-      averageEmbedding.reduce((sum, val) => sum + val * val, 0),
-    );
+      const storageIds = results.map((r) => r.storageId);
 
-    const normalizedEmbedding = averageEmbedding.map((val) => val / magnitude);
+      const averageEmbedding = new Array(1536)
+        .fill(0)
+        .map(
+          (_, i) =>
+            results.reduce((sum, r) => sum + r.embedding[i], 0) /
+            results.length,
+        );
 
-    const storageId = await uploadFile(file, file.type);
+      const magnitude = Math.sqrt(
+        averageEmbedding.reduce((sum, val) => sum + val * val, 0),
+      );
 
-    await storeLecture({
-      title: values.title,
-      description: values.description,
-      completed: false,
-      lectureTranscriptionEmbedding: normalizedEmbedding,
-      lectureTranscription: storageIds,
-      contentStorageId: storageId,
-      moduleId: moduleId,
-      fileType: "audio",
-      image: undefined,
-    });
+      const normalizedEmbedding = averageEmbedding.map(
+        (val) => val / magnitude,
+      );
+
+      const storageId = await uploadFile(file, file.type);
+
+      await storeLecture({
+        title: values.title,
+        description: values.description,
+        completed: false,
+        lectureTranscriptionEmbedding: normalizedEmbedding,
+        lectureTranscription: storageIds,
+        contentStorageId: storageId,
+        moduleId: moduleId,
+        fileType: "audio",
+        image: undefined,
+      });
+    }
   };
 
   const handleVideoUpload = async (
@@ -177,56 +185,64 @@ export const useLectureUpload = () => {
     moduleId: Id<"modules">,
     setUploadProgress: UploadProgressSetter,
   ) => {
-    const audioSegments = await extractAudioFromVideo(file);
-    setUploadProgress(25);
+    if (isReady) {
+      const audioSegments = await extractAudioFromVideo(file);
+      setUploadProgress(25);
 
-    const results = await Promise.all(
-      audioSegments.map(async (segment, index) => {
-        const { storageId, embedding } = await transcribeAudio({
-          audioChunk: segment.audioData,
-          chunkIndex: index,
-        });
+      const results = await Promise.all(
+        audioSegments.map(async (segment, index) => {
+          const { storageId, embedding } = await transcribeAudio({
+            audioChunk: segment.audioData,
+            chunkIndex: index,
+          });
 
-        setUploadProgress(
-          25 +
-            Math.min(50, Math.floor(((index + 1) / audioSegments.length) * 50)),
-        );
+          setUploadProgress(
+            25 +
+              Math.min(
+                50,
+                Math.floor(((index + 1) / audioSegments.length) * 50),
+              ),
+          );
 
-        return { storageId, embedding };
-      }),
-    );
-
-    const storageIds = results.map((r) => r.storageId);
-
-    const averageEmbedding = new Array(1536)
-      .fill(0)
-      .map(
-        (_, i) =>
-          results.reduce((sum, r) => sum + r.embedding[i], 0) / results.length,
+          return { storageId, embedding };
+        }),
       );
 
-    const magnitude = Math.sqrt(
-      averageEmbedding.reduce((sum, val) => sum + val * val, 0),
-    );
+      const storageIds = results.map((r) => r.storageId);
 
-    const normalizedEmbedding = averageEmbedding.map((val) => val / magnitude);
+      const averageEmbedding = new Array(1536)
+        .fill(0)
+        .map(
+          (_, i) =>
+            results.reduce((sum, r) => sum + r.embedding[i], 0) /
+            results.length,
+        );
 
-    const videoId = await uploadFile(file, file.type);
-    setUploadProgress(90);
+      const magnitude = Math.sqrt(
+        averageEmbedding.reduce((sum, val) => sum + val * val, 0),
+      );
 
-    await storeLecture({
-      title: values.title,
-      description: values.description,
-      completed: false,
-      lectureTranscriptionEmbedding: normalizedEmbedding,
-      lectureTranscription: storageIds,
-      contentStorageId: videoId,
-      moduleId: moduleId,
-      fileType: "video",
-      image: undefined,
-    });
+      const normalizedEmbedding = averageEmbedding.map(
+        (val) => val / magnitude,
+      );
 
-    setUploadProgress(100);
+      const videoId = await uploadFile(file, file.type);
+      setUploadProgress(90);
+
+      await storeLecture({
+        title: values.title,
+        description: values.description,
+        completed: false,
+        lectureTranscriptionEmbedding: normalizedEmbedding,
+        lectureTranscription: storageIds,
+        contentStorageId: videoId,
+        moduleId: moduleId,
+        fileType: "video",
+        image: undefined,
+      });
+
+      setUploadProgress(100);
+    }
   };
 
   const uploadLecture = async (

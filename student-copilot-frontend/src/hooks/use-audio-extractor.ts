@@ -1,6 +1,8 @@
+import { useAuth } from "@clerk/clerk-react";
 import { useCallback } from "react";
+import axios from "axios";
 
-interface AudioSegment {
+export interface AudioSegment {
   id: number;
   startTime: string;
   endTime: string;
@@ -8,29 +10,76 @@ interface AudioSegment {
 }
 
 const useAudioExtractor = () => {
+  const { isSignedIn, isLoaded, getToken } = useAuth();
+  const MAX_TOKENS_PER_SEGMENT = 16384;
+
   const extractAudioFromVideo = useCallback(
-    async (videoFile: File): Promise<AudioSegment[]> => {
-      const formData = new FormData();
-      formData.append("audioFile", videoFile);
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/audio/segment`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    async (file: File): Promise<AudioSegment[]> => {
+      if (!isLoaded || !isSignedIn) {
+        throw new Error("Authentication required");
       }
 
-      return await response.json();
+      if (!file.type.startsWith("video/") && !file.type.startsWith("audio/")) {
+        console.log("File type: ", file.type);
+        throw new Error(
+          "Invalid file type. Please upload a audio or video file.",
+        );
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file, file.name);
+
+        const token = await getToken({
+          template: "convex",
+        });
+
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/Audio/segment`,
+          formData,
+          {
+            params: {
+              maxTokensPerSegment: MAX_TOKENS_PER_SEGMENT,
+            },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+            timeout: 300000, // 5 minute timeout
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / (progressEvent.total ?? 100),
+              );
+              console.log(`Upload Progress: ${percentCompleted}%`);
+            },
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
+          },
+        );
+
+        console.log("Response received:", response.status);
+        return response.data;
+      } catch (error) {
+        console.error("Audio extraction failed:", error);
+        if (axios.isAxiosError(error)) {
+          const errorMessage = error.response?.data?.message || error.message;
+          if (error.code === "ECONNABORTED") {
+            throw new Error(
+              "Request timed out. The file might be too large or the server is busy.",
+            );
+          }
+          throw new Error(errorMessage);
+        }
+        throw error;
+      }
     },
-    [],
+    [isSignedIn, isLoaded, getToken],
   );
 
-  return { extractAudioFromVideo };
+  return {
+    extractAudioFromVideo,
+    isReady: isLoaded && isSignedIn,
+  };
 };
 
 export default useAudioExtractor;

@@ -1,4 +1,3 @@
-using Clerk.Net.DependencyInjection;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,15 +26,13 @@ builder.Services.AddValidatorsFromAssemblyContaining<AudioSegmentationRequestVal
 
 // HTTP and API services
 builder.Services.AddHttpClient();
-builder.Services.AddClerkApiClient(config =>
-{
-    config.SecretKey = builder.Configuration["Clerk:SecretKey"]!;
-});
 
 // Register application services
 builder.Services.AddScoped<YoutubeTranscriptService>();
 builder.Services.AddScoped<IAudioSegmentationService, AudioSegmentationService>();
-builder.Services.AddScoped<IVideoToAudioService, VideoToAudioService>();
+builder.Services.AddScoped<IVideoToAudioService>(provider => new VideoToAudioService(
+    Environment.GetEnvironmentVariable("FFMPEG_PATH")!
+));
 
 // Authentication
 builder
@@ -53,7 +50,8 @@ builder
         };
     });
 
-// CORS configuration
+// CORS Configuration
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
@@ -63,10 +61,14 @@ builder.Services.AddCors(options =>
             policy
                 .WithOrigins(
                     "https://grandiose-caiman-959.convex.cloud",
-                    "http://grandiose-caiman-959.convex.cloud"
+                    "http://grandiose-caiman-959.convex.cloud",
+                    "http://localhost:5173",
+                    "http://localhost:5000"
                 )
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .WithExposedHeaders("Content-Disposition");
         }
     );
 });
@@ -89,6 +91,28 @@ builder
         }
     );
 
+// HTTP Logging
+
+builder.Services.AddHttpLogging(logging =>
+{
+    logging.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+    logging.RequestHeaders.Add("Authorization");
+    logging.RequestHeaders.Add("Content-Type");
+    logging.RequestHeaders.Add("Content-Length");
+    logging.MediaTypeOptions.AddText("application/json");
+    logging.RequestBodyLogLimit = 4096;
+    logging.ResponseBodyLogLimit = 4096;
+});
+
+// Add detailed logging configuration
+builder.Services.AddLogging(logging =>
+{
+    logging.ClearProviders();
+    logging.AddConsole();
+    logging.AddDebug();
+    logging.SetMinimumLevel(LogLevel.Trace);
+});
+
 var app = builder.Build();
 
 // Development specific configuration
@@ -96,6 +120,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    builder.Configuration.AddUserSecrets<Program>();
 }
 
 // Logging configuration status
@@ -115,6 +140,7 @@ logger.LogInformation(
 );
 
 // Middleware pipeline
+app.UseHttpLogging();
 app.UseCors("MyAllowedOrigins");
 app.UseAuthentication();
 app.UseAuthorization();

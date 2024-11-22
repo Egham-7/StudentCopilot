@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="Clerk.Net" Version="1.7.0" />
     <PackageReference Include="Clerk.Net.DependencyInjection" Version="1.7.0" />
+    <PackageReference Include="FFMpegCore" Version="5.1.0" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
     <PackageReference Include="Google.Apis.YouTube.v3" Version="1.68.0.3582" />

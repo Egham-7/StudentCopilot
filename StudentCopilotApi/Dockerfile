@@ -13,9 +13,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy
 WORKDIR /app
 COPY --from=build /app .
 
-# Install yt-dlp
+# Install yt-dlp and FFmpeg
 RUN apt-get update && \
-  apt-get install -y python3-pip && \
+  apt-get install -y python3-pip ffmpeg && \
   pip3 install yt-dlp
 
 # Configure container security

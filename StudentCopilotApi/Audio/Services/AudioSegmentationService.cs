@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
+using FFMpegCore;
 using StudentCopilotApi.Audio.Interfaces;
 using StudentCopilotApi.Audio.Models;
 
@@ -22,82 +21,84 @@ namespace StudentCopilotApi.Audio.Services
             int maxTokensPerSegment
         )
         {
-            // Create temporary file path
-            string tempFilePath = Path.GetTempFileName();
+            string tempInputPath = Path.GetTempFileName();
+            string tempWavPath = Path.GetTempFileName() + ".wav";
 
             try
             {
-                // Save the uploaded file to temp location
-                using (var stream = File.Create(tempFilePath))
+                // Save the uploaded file
+                using (var stream = File.Create(tempInputPath))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                // Process the audio file
-                using var reader = new AudioFileReader(tempFilePath);
-                var samples = await ProcessAudioStreamAsync(reader);
+                // Convert to WAV using FFmpeg
+
+
+                await FFMpegArguments
+                    .FromFileInput(tempInputPath)
+                    .OutputToFile(
+                        tempWavPath,
+                        true,
+                        options =>
+                            options
+                                .WithAudioSamplingRate(_sampleRate)
+                                .WithAudioCodec("pcm_s16le")
+                                .WithCustomArgument("-ac 1")
+                    ) // Set mono channel
+                    .ProcessAsynchronously();
+
+                var samples = await ReadWavFileAsync(tempWavPath);
                 var segmentBoundaries = await Task.Run(
                     () => FindSegmentBoundariesParallel(samples)
                 );
+
                 return await CreateSegmentsParallel(samples, segmentBoundaries);
             }
             finally
             {
-                // Clean up temporary file
-                if (File.Exists(tempFilePath))
+                if (File.Exists(tempInputPath))
+                    File.Delete(tempInputPath);
+                if (File.Exists(tempWavPath))
+                    File.Delete(tempWavPath);
+            }
+        }
+
+        private async Task<List<float>> ReadWavFileAsync(string wavPath)
+        {
+            var samples = new List<float>();
+
+            await using var fileStream = new FileStream(
+                wavPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize: 4096,
+                useAsync: true
+            );
+            using var reader = new BinaryReader(fileStream);
+
+            // Skip WAV header (44 bytes)
+            reader.BaseStream.Position = 44;
+
+            // Read samples in chunks for better performance
+            const int chunkSize = 4096;
+            byte[] buffer = new byte[chunkSize];
+            int bytesRead;
+
+            while ((bytesRead = await fileStream.ReadAsync(buffer)) > 0)
+            {
+                for (int i = 0; i < bytesRead; i += 2)
                 {
-                    File.Delete(tempFilePath);
+                    if (i + 1 >= bytesRead)
+                        break;
+
+                    short sample = BitConverter.ToInt16(buffer, i);
+                    samples.Add(sample / 32768f);
                 }
             }
-        }
 
-        private WaveStream CreateAudioReader(IFormFile file)
-        {
-            try
-            {
-                return new AudioFileReader(file.Name);
-            }
-            catch (Exception)
-            {
-                throw new NotSupportedException(
-                    "Unsupported audio format. Supported formats: WAV, MP3, AAC, M4A"
-                );
-            }
-        }
-
-        private async Task<List<float>> ProcessAudioStreamAsync(WaveStream waveProvider)
-        {
-            var samples = new ConcurrentBag<float>();
-            var buffer = new float[_bufferSize];
-
-            var resampler = new WdlResamplingSampleProvider(
-                new WaveToSampleProvider(waveProvider),
-                _sampleRate
-            );
-            var monoProvider = resampler.ToMono();
-
-            var tasks = new List<Task>();
-            int samplesRead;
-
-            while (
-                (samplesRead = await Task.Run(() => monoProvider.Read(buffer, 0, buffer.Length)))
-                > 0
-            )
-            {
-                var localBuffer = buffer.Take(samplesRead).ToArray();
-                tasks.Add(
-                    Task.Run(() =>
-                    {
-                        foreach (var sample in localBuffer)
-                        {
-                            samples.Add(sample);
-                        }
-                    })
-                );
-            }
-
-            await Task.WhenAll(tasks);
-            return samples.OrderBy(x => samples.ToList().IndexOf(x)).ToList();
+            return samples;
         }
 
         private List<(TimeSpan Start, TimeSpan End)> FindSegmentBoundariesParallel(
@@ -166,7 +167,6 @@ namespace StudentCopilotApi.Audio.Services
                         EndTime = boundary.End,
                         AudioData = await Task.Run(() => ConvertToByteArray(segmentSamples), ct),
                     };
-
                     segments.Add(segment);
                 }
             );
@@ -183,12 +183,10 @@ namespace StudentCopilotApi.Audio.Services
         {
             using var memoryStream = new MemoryStream();
             using var writer = new BinaryWriter(memoryStream);
-
             foreach (var sample in samples)
             {
                 writer.Write(sample);
             }
-
             return memoryStream.ToArray();
         }
     }

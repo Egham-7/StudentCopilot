@@ -1,35 +1,49 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentCopilotApi.Audio.Interfaces;
 
 namespace StudentCopilotApi.Audio.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
+    [Authorize]
     public class AudioController : ControllerBase
     {
         private readonly IAudioSegmentationService _audioSegmentationService;
         private readonly IVideoToAudioService _videoToAudioService;
+        private readonly ILogger<AudioController> _logger;
 
         public AudioController(
             IAudioSegmentationService audioSegmentationService,
-            IVideoToAudioService videoToAudioService
+            IVideoToAudioService videoToAudioService,
+            ILogger<AudioController> logger
         )
         {
             _audioSegmentationService = audioSegmentationService;
             _videoToAudioService = videoToAudioService;
+            _logger = logger;
         }
 
         [HttpPost("segment")]
-        public async Task<IActionResult> SegmentMedia(IFormFile file, int maxTokensPerSegment)
+        public async Task<IActionResult> SegmentMedia(
+            IFormFile file,
+            [FromQuery] int maxTokensPerSegment
+        )
         {
+            _logger.LogInformation(
+                "Starting media segmentation for file: {FileName} with max tokens: {MaxTokens}",
+                file.FileName,
+                maxTokensPerSegment
+            );
+
             string? audioPath = null;
             try
             {
-                // Check if the file is a video
                 if (IsVideoFile(file.FileName))
                 {
+                    _logger.LogInformation("Processing video file: {FileName}", file.FileName);
                     audioPath = await _videoToAudioService.ConvertVideoToAudioAsync(file);
-                    // Create new FormFile from the audio file
+
                     using var audioStream = System.IO.File.OpenRead(audioPath);
                     var audioFile = new FormFile(
                         audioStream,
@@ -38,24 +52,51 @@ namespace StudentCopilotApi.Audio.Controllers
                         "audio",
                         Path.GetFileName(audioPath)
                     );
-                    return Ok(
-                        await _audioSegmentationService.SegmentAudioAsync(
-                            audioFile,
-                            maxTokensPerSegment
-                        )
+
+                    _logger.LogInformation(
+                        "Video converted to audio successfully. Processing audio segmentation"
                     );
+                    var result = await _audioSegmentationService.SegmentAudioAsync(
+                        audioFile,
+                        maxTokensPerSegment
+                    );
+                    _logger.LogInformation("Audio segmentation completed successfully");
+                    return Ok(result);
                 }
 
-                // Process audio file directly
-                return Ok(
-                    await _audioSegmentationService.SegmentAudioAsync(file, maxTokensPerSegment)
+                _logger.LogInformation("Processing audio file directly: {FileName}", file.FileName);
+                var audioResult = await _audioSegmentationService.SegmentAudioAsync(
+                    file,
+                    maxTokensPerSegment
                 );
+                _logger.LogInformation("Audio segmentation completed successfully");
+                return Ok(audioResult);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing media file: {FileName}", file.FileName);
+                throw;
             }
             finally
             {
                 if (audioPath != null && System.IO.File.Exists(audioPath))
                 {
-                    System.IO.File.Delete(audioPath);
+                    try
+                    {
+                        System.IO.File.Delete(audioPath);
+                        _logger.LogInformation(
+                            "Temporary audio file deleted: {AudioPath}",
+                            audioPath
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(
+                            ex,
+                            "Failed to delete temporary audio file: {AudioPath}",
+                            audioPath
+                        );
+                    }
                 }
             }
         }
@@ -63,7 +104,13 @@ namespace StudentCopilotApi.Audio.Controllers
         private bool IsVideoFile(string fileName)
         {
             var videoExtensions = new[] { ".mp4", ".avi", ".mkv", ".mov", ".wmv" };
-            return videoExtensions.Contains(Path.GetExtension(fileName).ToLower());
+            var isVideo = videoExtensions.Contains(Path.GetExtension(fileName).ToLower());
+            _logger.LogDebug(
+                "File {FileName} is{NotVideo} a video file",
+                fileName,
+                isVideo ? "" : " not"
+            );
+            return isVideo;
         }
     }
 }

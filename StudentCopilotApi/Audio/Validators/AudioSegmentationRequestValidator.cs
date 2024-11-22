@@ -14,7 +14,7 @@ namespace StudentCopilotApi.Audio.Validators
             ".mov",
             ".wmv",
         };
-        private const int AUDIO_FILE_LIMIT = 100 * 1024 * 1024; // 100MB
+        private const int AUDIO_FILE_LIMIT = 200 * 1024 * 1024; // 200MB
 
         public AudioSegmentationRequestValidator()
         {
