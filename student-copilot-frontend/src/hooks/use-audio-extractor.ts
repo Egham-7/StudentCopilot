@@ -9,6 +9,22 @@ interface AudioSegment {
   audioData: ArrayBuffer;
 }
 
+interface RawAudioSegment {
+  id: number;
+  startTime: string;
+  endTime: string;
+  audioData: string;
+}
+
+const processAudioSegment = (segment: RawAudioSegment): ArrayBuffer => {
+  const binaryString = window.atob(segment.audioData);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+};
+
 const useAudioExtractor = () => {
   const { isSignedIn, isLoaded, getToken } = useAuth();
   const MAX_TOKENS_PER_SEGMENT = 16384;
@@ -28,7 +44,7 @@ const useAudioExtractor = () => {
         template: "convex",
       });
 
-      const response = await axios.post<AudioSegment[]>(
+      const response = await axios.post<RawAudioSegment[]>(
         `${import.meta.env.VITE_API_URL}/api/Audio/segment`,
         formData,
         {
@@ -43,7 +59,12 @@ const useAudioExtractor = () => {
         },
       );
 
-      return response.data;
+      const segments = response.data.map((segment) => ({
+        ...segment,
+        audioData: processAudioSegment(segment),
+      }));
+
+      return segments;
     },
     [isSignedIn, isLoaded, getToken, MAX_CONTENT_LENGTH, TIMEOUT_MILLISECONDS],
   );

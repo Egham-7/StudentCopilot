@@ -132,56 +132,49 @@ namespace StudentCopilotApi.Audio.Services
         )
         {
             var boundaries = new ConcurrentBag<(TimeSpan Start, TimeSpan End)>();
-            var chunkSize = samples.Count / Environment.ProcessorCount;
+            var minSegmentSamples = (int)(_sampleRate * 2); // Minimum 2 seconds per segment
+            var maxSegmentSamples = (int)(_sampleRate * maxSegmentDuration);
 
-            Parallel.ForEach(
-                Partitioner.Create(0, samples.Count, chunkSize),
-                _parallelOptions,
-                range =>
+            var currentStart = 0;
+            var sampleCount = samples.Count;
+
+            while (currentStart < sampleCount)
+            {
+                var potentialEnd = Math.Min(currentStart + maxSegmentSamples, sampleCount);
+                var bestSplitPoint = potentialEnd;
+
+                // Look for silence in the last second of the potential segment
+                var searchStart = Math.Max(
+                    currentStart + minSegmentSamples,
+                    potentialEnd - _sampleRate
+                );
+
+                for (int i = searchStart; i < potentialEnd; i++)
                 {
-                    var start = range.Item1;
-                    var end = range.Item2;
-                    var currentSegmentStart = TimeSpan.FromSeconds((double)start / _sampleRate);
-                    var lastBoundaryTime = currentSegmentStart;
-
-                    for (int i = start; i < end; i++)
+                    if (Math.Abs(samples[i]) < _silenceThreshold)
                     {
-                        var currentTime = TimeSpan.FromSeconds((double)i / _sampleRate);
-
-                        // Force split if maximum segment duration is exceeded
-                        if ((currentTime - lastBoundaryTime).TotalSeconds >= maxSegmentDuration)
+                        var silenceDuration = 0;
+                        var j = i;
+                        while (j < potentialEnd && Math.Abs(samples[j]) < _silenceThreshold)
                         {
-                            boundaries.Add((lastBoundaryTime, currentTime));
-                            lastBoundaryTime = currentTime;
-                            continue;
+                            silenceDuration++;
+                            j++;
                         }
 
-                        if (Math.Abs(samples[i]) < _silenceThreshold)
+                        if (silenceDuration >= (_sampleRate * _minSilenceDuration / 1000))
                         {
-                            var silenceDuration = 0;
-                            while (i < end && Math.Abs(samples[i]) < _silenceThreshold)
-                            {
-                                silenceDuration++;
-                                i++;
-                            }
-
-                            if (silenceDuration >= (_sampleRate * _minSilenceDuration / 1000))
-                            {
-                                var silenceEndTime = TimeSpan.FromSeconds((double)i / _sampleRate);
-                                boundaries.Add((lastBoundaryTime, silenceEndTime));
-                                lastBoundaryTime = silenceEndTime;
-                            }
+                            bestSplitPoint = j;
+                            break;
                         }
-                    }
-
-                    // Add final segment if needed
-                    var finalTime = TimeSpan.FromSeconds((double)end / _sampleRate);
-                    if (lastBoundaryTime < finalTime)
-                    {
-                        boundaries.Add((lastBoundaryTime, finalTime));
                     }
                 }
-            );
+
+                var startTime = TimeSpan.FromSeconds((double)currentStart / _sampleRate);
+                var endTime = TimeSpan.FromSeconds((double)bestSplitPoint / _sampleRate);
+
+                boundaries.Add((startTime, endTime));
+                currentStart = bestSplitPoint;
+            }
 
             return boundaries.OrderBy(x => x.Start).ToList();
         }
