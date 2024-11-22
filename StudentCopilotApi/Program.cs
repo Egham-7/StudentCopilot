@@ -104,15 +104,6 @@ builder.Services.AddHttpLogging(logging =>
     logging.ResponseBodyLogLimit = 4096;
 });
 
-// Add detailed logging configuration
-builder.Services.AddLogging(logging =>
-{
-    logging.ClearProviders();
-    logging.AddConsole();
-    logging.AddDebug();
-    logging.SetMinimumLevel(LogLevel.Trace);
-});
-
 var app = builder.Build();
 
 // Development specific configuration
@@ -121,6 +112,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     builder.Configuration.AddUserSecrets<Program>();
+
+    // Add detailed logging configuration
+    builder.Services.AddLogging(logging =>
+    {
+        logging.ClearProviders();
+        logging.AddConsole();
+        logging.AddDebug();
+        logging.SetMinimumLevel(LogLevel.Trace);
+    });
 }
 
 // Logging configuration status
