@@ -5,6 +5,6 @@ namespace StudentCopilotApi.Audio.Models
         public int Id { get; init; }
         public TimeSpan StartTime { get; init; }
         public TimeSpan EndTime { get; init; }
-        public required IReadOnlyList<double> AudioData { get; init; }
+        public required byte[] AudioData { get; set; }
     }
 }

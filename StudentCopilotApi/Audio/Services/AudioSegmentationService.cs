@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text;
 using FFMpegCore;
 using StudentCopilotApi.Audio.Interfaces;
 using StudentCopilotApi.Audio.Models;
@@ -73,7 +74,7 @@ namespace StudentCopilotApi.Audio.Services
                 foreach (var segment in segments)
                 {
                     _logger.LogInformation(
-                        $"Segment: Start={segment.StartTime}, End={segment.EndTime}, Data Length={segment.AudioData?.Count ?? 0}"
+                        $"Segment: Start={segment.StartTime}, End={segment.EndTime}, Data Length={segment.AudioData.Length}"
                     );
                 }
 
@@ -209,13 +210,14 @@ namespace StudentCopilotApi.Audio.Services
                         },
                         ct
                     );
-                    var audioData = segmentSamples.Select(s => (double)s).ToList().AsReadOnly();
+
+                    byte[] wavBytes = ConvertToWavBytes(segmentSamples);
 
                     var segment = new AudioSegment
                     {
                         StartTime = boundary.Start,
                         EndTime = boundary.End,
-                        AudioData = audioData,
+                        AudioData = wavBytes,
                     };
                     segments.Add(segment);
                 }
@@ -227,6 +229,45 @@ namespace StudentCopilotApi.Audio.Services
         public int EstimateTokenCount(string text)
         {
             return text.Length / 4;
+        }
+
+        private byte[] ConvertToWavBytes(float[] samples)
+        {
+            using var memoryStream = new MemoryStream();
+            using var writer = new BinaryWriter(memoryStream);
+
+            // WAV header
+            writer.Write(Encoding.ASCII.GetBytes("RIFF")); // ChunkID
+            writer.Write(0); // ChunkSize - will be filled later
+            writer.Write(Encoding.ASCII.GetBytes("WAVE")); // Format
+
+            // Format chunk
+            writer.Write(Encoding.ASCII.GetBytes("fmt ")); // Subchunk1ID
+            writer.Write(16); // Subchunk1Size (16 for PCM)
+            writer.Write((short)1); // AudioFormat (1 for PCM)
+            writer.Write((short)1); // NumChannels (1 for mono)
+            writer.Write(_sampleRate); // SampleRate
+            writer.Write(_sampleRate * 2); // ByteRate
+            writer.Write((short)2); // BlockAlign
+            writer.Write((short)16); // BitsPerSample
+
+            // Data chunk
+            writer.Write(Encoding.ASCII.GetBytes("data")); // Subchunk2ID
+            writer.Write(samples.Length * 2); // Subchunk2Size
+
+            // Convert and write samples
+            foreach (float sample in samples)
+            {
+                short value = (short)(sample * 32767f);
+                writer.Write(value);
+            }
+
+            // Update ChunkSize
+            var fileLength = (int)memoryStream.Length;
+            memoryStream.Position = 4;
+            writer.Write(fileLength - 8);
+
+            return memoryStream.ToArray();
         }
     }
 }
