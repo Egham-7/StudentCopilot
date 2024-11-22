@@ -11,12 +11,18 @@ namespace StudentCopilotApi.Audio.Services
         private readonly float _silenceThreshold = 0.01f;
         private readonly int _minSilenceDuration = 500;
         private readonly int _bufferSize = 4096;
+        private readonly ILogger<AudioSegmentationService> _logger;
         private readonly ParallelOptions _parallelOptions = new()
         {
             MaxDegreeOfParallelism = Environment.ProcessorCount,
         };
 
         private const int AVERAGE_CHARS_PER_SECOND = 15; // Approximate characters spoken per second
+
+        public AudioSegmentationService(ILogger<AudioSegmentationService> logger)
+        {
+            _logger = logger;
+        }
 
         public async Task<IEnumerable<AudioSegment>> SegmentAudioAsync(
             IFormFile file,
@@ -59,7 +65,11 @@ namespace StudentCopilotApi.Audio.Services
                     () => FindSegmentBoundariesParallel(samples, maxSegmentDuration)
                 );
 
-                return await CreateSegmentsParallel(samples, segmentBoundaries);
+                var result = CreateSegmentsParallel(samples, segmentBoundaries);
+
+                _logger.LogInformation("Result: ", result);
+
+                return await result;
             }
             finally
             {

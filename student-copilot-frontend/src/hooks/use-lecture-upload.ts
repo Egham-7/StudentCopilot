@@ -126,6 +126,8 @@ export const useLectureUpload = () => {
     if (isReady) {
       const audioSegments = await extractAudioFromVideo(file);
 
+      console.log("Audio Segments: ", audioSegments);
+
       const results = await Promise.all(
         audioSegments.map(async (segment, index) => {
           const { storageId, embedding } = await transcribeAudio({
@@ -187,6 +189,7 @@ export const useLectureUpload = () => {
   ) => {
     if (isReady) {
       const audioSegments = await extractAudioFromVideo(file);
+      console.log("Audio Segments: ", audioSegments);
       setUploadProgress(25);
 
       const results = await Promise.all(

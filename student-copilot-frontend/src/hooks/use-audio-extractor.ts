@@ -6,7 +6,7 @@ export interface AudioSegment {
   id: number;
   startTime: string;
   endTime: string;
-  audioData: number[];
+  audioData: Float32Array;
 }
 
 const useAudioExtractor = () => {

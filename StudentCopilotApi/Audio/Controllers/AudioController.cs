@@ -71,6 +71,7 @@ namespace StudentCopilotApi.Audio.Controllers
                     file,
                     maxTokensPerSegment
                 );
+                _logger.LogInformation("Audio Result: ", audioResult);
                 _logger.LogInformation("Audio segmentation completed successfully");
                 return Ok(audioResult);
             }
