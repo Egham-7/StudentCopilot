@@ -53,6 +53,8 @@ namespace StudentCopilotApi.Audio.Services
                                 .WithAudioSamplingRate(_sampleRate)
                                 .WithAudioCodec("pcm_s16le")
                                 .WithCustomArgument("-ac 1")
+                                .WithCustomArgument("-ar 16000") // Explicitly set sample rate
+                                .WithCustomArgument("-bits_per_raw_sample 16") // Ensure 16-bit depth
                     ) // Set mono channel
                     .ProcessAsynchronously();
 
