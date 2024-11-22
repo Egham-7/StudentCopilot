@@ -1,12 +1,12 @@
 import { useAuth } from "@clerk/clerk-react";
-import { useCallback } from "react";
+import { useCallback } from "node_modules/react-resizable-panels/dist/declarations/src/vendor/react";
 import axios from "axios";
 
-export interface AudioSegment {
+interface AudioSegment {
   id: number;
   startTime: string;
   endTime: string;
-  audioData: Float32Array;
+  audioData: number[];
 }
 
 const useAudioExtractor = () => {
@@ -19,50 +19,29 @@ const useAudioExtractor = () => {
         throw new Error("Authentication required");
       }
 
-      if (!file.type.startsWith("video/") && !file.type.startsWith("audio/")) {
-        throw new Error(
-          "Invalid file type. Please upload a audio or video file.",
-        );
-      }
+      const formData = new FormData();
+      formData.append("file", file, file.name);
 
-      try {
-        const formData = new FormData();
-        formData.append("file", file, file.name);
+      const token = await getToken({
+        template: "convex",
+      });
 
-        const token = await getToken({
-          template: "convex",
-        });
-
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/Audio/segment`,
-          formData,
-          {
-            params: {
-              maxTokensPerSegment: MAX_TOKENS_PER_SEGMENT,
-            },
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-            timeout: 300000, // 5 minute timeout
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity,
+      const response = await axios.post<AudioSegment[]>(
+        `${import.meta.env.VITE_API_URL}/api/Audio/segment`,
+        formData,
+        {
+          params: { maxTokensPerSegment: MAX_TOKENS_PER_SEGMENT },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
-        );
+          timeout: 300000,
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+        },
+      );
 
-        return response.data;
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          const errorMessage = error.response?.data?.message || error.message;
-          if (error.code === "ECONNABORTED") {
-            throw new Error(
-              "Request timed out. The file might be too large or the server is busy.",
-            );
-          }
-          throw new Error(errorMessage);
-        }
-        throw error;
-      }
+      return response.data;
     },
     [isSignedIn, isLoaded, getToken],
   );

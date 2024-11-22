@@ -71,11 +71,11 @@ namespace StudentCopilotApi.Audio.Services
                 foreach (var segment in segments)
                 {
                     _logger.LogInformation(
-                        $"Segment: Start={segment.StartTime}, End={segment.EndTime}, Data Length={segment.AudioData?.Length ?? 0}"
+                        $"Segment: Start={segment.StartTime}, End={segment.EndTime}, Data Length={segment.AudioData?.Count ?? 0}"
                     );
                 }
 
-                return segments;
+                return segments.OrderBy(segment => segment.StartTime.TotalMilliseconds);
             }
             finally
             {
@@ -205,12 +205,13 @@ namespace StudentCopilotApi.Audio.Services
                         },
                         ct
                     );
+                    var audioData = samples.Select(s => (double)s).ToList().AsReadOnly();
 
                     var segment = new AudioSegment
                     {
                         StartTime = boundary.Start,
                         EndTime = boundary.End,
-                        AudioData = segmentSamples,
+                        AudioData = audioData,
                     };
                     segments.Add(segment);
                 }
