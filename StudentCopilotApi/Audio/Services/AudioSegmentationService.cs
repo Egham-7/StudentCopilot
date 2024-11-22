@@ -65,11 +65,17 @@ namespace StudentCopilotApi.Audio.Services
                     () => FindSegmentBoundariesParallel(samples, maxSegmentDuration)
                 );
 
-                var result = CreateSegmentsParallel(samples, segmentBoundaries);
+                var segments = await CreateSegmentsParallel(samples, segmentBoundaries);
 
-                _logger.LogInformation("Result: ", result);
+                _logger.LogInformation($"Created {segments.Count()} segments");
+                foreach (var segment in segments)
+                {
+                    _logger.LogInformation(
+                        $"Segment: Start={segment.StartTime}, End={segment.EndTime}, Data Length={segment.AudioData?.Length ?? 0}"
+                    );
+                }
 
-                return await result;
+                return segments;
             }
             finally
             {
