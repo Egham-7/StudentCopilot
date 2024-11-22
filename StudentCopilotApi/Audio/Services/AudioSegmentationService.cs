@@ -210,7 +210,8 @@ namespace StudentCopilotApi.Audio.Services
             using var writer = new BinaryWriter(memoryStream);
             foreach (var sample in samples)
             {
-                writer.Write(sample);
+                short pcmValue = (short)(sample * 32767f);
+                writer.Write(pcmValue);
             }
             return memoryStream.ToArray();
         }

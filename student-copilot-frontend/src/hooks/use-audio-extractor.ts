@@ -20,7 +20,6 @@ const useAudioExtractor = () => {
       }
 
       if (!file.type.startsWith("video/") && !file.type.startsWith("audio/")) {
-        console.log("File type: ", file.type);
         throw new Error(
           "Invalid file type. Please upload a audio or video file.",
         );
@@ -46,21 +45,13 @@ const useAudioExtractor = () => {
               "Content-Type": "multipart/form-data",
             },
             timeout: 300000, // 5 minute timeout
-            onUploadProgress: (progressEvent) => {
-              const percentCompleted = Math.round(
-                (progressEvent.loaded * 100) / (progressEvent.total ?? 100),
-              );
-              console.log(`Upload Progress: ${percentCompleted}%`);
-            },
             maxContentLength: Infinity,
             maxBodyLength: Infinity,
           },
         );
 
-        console.log("Response received:", response.status);
         return response.data;
       } catch (error) {
-        console.error("Audio extraction failed:", error);
         if (axios.isAxiosError(error)) {
           const errorMessage = error.response?.data?.message || error.message;
           if (error.code === "ECONNABORTED") {
