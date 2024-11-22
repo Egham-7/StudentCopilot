@@ -1,6 +1,6 @@
 import { useAuth } from "@clerk/clerk-react";
-import { useCallback } from "node_modules/react-resizable-panels/dist/declarations/src/vendor/react";
 import axios from "axios";
+import { useCallback } from "react";
 
 interface AudioSegment {
   id: number;
