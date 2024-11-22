@@ -211,7 +211,7 @@ namespace StudentCopilotApi.Audio.Services
                         ct
                     );
 
-                    byte[] wavBytes = ConvertToWavBytes(segmentSamples);
+                    string wavBytes = ConvertToWavBytes(segmentSamples);
 
                     var segment = new AudioSegment
                     {
@@ -231,7 +231,7 @@ namespace StudentCopilotApi.Audio.Services
             return text.Length / 4;
         }
 
-        private byte[] ConvertToWavBytes(float[] samples)
+        private string ConvertToWavBytes(float[] samples)
         {
             using var memoryStream = new MemoryStream();
             using var writer = new BinaryWriter(memoryStream);
@@ -267,7 +267,9 @@ namespace StudentCopilotApi.Audio.Services
             memoryStream.Position = 4;
             writer.Write(fileLength - 8);
 
-            return memoryStream.ToArray();
+            var wavBytes = memoryStream.ToArray();
+
+            return Convert.ToBase64String(wavBytes);
         }
     }
 }

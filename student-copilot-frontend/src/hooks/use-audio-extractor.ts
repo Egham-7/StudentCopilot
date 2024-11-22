@@ -6,7 +6,7 @@ interface AudioSegment {
   id: number;
   startTime: string;
   endTime: string;
-  audioData: number[];
+  audioData: ArrayBuffer;
 }
 
 const useAudioExtractor = () => {

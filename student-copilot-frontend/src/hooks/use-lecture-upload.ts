@@ -128,10 +128,12 @@ export const useLectureUpload = () => {
 
       console.log("Audio Segments: ", audioSegments);
 
+      setUploadProgress(25);
+
       const results = await Promise.all(
         audioSegments.map(async (segment, index) => {
           const { storageId, embedding } = await transcribeAudio({
-            audioChunk: new Uint8Array(segment.audioData).buffer,
+            audioChunk: segment.audioData,
             chunkIndex: index,
           });
 
@@ -194,10 +196,8 @@ export const useLectureUpload = () => {
 
       const results = await Promise.all(
         audioSegments.map(async (segment, index) => {
-          const audioData = Float32Array.from(segment.audioData);
-          const buffer = audioData.buffer;
           const { storageId, embedding } = await transcribeAudio({
-            audioChunk: buffer,
+            audioChunk: segment.audioData,
             chunkIndex: index,
           });
 
