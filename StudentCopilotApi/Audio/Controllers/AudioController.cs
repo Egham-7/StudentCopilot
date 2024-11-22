@@ -54,7 +54,6 @@ namespace StudentCopilotApi.Audio.Controllers
                         "audio",
                         Path.GetFileName(audioPath)
                     );
-                    audioStream.Close();
 
                     _logger.LogInformation(
                         "Video converted to audio successfully. Processing audio segmentation"
