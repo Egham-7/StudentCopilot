@@ -16,6 +16,8 @@ namespace StudentCopilotApi.Audio.Services
             MaxDegreeOfParallelism = Environment.ProcessorCount,
         };
 
+        private const int AVERAGE_CHARS_PER_SECOND = 15; // Approximate characters spoken per second
+
         public async Task<IEnumerable<AudioSegment>> SegmentAudioAsync(
             IFormFile file,
             int maxTokensPerSegment
@@ -49,8 +51,12 @@ namespace StudentCopilotApi.Audio.Services
                     .ProcessAsynchronously();
 
                 var samples = await ReadWavFileAsync(tempWavPath);
+
+                // Calculate maximum segment duration based on maxTokensPerSegment
+                double maxSegmentDuration =
+                    (maxTokensPerSegment * 4) / (double)AVERAGE_CHARS_PER_SECOND;
                 var segmentBoundaries = await Task.Run(
-                    () => FindSegmentBoundariesParallel(samples)
+                    () => FindSegmentBoundariesParallel(samples, maxSegmentDuration)
                 );
 
                 return await CreateSegmentsParallel(samples, segmentBoundaries);
@@ -102,7 +108,8 @@ namespace StudentCopilotApi.Audio.Services
         }
 
         private List<(TimeSpan Start, TimeSpan End)> FindSegmentBoundariesParallel(
-            List<float> samples
+            List<float> samples,
+            double maxSegmentDuration
         )
         {
             var boundaries = new ConcurrentBag<(TimeSpan Start, TimeSpan End)>();
@@ -116,10 +123,20 @@ namespace StudentCopilotApi.Audio.Services
                     var start = range.Item1;
                     var end = range.Item2;
                     var currentSegmentStart = TimeSpan.FromSeconds((double)start / _sampleRate);
+                    var lastBoundaryTime = currentSegmentStart;
 
                     for (int i = start; i < end; i++)
                     {
                         var currentTime = TimeSpan.FromSeconds((double)i / _sampleRate);
+
+                        // Force split if maximum segment duration is exceeded
+                        if ((currentTime - lastBoundaryTime).TotalSeconds >= maxSegmentDuration)
+                        {
+                            boundaries.Add((lastBoundaryTime, currentTime));
+                            lastBoundaryTime = currentTime;
+                            continue;
+                        }
+
                         if (Math.Abs(samples[i]) < _silenceThreshold)
                         {
                             var silenceDuration = 0;
@@ -131,10 +148,18 @@ namespace StudentCopilotApi.Audio.Services
 
                             if (silenceDuration >= (_sampleRate * _minSilenceDuration / 1000))
                             {
-                                boundaries.Add((currentSegmentStart, currentTime));
-                                currentSegmentStart = currentTime;
+                                var silenceEndTime = TimeSpan.FromSeconds((double)i / _sampleRate);
+                                boundaries.Add((lastBoundaryTime, silenceEndTime));
+                                lastBoundaryTime = silenceEndTime;
                             }
                         }
+                    }
+
+                    // Add final segment if needed
+                    var finalTime = TimeSpan.FromSeconds((double)end / _sampleRate);
+                    if (lastBoundaryTime < finalTime)
+                    {
+                        boundaries.Add((lastBoundaryTime, finalTime));
                     }
                 }
             );
