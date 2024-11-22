@@ -42,7 +42,7 @@ namespace StudentCopilotApi.Audio.Services
 
                 // Convert to WAV using FFmpeg
 
-
+                // Update the FFmpeg conversion parameters
                 await FFMpegArguments
                     .FromFileInput(tempInputPath)
                     .OutputToFile(
@@ -53,9 +53,9 @@ namespace StudentCopilotApi.Audio.Services
                                 .WithAudioSamplingRate(_sampleRate)
                                 .WithAudioCodec("pcm_s16le")
                                 .WithCustomArgument("-ac 1")
-                                .WithCustomArgument("-ar 16000") // Explicitly set sample rate
-                                .WithCustomArgument("-bits_per_raw_sample 16") // Ensure 16-bit depth
-                    ) // Set mono channel
+                                .WithCustomArgument("-f wav") // Explicitly specify WAV format
+                                .WithCustomArgument("-bits_per_raw_sample 16")
+                    )
                     .ProcessAsynchronously();
 
                 var samples = await ReadWavFileAsync(tempWavPath);

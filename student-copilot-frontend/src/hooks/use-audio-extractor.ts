@@ -12,6 +12,8 @@ interface AudioSegment {
 const useAudioExtractor = () => {
   const { isSignedIn, isLoaded, getToken } = useAuth();
   const MAX_TOKENS_PER_SEGMENT = 16384;
+  const MAX_CONTENT_LENGTH = 200 * 1024 * 1024; // 200 MB
+  const TIMEOUT_MILLISECONDS = 300000;
 
   const extractAudioFromVideo = useCallback(
     async (file: File): Promise<AudioSegment[]> => {
@@ -35,15 +37,15 @@ const useAudioExtractor = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-          timeout: 300000,
-          maxContentLength: Infinity,
-          maxBodyLength: Infinity,
+          timeout: TIMEOUT_MILLISECONDS,
+          maxContentLength: MAX_CONTENT_LENGTH,
+          maxBodyLength: MAX_CONTENT_LENGTH,
         },
       );
 
       return response.data;
     },
-    [isSignedIn, isLoaded, getToken],
+    [isSignedIn, isLoaded, getToken, MAX_CONTENT_LENGTH, TIMEOUT_MILLISECONDS],
   );
 
   return {
