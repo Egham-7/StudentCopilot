@@ -11,7 +11,7 @@ namespace StudentCopilotApi.Audio.Services
         private readonly int _sampleRate = 16000;
         private readonly float _silenceThreshold = 0.01f;
         private readonly int _minSilenceDuration = 500;
-        private readonly int _bufferSize = 4096;
+        private const int MAX_SEGMENT_SIZE_BYTES = 4 * 1024 * 1024;
         private readonly ILogger<AudioSegmentationService> _logger;
         private readonly ParallelOptions _parallelOptions = new()
         {
@@ -19,6 +19,7 @@ namespace StudentCopilotApi.Audio.Services
         };
 
         private const int AVERAGE_CHARS_PER_SECOND = 15; // Approximate characters spoken per second
+
 
         public AudioSegmentationService(ILogger<AudioSegmentationService> logger)
         {
@@ -126,14 +127,24 @@ namespace StudentCopilotApi.Audio.Services
             return samples;
         }
 
+
         private List<(TimeSpan Start, TimeSpan End)> FindSegmentBoundariesParallel(
-            List<float> samples,
-            double maxSegmentDuration
-        )
+    List<float> samples,
+    double maxSegmentDuration)
         {
             var boundaries = new ConcurrentBag<(TimeSpan Start, TimeSpan End)>();
             var minSegmentSamples = (int)(_sampleRate * 2); // Minimum 2 seconds per segment
-            var maxSegmentSamples = (int)(_sampleRate * maxSegmentDuration);
+
+            // Calculate max samples based on 5MB limit
+            // WAV format: 16-bit samples = 2 bytes per sample
+            // Including WAV header (44 bytes)
+            var maxSamplesFor5MB = (MAX_SEGMENT_SIZE_BYTES - 44) / 2;
+
+            // Use the smaller of duration-based or size-based limits
+            var maxSegmentSamples = Math.Min(
+                (int)(_sampleRate * maxSegmentDuration),
+                maxSamplesFor5MB
+            );
 
             var currentStart = 0;
             var sampleCount = samples.Count;
@@ -160,7 +171,6 @@ namespace StudentCopilotApi.Audio.Services
                             silenceDuration++;
                             j++;
                         }
-
                         if (silenceDuration >= (_sampleRate * _minSilenceDuration / 1000))
                         {
                             bestSplitPoint = j;
@@ -178,6 +188,7 @@ namespace StudentCopilotApi.Audio.Services
 
             return boundaries.OrderBy(x => x.Start).ToList();
         }
+
 
         private async Task<IEnumerable<AudioSegment>> CreateSegmentsParallel(
             List<float> samples,
