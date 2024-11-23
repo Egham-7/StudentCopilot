@@ -5,7 +5,7 @@ FROM node:23-alpine AS build
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@latest
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
