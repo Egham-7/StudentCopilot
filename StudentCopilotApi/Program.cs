@@ -58,6 +58,8 @@ builder.Services.AddHealthChecks()
 
 
 
+
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(x =>
     {
@@ -80,10 +82,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             logger.LogInformation("Configuring development environment JWT validation");
 
-            var developerParties = builder.Configuration
-                .GetSection("Clerk:DeveloperAuthorizedParties")
-                .Get<Dictionary<string, string>>() ?? new Dictionary<string, string>();
+            var developerParties = builder.Configuration["Clerk:DeveloperAuthorizedParties"]?.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>();
             var defaultParty = builder.Configuration["Clerk:DefaultAuthorizedParty"];
+
+            logger.LogInformation("Developer Parties {parties}: ", developerParties.ToString());
 
             x.Events = new JwtBearerEvents
             {
@@ -95,7 +97,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     logger.LogInformation("Token validation attempt - Authorized Party: {AuthorizedParty}", authorizedParty);
 
                     if (authorizedParty != null &&
-                        (developerParties.ContainsValue(authorizedParty) ||
+                        (developerParties.Contains(authorizedParty) ||
                          authorizedParty == defaultParty))
                     {
                         logger.LogInformation("Token validated successfully for authorized party: {AuthorizedParty}", authorizedParty);
