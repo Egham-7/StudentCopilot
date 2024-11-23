@@ -197,8 +197,6 @@ export const useLectureUpload = () => {
     setUploadProgress: UploadProgressSetter,
   ) => {
     if (isReady) {
-      console.log("File: ", file);
-
       // Audio extraction: 0-15%
       setUploadProgress(0);
       const audioFile = await extractAudio(file);
@@ -207,7 +205,6 @@ export const useLectureUpload = () => {
       // Audio segmentation: 15-25%
       const audioSegments = await segmentAudio(audioFile);
       setUploadProgress(25);
-      console.log("Audio Segments: ", audioSegments);
 
       // Transcription and embedding: 25-85%
       const transcriptionProgressRange = 60; // 85 - 25
@@ -290,8 +287,9 @@ export const useLectureUpload = () => {
 
       return success;
     } catch (error) {
-      console.error("Upload failed:", error);
-      showErrorToast();
+      if (error instanceof Error) {
+        showErrorToast(error.message);
+      }
       return false;
     } finally {
       setIsLoading(false);
