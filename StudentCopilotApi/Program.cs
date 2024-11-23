@@ -5,6 +5,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using StudentCopilotApi.youtube.Services;
 using StudentCopilotApi.Audio.Services;
 using StudentCopilotApi.Audio.Interfaces;
+using StudentCopilotApi.Audio.Validators;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +20,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddLogging();
 
+// Validators for Controllers
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<AudioSegmentationRequestValidator>();
+
 // HTTP and API services
 builder.Services.AddHttpClient();
 builder.Services.AddClerkApiClient(config =>
@@ -27,7 +34,7 @@ builder.Services.AddClerkApiClient(config =>
 // Register application services
 builder.Services.AddScoped<YoutubeTranscriptService>();
 builder.Services.AddScoped<IAudioSegmentationService, AudioSegmentationService>();
-builder.Services.AddScoped<IVideoToAudioService>(serviceProvider =>
+builder.Services.AddScoped<IVideoToAudioService>(provider =>
 {
     var ffmpegPath = builder.Configuration["FFmpeg:Path"] ?? "ffmpeg";
     return new VideoToAudioService(ffmpegPath);
@@ -129,6 +136,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         }
     });
 
+// HTTP Logging
+builder.Services.AddHttpLogging(logging =>
+{
+    logging.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+    logging.RequestHeaders.Add("Authorization");
+    logging.RequestHeaders.Add("Content-Type");
+    logging.RequestHeaders.Add("Content-Length");
+    logging.MediaTypeOptions.AddText("application/json");
+    logging.RequestBodyLogLimit = 4096;
+    logging.ResponseBodyLogLimit = 4096;
+});
+
 
 var app = builder.Build();
 
@@ -138,6 +157,15 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    builder.Configuration.AddUserSecrets<Program>();
+    // Add detailed logging configuration
+    builder.Services.AddLogging(logging =>
+    {
+        logging.ClearProviders();
+        logging.AddConsole();
+        logging.AddDebug();
+        logging.SetMinimumLevel(LogLevel.Trace);
+    });
 }
 
 // Logging configuration status
