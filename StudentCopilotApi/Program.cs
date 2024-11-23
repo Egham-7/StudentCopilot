@@ -131,6 +131,7 @@ if (app.Environment.IsDevelopment())
 // Logging configuration status
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Configuration Status:");
+logger.LogInformation("Mode: {Mode}", app.Environment.ToString());
 logger.LogInformation("Clerk Authority: {Authority}", builder.Configuration["Clerk:Authority"] ?? "NOT SET");
 logger.LogInformation("Clerk Secret Key: {HasSecret}", !string.IsNullOrEmpty(builder.Configuration["Clerk:SecretKey"]));
 logger.LogInformation("Clerk Authorized Party: {HasParty}", !string.IsNullOrEmpty(builder.Configuration["Clerk:AuthorizedParty"]));
