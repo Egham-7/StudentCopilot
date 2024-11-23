@@ -10,12 +10,8 @@ const useExtractAudio = () => {
 
   const extractAudio = useCallback(
     async (file: File): Promise<File> => {
-      if (!isSignedIn && !isLoaded) {
+      if (!isSignedIn || !isLoaded) {
         throw new Error("Must be signed in or loaded.");
-      }
-
-      if (!file.type.startsWith("video/")) {
-        throw new Error("File must be a video file.");
       }
 
       const formData = new FormData();
@@ -25,7 +21,7 @@ const useExtractAudio = () => {
         template: "convex",
       });
 
-      const response = await axios.post<File>(
+      const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/Audio/convert`,
         formData,
         {
@@ -36,12 +32,18 @@ const useExtractAudio = () => {
           timeout: TIMEOUT_MILLISECONDS,
           maxContentLength: MAX_CONTENT_LENGTH,
           maxBodyLength: MAX_CONTENT_LENGTH,
+          responseType: "blob",
         },
       );
 
-      const videoFile = response.data;
+      const audioBlob = new Blob([response.data], { type: "audio/mp3" });
+      const audioFile = new File(
+        [audioBlob],
+        `${file.name.split(".")[0]}.mp3`,
+        { type: "audio/mp3" },
+      );
 
-      return videoFile;
+      return audioFile;
     },
     [isLoaded, isSignedIn, getToken, MAX_CONTENT_LENGTH],
   );

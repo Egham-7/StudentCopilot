@@ -127,12 +127,13 @@ export const useLectureUpload = () => {
     setUploadProgress: UploadProgressSetter,
   ): Promise<void> => {
     if (isReady) {
+      // Initial segmentation - 0% to 20%
+      setUploadProgress(10);
       const audioSegments = await segmentAudio(file);
+      setUploadProgress(20);
 
-      console.log("Audio Segments: ", audioSegments);
-
-      setUploadProgress(25);
-
+      // Transcription phase - 20% to 70%
+      const transcriptionProgressPerSegment = 50 / audioSegments.length;
       const results = await Promise.all(
         audioSegments.map(async (segment, index) => {
           const { storageId, embedding } = await transcribeAudio({
@@ -140,20 +141,18 @@ export const useLectureUpload = () => {
             chunkIndex: index,
           });
 
-          setUploadProgress(
-            25 +
-              Math.min(
-                50,
-                Math.floor(((index + 1) / audioSegments.length) * 50),
-              ),
-          );
+          // Calculate progress based on completed segments
+          const transcriptionProgress =
+            20 + (index + 1) * transcriptionProgressPerSegment;
+          setUploadProgress(Math.floor(transcriptionProgress));
 
           return { storageId, embedding };
         }),
       );
 
+      // Processing embeddings - 70% to 80%
+      setUploadProgress(75);
       const storageIds = results.map((r) => r.storageId);
-
       const averageEmbedding = new Array(1536)
         .fill(0)
         .map(
@@ -165,13 +164,16 @@ export const useLectureUpload = () => {
       const magnitude = Math.sqrt(
         averageEmbedding.reduce((sum, val) => sum + val * val, 0),
       );
-
       const normalizedEmbedding = averageEmbedding.map(
         (val) => val / magnitude,
       );
+      setUploadProgress(80);
 
+      // Final storage phase - 80% to 95%
       const storageId = await uploadFile(file, file.type);
+      setUploadProgress(90);
 
+      // Storing lecture data - 95% to 100%
       await storeLecture({
         title: values.title,
         description: values.description,
@@ -184,6 +186,8 @@ export const useLectureUpload = () => {
         image: undefined,
       });
     }
+
+    setUploadProgress(100);
   };
 
   const handleVideoUpload = async (
@@ -193,12 +197,22 @@ export const useLectureUpload = () => {
     setUploadProgress: UploadProgressSetter,
   ) => {
     if (isReady) {
+      console.log("File: ", file);
+
+      // Audio extraction: 0-15%
+      setUploadProgress(0);
       const audioFile = await extractAudio(file);
-      setUploadProgress(10);
+      setUploadProgress(15);
 
+      // Audio segmentation: 15-25%
       const audioSegments = await segmentAudio(audioFile);
-
+      setUploadProgress(25);
       console.log("Audio Segments: ", audioSegments);
+
+      // Transcription and embedding: 25-85%
+      const transcriptionProgressRange = 60; // 85 - 25
+      const progressPerSegment =
+        transcriptionProgressRange / audioSegments.length;
 
       const results = await Promise.all(
         audioSegments.map(async (segment, index) => {
@@ -207,20 +221,13 @@ export const useLectureUpload = () => {
             chunkIndex: index,
           });
 
-          setUploadProgress(
-            25 +
-              Math.min(
-                50,
-                Math.floor(((index + 1) / audioSegments.length) * 50),
-              ),
-          );
-
+          setUploadProgress(25 + Math.floor((index + 1) * progressPerSegment));
           return { storageId, embedding };
         }),
       );
 
+      // Calculate embeddings: 85-90%
       const storageIds = results.map((r) => r.storageId);
-
       const averageEmbedding = new Array(1536)
         .fill(0)
         .map(
@@ -232,13 +239,14 @@ export const useLectureUpload = () => {
       const magnitude = Math.sqrt(
         averageEmbedding.reduce((sum, val) => sum + val * val, 0),
       );
-
       const normalizedEmbedding = averageEmbedding.map(
         (val) => val / magnitude,
       );
-
-      const videoId = await uploadFile(file, file.type);
       setUploadProgress(90);
+
+      // Final storage: 90-100%
+      const videoId = await uploadFile(file, file.type);
+      setUploadProgress(95);
 
       await storeLecture({
         title: values.title,
@@ -251,7 +259,6 @@ export const useLectureUpload = () => {
         fileType: "video",
         image: undefined,
       });
-
       setUploadProgress(100);
     }
   };
