@@ -56,7 +56,6 @@ builder.Services.AddHealthChecks()
             : HealthCheckResult.Unhealthy("Missing configuration");
     });
 
-var app = builder.Build();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(x =>
@@ -72,7 +71,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true
         };
 
-        if (app.Environment.IsDevelopment())
+        if (builder.Environment.IsDevelopment())
         {
             var developerParties = builder.Configuration
                 .GetSection("Clerk:DeveloperAuthorizedParties")
@@ -107,6 +106,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         }
     });
 
+
+var app = builder.Build();
 
 
 // Development specific configuration
