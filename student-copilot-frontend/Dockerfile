@@ -22,9 +22,14 @@ ARG VITE_CLERK_SECRET_KEY
 ARG VITE_CLERK_SIGN_IN_FORCE_REDIRECT_URL
 ARG VITE_CLERK_SIGN_UP_FORCE_REDIRECT_URL
 ARG VITE_CONVEX_URL
+ARG ENVIRONMENT=production
 
-# Build the app and deploy Convex functions
-RUN pnpm dlx convex deploy --cmd 'pnpm vite build'
+# Build the app and deploy Convex functions with conditional preview flag
+RUN if [ "$ENVIRONMENT" = "staging" ]; then \
+  pnpm dlx convex deploy --preview-create staging --cmd 'pnpm vite build'; \
+  else \
+  pnpm dlx convex deploy --cmd 'pnpm vite build'; \
+  fi
 
 # Production stage
 FROM nginx:alpine
