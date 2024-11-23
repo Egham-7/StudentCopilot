@@ -15,11 +15,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview-alpine
 WORKDIR /app
 COPY --from=build /app .
 
-# Install FFmpeg with best practices
-RUN apt-get update && \
-  apt-get install -y --no-install-recommends \
-  ffmpeg=7:4.4.2-0ubuntu0.22.04.1 && \
-  rm -rf /var/lib/apt/lists/*
+# Install FFmpeg with Alpine package manager
+RUN apk add --no-cache ffmpeg
 
 # Configure container security
 USER app
