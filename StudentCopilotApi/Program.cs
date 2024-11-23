@@ -8,8 +8,22 @@ using StudentCopilotApi.Audio.Interfaces;
 using StudentCopilotApi.Audio.Validators;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Http.Features;
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 209715200; // 200 MB in bytes
+});
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 209715200; // 200 MB in bytes
+});
 
 // Configuration setup
 builder.Configuration.AddEnvironmentVariables();
