@@ -19,62 +19,99 @@ builder.Services.AddLogging();
 builder.Services.AddHttpClient();
 builder.Services.AddClerkApiClient(config =>
 {
-  config.SecretKey = builder.Configuration["Clerk:SecretKey"]!;
+    config.SecretKey = builder.Configuration["Clerk:SecretKey"]!;
 });
 
 // Register application services
 builder.Services.AddScoped<YoutubeTranscriptService>();
 
-// Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(x =>
-    {
-      x.Authority = builder.Configuration["Clerk:Authority"];
-      x.TokenValidationParameters = new TokenValidationParameters()
-      {
-        ValidateAudience = true,
-        ValidAudience = "convex",
-        NameClaimType = "name",
-        ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["Clerk:Authority"]
-      };
-    });
 
 // CORS configuration
 builder.Services.AddCors(options =>
 {
-  options.AddPolicy("MyAllowedOrigins",
-      policy =>
-      {
-        policy.WithOrigins(
-              "https://grandiose-caiman-959.convex.cloud",
-              "http://grandiose-caiman-959.convex.cloud"
-          )
-          .AllowAnyHeader()
-          .AllowAnyMethod();
-      });
+    options.AddPolicy("MyAllowedOrigins",
+        policy =>
+        {
+            policy.WithOrigins(
+                builder.Configuration["Cors:AllowedOrigins"]!
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+        });
 });
 
 // Health checks
 builder.Services.AddHealthChecks()
     .AddCheck("Configuration", () =>
     {
-      var configValid = !string.IsNullOrEmpty(builder.Configuration["Clerk:Authority"]) &&
-                       !string.IsNullOrEmpty(builder.Configuration["Clerk:SecretKey"]) &&
-                       !string.IsNullOrEmpty(builder.Configuration["Clerk:AuthorizedParty"]);
+        var configValid = !string.IsNullOrEmpty(builder.Configuration["Clerk:Authority"]) &&
+                         !string.IsNullOrEmpty(builder.Configuration["Clerk:SecretKey"]) &&
+                         !string.IsNullOrEmpty(builder.Configuration["Cors:AllowedOrigins"]) &&
+                         !string.IsNullOrEmpty(builder.Configuration["Clerk:AuthorizedParty"]);
 
-      return configValid
-          ? HealthCheckResult.Healthy("Configuration loaded")
-          : HealthCheckResult.Unhealthy("Missing configuration");
+        return configValid
+            ? HealthCheckResult.Healthy("Configuration loaded")
+            : HealthCheckResult.Unhealthy("Missing configuration");
     });
 
 var app = builder.Build();
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(x =>
+    {
+        x.Authority = builder.Configuration["Clerk:Authority"];
+        x.TokenValidationParameters = new TokenValidationParameters()
+        {
+            ValidateAudience = true,
+            ValidAudience = "convex",
+            NameClaimType = "name",
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Clerk:Authority"],
+            ValidateIssuerSigningKey = true
+        };
+
+        if (app.Environment.IsDevelopment())
+        {
+            var developerParties = builder.Configuration
+                .GetSection("Clerk:DeveloperAuthorizedParties")
+                .Get<Dictionary<string, string>>() ?? new Dictionary<string, string>();
+
+            var defaultParty = builder.Configuration["Clerk:DefaultAuthorizedParty"];
+
+            x.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = context =>
+                {
+                    var authorizedParty = context.Principal?.Claims
+                        .FirstOrDefault(c => c.Type == "azp")?.Value;
+
+                    if (authorizedParty != null &&
+                        (developerParties.ContainsValue(authorizedParty) ||
+                         authorizedParty == defaultParty))
+                    {
+                        return Task.CompletedTask;
+                    }
+
+                    context.Fail("Invalid authorized party");
+                    return Task.CompletedTask;
+                }
+            };
+        }
+        else
+        {
+            // Production configuration
+            x.TokenValidationParameters.ValidateAudience = true;
+            x.TokenValidationParameters.ValidAudience = builder.Configuration["Clerk:AuthorizedParty"];
+        }
+    });
+
+
+
 // Development specific configuration
 if (app.Environment.IsDevelopment())
 {
-  app.UseSwagger();
-  app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 // Logging configuration status
