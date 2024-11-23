@@ -9,7 +9,8 @@ const ACCEPTED_FILE_TYPES = [
   "audio/wav",
   "audio/ogg",
   "application/pdf",
-  "video/mp4"
+  "video/mp4",
+  "video/quicktime"
 ];
 
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200 MB in bytes

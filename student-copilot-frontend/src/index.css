@@ -67,3 +67,18 @@
     @apply font-heading;
   }
 }
+
+
+
+.perspective-1000 {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}

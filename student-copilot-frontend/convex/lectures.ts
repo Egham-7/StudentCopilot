@@ -415,3 +415,15 @@ export const fetchTranscription = internalAction({
     return transcription.join("\n");
   },
 });
+
+export const getLecture = internalQuery({
+  args: { lectureId: v.id("lectures") },
+  handler: async (ctx, args) => {
+    const lecture = await ctx.db.get(args.lectureId);
+    if (!lecture) {
+      throw new Error("Lecture not found");
+    }
+    return lecture;
+  },
+});
+
