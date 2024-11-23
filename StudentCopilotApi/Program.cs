@@ -57,10 +57,15 @@ builder.Services.AddHealthChecks()
     });
 
 
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(x =>
     {
+        var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
+
         x.Authority = builder.Configuration["Clerk:Authority"];
+        logger.LogInformation("Configuring JWT authentication with Authority: {Authority}", x.Authority);
+
         x.TokenValidationParameters = new TokenValidationParameters()
         {
             ValidateAudience = true,
@@ -73,10 +78,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
         if (builder.Environment.IsDevelopment())
         {
+            logger.LogInformation("Configuring development environment JWT validation");
+
             var developerParties = builder.Configuration
                 .GetSection("Clerk:DeveloperAuthorizedParties")
                 .Get<Dictionary<string, string>>() ?? new Dictionary<string, string>();
-
             var defaultParty = builder.Configuration["Clerk:DefaultAuthorizedParty"];
 
             x.Events = new JwtBearerEvents
@@ -86,13 +92,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     var authorizedParty = context.Principal?.Claims
                         .FirstOrDefault(c => c.Type == "azp")?.Value;
 
+                    logger.LogInformation("Token validation attempt - Authorized Party: {AuthorizedParty}", authorizedParty);
+
                     if (authorizedParty != null &&
                         (developerParties.ContainsValue(authorizedParty) ||
                          authorizedParty == defaultParty))
                     {
+                        logger.LogInformation("Token validated successfully for authorized party: {AuthorizedParty}", authorizedParty);
                         return Task.CompletedTask;
                     }
 
+                    logger.LogWarning("Token validation failed - Invalid authorized party: {AuthorizedParty}", authorizedParty);
                     context.Fail("Invalid authorized party");
                     return Task.CompletedTask;
                 }
@@ -100,9 +110,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         }
         else
         {
-            // Production configuration
+            logger.LogInformation("Configuring production environment JWT validation");
             x.TokenValidationParameters.ValidateAudience = true;
             x.TokenValidationParameters.ValidAudience = builder.Configuration["Clerk:AuthorizedParty"];
+            logger.LogInformation("Production ValidAudience set to: {Audience}", x.TokenValidationParameters.ValidAudience);
         }
     });
 
