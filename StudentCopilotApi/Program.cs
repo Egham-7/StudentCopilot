@@ -29,11 +29,13 @@ builder.Services.AddScoped<YoutubeTranscriptService>();
 // CORS configuration
 builder.Services.AddCors(options =>
 {
+    var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]!
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     options.AddPolicy("MyAllowedOrigins",
         policy =>
         {
             policy.WithOrigins(
-                builder.Configuration["Cors:AllowedOrigins"]!
+                allowedOrigins
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
