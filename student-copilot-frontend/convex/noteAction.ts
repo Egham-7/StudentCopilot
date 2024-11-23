@@ -22,14 +22,14 @@ export const fetchAndProcessTranscriptions = internalAction({
       v.literal("auditory"),
       v.literal("visual"),
       v.literal("kinesthetic"),
-      v.literal("analytical")
+      v.literal("analytical"),
     ),
     course: v.string(),
     levelOfStudy: v.union(
       v.literal("Bachelors"),
       v.literal("Associate"),
       v.literal("Masters"),
-      v.literal("PhD")
+      v.literal("PhD"),
     ),
   },
 
@@ -55,7 +55,7 @@ export const fetchAndProcessTranscriptions = internalAction({
         transcriptionChunks.push(chunkText);
       }
     }
-    console.log(transcriptionChunks);
+
     // Schedule the note generation task
     await ctx.scheduler.runAfter(0, internal.noteAction.generateNotes, {
       transcriptionChunks,
@@ -77,14 +77,14 @@ export const generateNotes = internalAction({
       v.literal("auditory"),
       v.literal("visual"),
       v.literal("kinesthetic"),
-      v.literal("analytical")
+      v.literal("analytical"),
     ),
     course: v.string(),
     levelOfStudy: v.union(
       v.literal("Bachelors"),
       v.literal("Associate"),
       v.literal("Masters"),
-      v.literal("PhD")
+      v.literal("PhD"),
     ),
   },
   handler: async (ctx, args) => {
@@ -95,6 +95,7 @@ export const generateNotes = internalAction({
       course,
       levelOfStudy,
     } = args;
+
 
     // Initialize a memory manager for saving the processing state
     const memoryManager = new MemorySaver();
@@ -131,21 +132,23 @@ export const generateNotes = internalAction({
         // Invoke the application graph with the current chunk data and config
         const processingResult = await appGraph.invoke(processingData, executionConfig);
 
-        // Extract the generated note from the result and add it to the noteBlocks array
+        // Convert the processed note into JSON format for storage
+        const finalResultJson = JSON.stringify(processingResult.note);
 
         // Create a blob from the JSON data for storage
-        const noteChunkBlob = new Blob(processingResult.note, {type:"application/json"});
-        
+        const noteChunkBlob = new Blob([finalResultJson], { type: "application/json" });
+
         // Store the blob in storage and retrieve the storage ID
         const storageId = await ctx.storage.store(noteChunkBlob);
 
         // Generate an embedding for the current chunk and return the storage ID with the embedding
         const chunkEmbedding = await generateEmbedding(JSON.stringify(processingResult.note));
 
-        return { storageId, chunkEmbedding };
+        return { storageId, chunkEmbedding }; 
       });
     });
-    
+
+
     const processedChunks = await Promise.all(chunkProcessingPromises);
 
     const noteChunkIds: Id<"_storage">[] = [];
@@ -161,7 +164,7 @@ export const generateNotes = internalAction({
     for (let i = 0; i < 1536; i++) {
       const sum = allEmbeddings.reduce(
         (acc, embedding) => acc + (embedding[i] || 0),
-        0
+        0,
       );
       concatenatedEmbedding.push(sum / allEmbeddings.length);
     }
@@ -185,8 +188,6 @@ export function flattenNotes(blocks: TNoteBlock[]): any[] {
     return [...acc, block];
   }, []);
 }
-
-
 
 export const getNoteById = action({
   args: { noteId: v.id("notes") },
@@ -219,7 +220,7 @@ export const getNoteById = action({
     }
 
     // Fetch content for each text chunk
-    const textContent = await Promise.all(
+    const content = await Promise.all(
       note.textChunks.map(async (chunkId: string) => {
         const url = await ctx.storage.getUrl(chunkId as Id<"_storage">);
         if (!url) {
@@ -227,16 +228,17 @@ export const getNoteById = action({
         }
         const response = await fetch(url);
         return response.json();
-      })
+      }),
     );
 
     return {
       ...note,
       content: {
-        time: Date.now(),
-        blocks: flattenNotes(textContent),
-        version: "2.11.10",
-      },
+        time : Date.now(),
+        blocks: flattenNotes(content),
+        version: "2.11.10"
+      }
     };
   },
 });
+

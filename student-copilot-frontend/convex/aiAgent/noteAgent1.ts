@@ -118,7 +118,7 @@ async function collector(_state: typeof InputAnnotation.State): Promise<typeof O
       const message = _state.messages[index];
       const msgStr = message.content as string;
       const htmlContent = await marked(msgStr);
-      console.log(htmlContent);
+      
 
       if (index === _state.messages.length - 3 && index == 1) {
         // Add an image block
@@ -267,11 +267,12 @@ export async function planLectureNotes(
 
 const decisionLogic = (state: typeof InputAnnotation.State) => {
     // Check if the first message content is "Yes"
-    /*
+    
     if (state.messages[0]?.content === "Yes") {
         return "generate_image";  // Transition to generate_title
-    } else {*/
+    } else {
         return "generate_title";  // Transition to generate_paragraph
+    }
     
 };
 
