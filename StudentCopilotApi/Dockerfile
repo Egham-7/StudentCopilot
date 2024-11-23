@@ -1,22 +1,22 @@
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-preview-alpine AS build
 WORKDIR /src
+
 # Copy csproj and restore dependencies
 COPY *.csproj .
 RUN dotnet restore
+
 # Copy remaining source code
 COPY . .
 RUN dotnet publish -c Release -o /app
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview-alpine
 WORKDIR /app
 COPY --from=build /app .
 
-# Install yt-dlp
-RUN apt-get update && \
-  apt-get install -y python3-pip && \
-  pip3 install yt-dlp
+# Install FFmpeg with Alpine package manager
+RUN apk add --no-cache ffmpeg
 
 # Configure container security
 USER app
