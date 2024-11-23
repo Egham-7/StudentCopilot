@@ -40,9 +40,6 @@ builder.Services.AddScoped<IVideoToAudioService>(provider =>
     return new VideoToAudioService(ffmpegPath);
 });
 
-
-
-
 // CORS configuration
 builder.Services.AddCors(options =>
 {
@@ -72,8 +69,6 @@ builder.Services.AddHealthChecks()
             ? HealthCheckResult.Healthy("Configuration loaded")
             : HealthCheckResult.Unhealthy("Missing configuration");
     });
-
-
 
 
 
@@ -153,12 +148,11 @@ var app = builder.Build();
 
 
 // Development specific configuration
+
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    builder.Configuration.AddUserSecrets<Program>();
-    // Add detailed logging configuration
+    // Configure logging BEFORE building the application
     builder.Services.AddLogging(logging =>
     {
         logging.ClearProviders();
@@ -166,6 +160,10 @@ if (app.Environment.IsDevelopment())
         logging.AddDebug();
         logging.SetMinimumLevel(LogLevel.Trace);
     });
+
+    app.UseSwagger();
+    app.UseSwaggerUI();
+    builder.Configuration.AddUserSecrets<Program>();
 }
 
 // Logging configuration status
