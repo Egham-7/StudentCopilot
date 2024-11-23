@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using StudentCopilotApi.youtube.Services;
+using StudentCopilotApi.Audio.Services;
+using StudentCopilotApi.Audio.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +26,14 @@ builder.Services.AddClerkApiClient(config =>
 
 // Register application services
 builder.Services.AddScoped<YoutubeTranscriptService>();
+builder.Services.AddScoped<IAudioSegmentationService, AudioSegmentationService>();
+builder.Services.AddScoped<IVideoToAudioService>(serviceProvider =>
+{
+    var ffmpegPath = builder.Configuration["FFmpeg:Path"] ?? "ffmpeg";
+    return new VideoToAudioService(ffmpegPath);
+});
+
+
 
 
 // CORS configuration
