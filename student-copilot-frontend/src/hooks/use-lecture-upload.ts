@@ -10,7 +10,8 @@ import { UploadProgressSetter } from "@/lib/lecture-upload-utils";
 import { createFormSchema } from "@/lib/ui_utils";
 import { TEXT_SPLITTER_CONFIG } from "@/lib/lecture-upload-utils";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import useAudioExtractor from "./use-audio-extractor";
+import useSegmentAudio from "./use-segment-audio";
+import useExtractAudio from "./use-extract-audio";
 
 export const useLectureUpload = () => {
   const { toast } = useToast();
@@ -23,7 +24,9 @@ export const useLectureUpload = () => {
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
   const { getUploader } = useWebsiteUploaders();
 
-  const { extractAudioFromVideo, isReady } = useAudioExtractor();
+  const { segmentAudio, isReady } = useSegmentAudio();
+
+  const { extractAudio } = useExtractAudio();
 
   const uploadFile = async (
     file: File,
@@ -124,7 +127,7 @@ export const useLectureUpload = () => {
     setUploadProgress: UploadProgressSetter,
   ): Promise<void> => {
     if (isReady) {
-      const audioSegments = await extractAudioFromVideo(file);
+      const audioSegments = await segmentAudio(file);
 
       console.log("Audio Segments: ", audioSegments);
 
@@ -190,9 +193,12 @@ export const useLectureUpload = () => {
     setUploadProgress: UploadProgressSetter,
   ) => {
     if (isReady) {
-      const audioSegments = await extractAudioFromVideo(file);
+      const audioFile = await extractAudio(file);
+      setUploadProgress(10);
+
+      const audioSegments = await segmentAudio(audioFile);
+
       console.log("Audio Segments: ", audioSegments);
-      setUploadProgress(25);
 
       const results = await Promise.all(
         audioSegments.map(async (segment, index) => {

@@ -38,33 +38,8 @@ namespace StudentCopilotApi.Audio.Controllers
                 maxTokensPerSegment
             );
 
-            string? audioPath = null;
             try
             {
-                if (IsVideoFile(file.FileName))
-                {
-                    _logger.LogInformation("Processing video file: {FileName}", file.FileName);
-                    audioPath = await _videoToAudioService.ConvertVideoToAudioAsync(file);
-
-                    using var audioStream = System.IO.File.OpenRead(audioPath);
-                    var audioFile = new FormFile(
-                        audioStream,
-                        0,
-                        audioStream.Length,
-                        "audio",
-                        Path.GetFileName(audioPath)
-                    );
-
-                    _logger.LogInformation(
-                        "Video converted to audio successfully. Processing audio segmentation"
-                    );
-                    var result = await _audioSegmentationService.SegmentAudioAsync(
-                        audioFile,
-                        maxTokensPerSegment
-                    );
-                    _logger.LogInformation("Audio segmentation completed successfully");
-                    return Ok(result);
-                }
 
                 _logger.LogInformation("Processing audio file directly: {FileName}", file.FileName);
                 var audioResult = await _audioSegmentationService.SegmentAudioAsync(
@@ -79,40 +54,48 @@ namespace StudentCopilotApi.Audio.Controllers
                 _logger.LogError(ex, "Error processing media file: {FileName}", file.FileName);
                 throw;
             }
-            finally
+
+        }
+
+
+        [HttpPost("convert")]
+        [RequestSizeLimit(200_000_000)] // 200MB in bytes
+        [RequestFormLimits(MultipartBodyLengthLimit = 200_000_000)]
+        public async Task<IActionResult> ConvertVideoToAudio(IFormFile file)
+        {
+            try
             {
-                if (audioPath != null && System.IO.File.Exists(audioPath))
+                _logger.LogInformation("Starting video to audio conversion for file: {FileName}", file.FileName);
+
+
+                var audioPath = await _videoToAudioService.ConvertVideoToAudioAsync(file);
+
+                if (System.IO.File.Exists(audioPath))
                 {
+                    var audioBytes = await System.IO.File.ReadAllBytesAsync(audioPath);
+
                     try
                     {
                         System.IO.File.Delete(audioPath);
-                        _logger.LogInformation(
-                            "Temporary audio file deleted: {AudioPath}",
-                            audioPath
-                        );
+                        _logger.LogInformation("Temporary audio file deleted: {AudioPath}", audioPath);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(
-                            ex,
-                            "Failed to delete temporary audio file: {AudioPath}",
-                            audioPath
-                        );
+                        _logger.LogWarning(ex, "Failed to delete temporary audio file: {AudioPath}", audioPath);
                     }
+
+                    _logger.LogInformation("Video conversion completed successfully");
+                    return File(audioBytes, "audio/mp3", Path.GetFileNameWithoutExtension(file.FileName) + ".mp3");
                 }
+
+                return BadRequest("Failed to convert video to audio");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error converting video to audio: {FileName}", file.FileName);
+                throw;
             }
         }
 
-        private bool IsVideoFile(string fileName)
-        {
-            var videoExtensions = new[] { ".mp4", ".avi", ".mkv", ".mov", ".wmv" };
-            var isVideo = videoExtensions.Contains(Path.GetExtension(fileName).ToLower());
-            _logger.LogDebug(
-                "File {FileName} is{NotVideo} a video file",
-                fileName,
-                isVideo ? "" : " not"
-            );
-            return isVideo;
-        }
     }
 }

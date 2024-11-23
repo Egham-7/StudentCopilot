@@ -25,16 +25,20 @@ const processAudioSegment = (segment: RawAudioSegment): ArrayBuffer => {
   return bytes.buffer;
 };
 
-const useAudioExtractor = () => {
+const useSegmentAudio = () => {
   const { isSignedIn, isLoaded, getToken } = useAuth();
   const MAX_TOKENS_PER_SEGMENT = 16384;
   const MAX_CONTENT_LENGTH = 200 * 1024 * 1024; // 200 MB
   const TIMEOUT_MILLISECONDS = 300000;
 
-  const extractAudioFromVideo = useCallback(
+  const segmentAudio = useCallback(
     async (file: File): Promise<AudioSegment[]> => {
       if (!isLoaded || !isSignedIn) {
         throw new Error("Authentication required");
+      }
+
+      if (!file.type.startsWith("audio/")) {
+        throw new Error("Must pass an audio file.");
       }
 
       const formData = new FormData();
@@ -70,9 +74,9 @@ const useAudioExtractor = () => {
   );
 
   return {
-    extractAudioFromVideo,
+    segmentAudio,
     isReady: isLoaded && isSignedIn,
   };
 };
 
-export default useAudioExtractor;
+export default useSegmentAudio;
