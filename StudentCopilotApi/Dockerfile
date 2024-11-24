@@ -22,6 +22,6 @@ USER appuser
 ENV ASPNETCORE_URLS=http://+:80
 ENV FFmpeg__Path=/usr/bin/ffmpeg
 
-EXPOSE 80
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "StudentCopilotApi.dll"]
 
