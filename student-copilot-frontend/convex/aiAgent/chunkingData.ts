@@ -1,9 +1,10 @@
 
+/*
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 export async function chunker(text: string): Promise<string[]> {
     const splitter = new RecursiveCharacterTextSplitter({
         chunkSize: 50,
-        chunkOverlap: 100,
+        chunkOverlap: 0,
       });
     const output = await splitter.createDocuments([text]);
     let arr:string[] = []; 
@@ -12,8 +13,8 @@ export async function chunker(text: string): Promise<string[]> {
   });
     return arr;
 }
+*/
 
-/*
 import {splitBySentence, getEmbeddings, semanticSplitter} from "./textSplitter";
 
 // Main Function: SemanticTextSplitter
@@ -28,4 +29,4 @@ export async function chunker(
   const embeddings = await getEmbeddings(sentences); // Step 2: Get embeddings for each sentence
   const chunks = semanticSplitter(sentences, embeddings, minChunkSize, maxChunkSize, overlapSize); // Step 3: Split sentences into semantic chunks with overlap
   return chunks.map(chunk => chunk.join(" ")); // Step 4: Combine sentences into paragraph chunks
-}*/
+}

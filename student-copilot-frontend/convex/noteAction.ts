@@ -108,6 +108,8 @@ export const generateNotes = internalAction({
       course,
       transcriptionChunks
     );
+    // Store previous generated images
+    const imgArr:string[] = []
 
     // Compile the application state graph with memory checkpointing enabled
     const appGraph = graph.compile({ checkpointer: memoryManager });
@@ -131,7 +133,10 @@ export const generateNotes = internalAction({
 
         // Invoke the application graph with the current chunk data and config
         const processingResult = await appGraph.invoke(processingData, executionConfig);
-
+        if(processingResult.ImageBlockSchema){
+          imgArr.push(processingResult.ImageBlockSchema.caption);
+        }
+        
         // Convert the processed note into JSON format for storage
         const finalResultJson = JSON.stringify(processingResult.note);
 

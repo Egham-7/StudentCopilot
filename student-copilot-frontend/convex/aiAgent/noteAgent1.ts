@@ -5,7 +5,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import axios from 'axios';
 import { z } from 'zod';
 import { marked } from "marked";
-import {titlePrompt, paragraphPrompt, categorizationPrompt} from "./prompts/noteAgent.ts"
+import {titlePrompt, paragraphPrompt, imageGenerationPrompt} from "./prompts/noteAgent.ts"
 // Define schema for image block data
 const ImageBlockSchema = z.object({
   file: z.object({
@@ -53,7 +53,7 @@ const InputAnnotation = Annotation.Root({
   levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
   course: Annotation<string>,
   plan: Annotation<string>,
-  noteArr: Annotation<string[]>,
+  ImgArr: Annotation<string[]>,
 });
 
 // Define output annotation structure
@@ -72,7 +72,6 @@ export async function fetchImageLink(query: string): Promise<string> {
   try {
     const response = await axios.get(searchUrl);
     const imageLink = response?.data?.items?.[0]?.link;
-
     if (imageLink) {
       return imageLink;
     } else {
@@ -105,6 +104,7 @@ async function generateImageSearchQuery(_state: typeof InputAnnotation.State): P
   const result = await llm.invoke(prompt);
   return {messages:result};
 }
+
 // Function to generate an image search query based on note context and retrieve an image link
 async function collector(_state: typeof InputAnnotation.State): Promise<typeof OutputAnnotation.State> {
     const combinedNotes: TNoteBlock[] = [];
@@ -118,15 +118,21 @@ async function collector(_state: typeof InputAnnotation.State): Promise<typeof O
       const message = _state.messages[index];
       const msgStr = message.content as string;
       const htmlContent = await marked(msgStr);
-      
-
-      if (index === _state.messages.length - 3 && index == 1) {
+      if (index === _state.messages.length - 3 && index == 0) {
         // Add an image block
+        let url = "";
+        try {
+          url = await fetchImageLink(msgStr);
+        } catch (error) {
+          console.error("Error fetching image link:", error);
+          url = ""; // Fallback to an empty string
+        }
+        if(url!=""){
         combinedNotes.push({
           type: "image",
           data: {
             file: {
-              url: await fetchImageLink(msgStr),
+              url: url,
             },
             caption: msgStr,
             withBorder: true,
@@ -134,7 +140,9 @@ async function collector(_state: typeof InputAnnotation.State): Promise<typeof O
             stretched: false,
           },
         });
-      } else if (index === _state.messages.length - 2) {
+      }
+      } 
+      else if (index === _state.messages.length - 2) {
         // Add a header block
         combinedNotes.push({
           type: "header",
@@ -155,9 +163,6 @@ async function collector(_state: typeof InputAnnotation.State): Promise<typeof O
         });
       }
       }
-    
-
-    
     return { note: combinedNotes };
   }
   
@@ -187,29 +192,29 @@ export async function generateParagraph(_state: typeof InputAnnotation.State): P
 
     const chain = paragraphPrompt.pipe(llm);
 
-    const {  chunk , noteArr } = _state;
+    const {  chunk  } = _state;
 
     const result = await chain.invoke({
       chunk,
-      noteArr,
     });
    
     return {messages:result};
   }
+
 
   export const decideIfImageNeeded = async (state: typeof InputAnnotation.State) => {
   
     // Invoke the model
     const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18"});
 
-    const chain = categorizationPrompt.pipe(llm);
+    const chain = imageGenerationPrompt.pipe(llm);
 
-    const {  chunk , noteArr } = state;
+    const {  chunk , ImgArr } = state;
     
     try {
       // Invoke the model
-      const categorizationResponse = await chain.invoke({ chunk, noteArr });
-  
+      const categorizationResponse = await chain.invoke({ chunk, ImgArr });
+      
       // Validate response using Zod
       const schema = z.object({
         requiresTitle: z.enum(["Yes", "No"]),
@@ -218,9 +223,9 @@ export async function generateParagraph(_state: typeof InputAnnotation.State): P
       const validatedResponse = schema.parse({
         requiresTitle: categorizationResponse.content,
       });
-  
+      
       // Return parsed result
-      return { requiresTitle: validatedResponse.requiresTitle };
+      return { messages: validatedResponse.requiresTitle };
     } catch (error) {
       console.error("Error in decideIfImageNeeded:", error);
       throw new Error("Failed to determine if a title is needed.");
@@ -265,16 +270,6 @@ export async function planLectureNotes(
   return new AIMessage(fullPlan.trim());
 }
 
-const decisionLogic = (state: typeof InputAnnotation.State) => {
-    // Check if the first message content is "Yes"
-    
-    if (state.messages[0]?.content === "Yes") {
-        return "generate_image";  // Transition to generate_title
-    } else {
-        return "generate_title";  // Transition to generate_paragraph
-    }
-    
-};
 
 // Set up the state graph to control annotation processing flow
 export const graph = new StateGraph({
@@ -288,11 +283,11 @@ export const graph = new StateGraph({
 .addNode("collector",collector)
 .addEdge("__start__", "img_decision")
 .addConditionalEdges("img_decision", (state: typeof InputAnnotation.State) => {
-    // Call the synchronous logic function to get the transition
-    const nextStep = decisionLogic(state);
-    return nextStep;  // This will return either "generate_title" or "generate_paragraph"
+  return state.messages[0].content === "Yes" ? "generate_image" : "generate_title";
 })
 .addEdge("generate_image","generate_title")
 .addEdge("generate_title","generate_paragraph")
 .addEdge("generate_paragraph","collector")
 .addEdge("collector",END)
+
+

@@ -56,7 +56,7 @@ You are an expert note-taker specializing in creating concise, structured, and v
   HumanMessagePromptTemplate.fromTemplate(`
 ### Input Data:
 - **Content Chunk**: {chunk}
-- **Previous Notes**: {noteArr}
+
 
 ### Task:
 - Create a set of concise, well-structured notes based on the provided content chunk.
@@ -68,33 +68,35 @@ You are an expert note-taker specializing in creating concise, structured, and v
 
 
 
-export const categorizationPrompt = ChatPromptTemplate.fromMessages([
+export const imageGenerationPrompt = ChatPromptTemplate.fromMessages([
   SystemMessagePromptTemplate.fromTemplate(`
-You are an expert decision-making system specializing in determining the necessity of a title in a block of notes. Your task is to analyze the provided text chunk and decide if a title is required. Follow these detailed guidelines:
+You are an AI system specialized in making decisions about generating images based on textual context and prior image captions. Your task is to analyze the provided text chunk and decide if a new image is necessary, following these guidelines:
 
-1. **Consistency**:
-   - Ensure alignment with prior responses to maintain consistency.
-   - Consider the memory of previous chat interactions, represented as prior notes.
+1. **Relevance to Previous Images**:
+   - Compare the content chunk with captions of previously generated images to assess thematic consistency.
+   - Avoid duplicating images that cover the same concept or visuals unless a new perspective is required.
 
-2. **Clarity and Organization**:
-   - Assess the text chunk for clarity of structure and organization.
-   - Identify whether a title would enhance the chunk's readability or understanding.
+2. **Contextual Necessity**:
+   - Evaluate if the current text introduces new ideas or visual details that would benefit from an accompanying image.
+   - If the text elaborates on previously visualized ideas without significant new information, decide against generating an image.
 
-3. **Continuity and Flow**:
-   - Determine if adding a title improves the flow and coherence of the notes with surrounding content.
+3. **Clarity and Impact**:
+   - Determine if a new image would improve comprehension or provide meaningful visual support for the content.
+   - Favor generating an image if it can enhance understanding or engagement.
 
 ### Decision:
-- Respond with "Yes" if a title is required for the text chunk.
-- Respond with "No" if a title is not necessary.
-  `),
+- Respond with "Yes" if an image is required for the text chunk.
+- Respond with "No" if an image is not necessary.
+`),
   HumanMessagePromptTemplate.fromTemplate(`
 ### Input Data:
 - **Content Chunk**: {chunk}
-- **Prior Notes**: {noteArr}
+- **Previous Image Captions**: {ImgArr}
 
 ### Instructions:
-- Analyze the provided content chunk and the prior notes.
-- Decide if a title is required based on the provided guidelines.
+- Analyze the provided content chunk and the captions of prior images.
+- Decide if generating a new image is necessary based on the guidelines.
 - Respond with either "Yes" or "No" without additional explanation.
-  `)
+`)
 ]);
+
