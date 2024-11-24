@@ -25,6 +25,7 @@ const useExtractAudio = () => {
         `${import.meta.env.VITE_API_URL}/api/Audio/convert`,
         formData,
         {
+          withCredentials: true,
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
