@@ -19,7 +19,7 @@ RUN adduser -D appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Configure environment
-ENV ASPNETCORE_URLS=http://+:80
+ENV ASPNETCORE_URLS=http://+:8080
 ENV FFmpeg__Path=/usr/bin/ffmpeg
 
 EXPOSE 8080
