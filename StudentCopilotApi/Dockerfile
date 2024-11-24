@@ -12,12 +12,10 @@ WORKDIR /app
 COPY --from=build /app .
 
 # Install FFmpeg
-RUN apt-get update && \
-  apt-get install -y ffmpeg && \
-  rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache ffmpeg
 
 # Create non-root user
-RUN useradd -m appuser && chown -R appuser:appuser /app
+RUN adduser -D appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Configure environment
