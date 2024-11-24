@@ -1,28 +1,29 @@
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0-preview-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
 WORKDIR /src
-
-# Copy csproj and restore dependencies
 COPY *.csproj .
 RUN dotnet restore
-
-# Copy remaining source code
 COPY . .
 RUN dotnet publish -c Release -o /app
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview-alpine
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview
 WORKDIR /app
 COPY --from=build /app .
 
-# Install FFmpeg with Alpine package manager
-RUN apk add --no-cache ffmpeg
+# Install FFmpeg
+RUN apt-get update && \
+  apt-get install -y ffmpeg && \
+  rm -rf /var/lib/apt/lists/*
 
-# Configure container security
-USER app
+# Create non-root user
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Configure environment
+ENV ASPNETCORE_URLS=http://+:80
+ENV FFmpeg__Path=/usr/bin/ffmpeg
+
 EXPOSE 80
-EXPOSE 443
-
-# Set the entry point
 ENTRYPOINT ["dotnet", "StudentCopilotApi.dll"]
 
