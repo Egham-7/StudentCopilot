@@ -1,34 +1,46 @@
-import { useState } from 'react'
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { useMutation, useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
-import { Button } from "@/components/ui/button"
-import { Form, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Id } from 'convex/_generated/dataModel'
-import { Input } from "@/components/ui/input"
-import { toast } from '../ui/use-toast';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Id } from "convex/_generated/dataModel";
+import { Input } from "@/components/ui/input";
+import { toast } from "../ui/use-toast";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   lectureIds: z.array(z.string()),
-  noteIds: z.array(z.string())
+  noteIds: z.array(z.string()),
 });
 
 interface AIFlashcardFormProps {
-  moduleId: Id<"modules">
+  moduleId: Id<"modules">;
   onComplete: () => void;
-
 }
 
-export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) {
-  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>([])
-  const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([])
-  const lectures = useQuery(api.lectures.getLecturesByModuleId, { moduleId })
-  const notes = useQuery(api.notes.getNotesForModule, { moduleId })
-  const generateFlashCard = useMutation(api.flashcards.generateFlashCardsClient)
+export function AIFlashcardForm({
+  moduleId,
+  onComplete,
+}: AIFlashcardFormProps) {
+  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>(
+    [],
+  );
+  const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([]);
+  const lectures = useQuery(api.lectures.getLecturesByModuleId, { moduleId });
+  const notes = useQuery(api.notes.getNotesForModule, { moduleId });
+  const generateFlashCard = useMutation(
+    api.flashcards.generateFlashCardsClient,
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -38,15 +50,14 @@ export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) 
       lectureIds: [],
       noteIds: [],
     },
-  })
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-
     try {
-      const { title, description, lectureIds, noteIds } = values
+      const { title, description, lectureIds, noteIds } = values;
 
       if (!lectureIds?.length && !noteIds?.length) {
-        return
+        return;
       }
 
       await generateFlashCard({
@@ -54,24 +65,22 @@ export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) 
         title,
         description,
         lectureIds: lectureIds as Id<"lectures">[],
-        noteIds: noteIds as Id<"notes">[]
-      })
+        noteIds: noteIds as Id<"notes">[],
+      });
 
-      form.reset()
+      form.reset();
       onComplete?.();
 
       toast({
         title: "Generating flashcards.",
-        description: "We will let you know when its done!"
-      })
+        description: "We will let you know when its done!",
+      });
     } catch (error: unknown) {
-
       if (error instanceof Error) {
-
         toast({
           title: "Failed to generate flashcards.",
-          description: error.message
-        })
+          description: error.message,
+        });
       }
     }
   }
@@ -97,7 +106,10 @@ export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) 
           render={({ field }) => (
             <FormItem>
               <FormLabel>Description</FormLabel>
-              <Input placeholder='Enter what this flashcard set is about$a' {...field} />
+              <Input
+                placeholder="Enter what this flashcard set is about"
+                {...field}
+              />
             </FormItem>
           )}
         />
@@ -113,16 +125,22 @@ export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) 
                   <Button
                     key={lecture._id}
                     type="button"
-                    variant={selectedLectures.includes(lecture._id) ? "default" : "outline"}
+                    variant={
+                      selectedLectures.includes(lecture._id)
+                        ? "default"
+                        : "outline"
+                    }
                     onClick={() => {
-                      const newSelection = selectedLectures.includes(lecture._id)
-                        ? selectedLectures.filter(id => id !== lecture._id)
-                        : [...selectedLectures, lecture._id]
-                      setSelectedLectures(newSelection)
-                      form.setValue('lectureIds', newSelection)
+                      const newSelection = selectedLectures.includes(
+                        lecture._id,
+                      )
+                        ? selectedLectures.filter((id) => id !== lecture._id)
+                        : [...selectedLectures, lecture._id];
+                      setSelectedLectures(newSelection);
+                      form.setValue("lectureIds", newSelection);
                     }}
                   >
-                    <p className='truncate'>{lecture.title}</p>
+                    <p className="truncate">{lecture.title}</p>
                   </Button>
                 ))}
               </div>
@@ -142,16 +160,18 @@ export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) 
                   <Button
                     key={note._id}
                     type="button"
-                    variant={selectedNotes.includes(note._id) ? "default" : "outline"}
+                    variant={
+                      selectedNotes.includes(note._id) ? "default" : "outline"
+                    }
                     onClick={() => {
                       const newSelection = selectedNotes.includes(note._id)
-                        ? selectedNotes.filter(id => id !== note._id)
-                        : [...selectedNotes, note._id]
-                      setSelectedNotes(newSelection)
-                      form.setValue('noteIds', newSelection)
+                        ? selectedNotes.filter((id) => id !== note._id)
+                        : [...selectedNotes, note._id];
+                      setSelectedNotes(newSelection);
+                      form.setValue("noteIds", newSelection);
                     }}
                   >
-                    <p className='truncate'>{note._id}</p>
+                    <p className="truncate">{note._id}</p>
                   </Button>
                 ))}
               </div>
@@ -160,16 +180,17 @@ export function AIFlashcardForm({ moduleId, onComplete }: AIFlashcardFormProps) 
           )}
         />
 
-        <div className='flex justify-end'>
+        <div className="flex justify-end">
           <Button
             type="submit"
-            disabled={selectedLectures.length === 0 && selectedNotes.length === 0}
+            disabled={
+              selectedLectures.length === 0 && selectedNotes.length === 0
+            }
           >
             Generate Flashcards
           </Button>
         </div>
       </form>
     </Form>
-  )
+  );
 }
-
