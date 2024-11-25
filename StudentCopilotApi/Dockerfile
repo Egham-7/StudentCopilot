@@ -20,12 +20,13 @@ RUN apk add --no-cache \
   libstdc++ \
   zlib
 
-# Copy .NET runtime from Microsoft image
 COPY --from=mcr.microsoft.com/dotnet/aspnet:9.0-preview-alpine /usr/share/dotnet /usr/share/dotnet
-COPY --from=mcr.microsoft.com/dotnet/aspnet:9.0-preview-alpine /usr/lib/libmsquic.so /usr/lib/libmsquic.so
 
 WORKDIR /app
 COPY --from=build /app .
+
+# Verify FFmpeg installation
+RUN ffmpeg -version
 
 # Create non-root user
 RUN adduser -D appuser && chown -R appuser:appuser /app
@@ -33,6 +34,7 @@ USER appuser
 
 # Configure environment
 ENV ASPNETCORE_URLS=http://+:8080
+ENV FFmpeg__Path=/usr/bin/ffmpeg
 ENV PATH="$PATH:/usr/share/dotnet"
 
 EXPOSE 8080
