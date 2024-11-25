@@ -48,11 +48,9 @@ builder.Services.AddClerkApiClient(config =>
 // Register application services
 builder.Services.AddScoped<YoutubeTranscriptService>();
 builder.Services.AddScoped<IAudioSegmentationService, AudioSegmentationService>();
-builder.Services.AddScoped<IVideoToAudioService>(provider =>
-{
-    var ffmpegPath = builder.Configuration["FFmpeg:Path"] ?? "ffmpeg";
-    return new VideoToAudioService(ffmpegPath);
-});
+builder.Services.AddScoped<IVideoToAudioService>(provider => new VideoToAudioService(
+    Environment.GetEnvironmentVariable("FFMPEG_PATH")!
+));
 
 // CORS configuration
 builder.Services.AddCors(options =>
