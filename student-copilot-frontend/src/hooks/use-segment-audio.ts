@@ -51,7 +51,7 @@ const useSegmentAudio = () => {
       console.log("VITE API URL", import.meta.env.VITE_API_URL);
 
       const response = await axios.post<RawAudioSegment[]>(
-        `${import.meta.env.VITE_API_URL}/Audio/segment`,
+        `c-api-production.up.railway.app/api/Audio/segment`,
         formData,
         {
           params: { maxTokensPerSegment: MAX_TOKENS_PER_SEGMENT },
@@ -59,6 +59,7 @@ const useSegmentAudio = () => {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
+            Accept: "application/json",
           },
           timeout: TIMEOUT_MILLISECONDS,
           maxContentLength: MAX_CONTENT_LENGTH,
