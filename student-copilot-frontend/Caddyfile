@@ -11,18 +11,13 @@ www.studentcopilot.app {
     # Handle API requests
     handle /api/* {
         reverse_proxy c-api-production.up.railway.app {
+            # Headers for upstream
             header_up Host {upstream_hostport}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
             
-            # Pass through authorization headers
-            header_up Authorization {header.Authorization}
-            
-            # CORS headers
-            header Access-Control-Allow-Origin "*"
-            header Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE, PATCH"
-            header Access-Control-Allow-Headers "DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Range, Authorization"
+            # CORS response headers
+            header_down Access-Control-Allow-Origin "*"
+            header_down Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+            header_down Access-Control-Allow-Headers "DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Range, Authorization"
         }
     }
     
