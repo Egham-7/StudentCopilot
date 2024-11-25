@@ -5,7 +5,10 @@ import { ChatOpenAI } from "@langchain/openai";
 import axios from 'axios';
 import { z } from 'zod';
 import { marked } from "marked";
-import {titlePrompt, paragraphPrompt, imageGenerationPrompt} from "./prompts/noteAgent.ts"
+import {titlePrompt,
+  paragraphPrompt,
+  imageGenerationPrompt,
+  planPrompt} from "./prompts/noteAgent.ts"
 // Define schema for image block data
 const ImageBlockSchema = z.object({
   file: z.object({
@@ -192,10 +195,11 @@ export async function generateParagraph(_state: typeof InputAnnotation.State): P
 
     const chain = paragraphPrompt.pipe(llm);
 
-    const {  chunk  } = _state;
-
+    const {chunk,plan} = _state;
+  
     const result = await chain.invoke({
       chunk,
+      plan
     });
    
     return {messages:result};
@@ -233,43 +237,32 @@ export async function generateParagraph(_state: typeof InputAnnotation.State): P
   };
 
 
-// Function to create a lecture plan based on preferences and lecture content
-export async function planLectureNotes(
-  noteTakingStyle: string,
-  learningStyle: "auditory" | "visual" | "kinesthetic" | "analytical",
-  levelOfStudy: "Bachelors" | "Associate" | "Masters" | "PhD",
-  course: string,
-  lectureContent: string[]
-): Promise<AIMessage> {
-  const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18" });
-  let fullPlan: string = "";
 
-  // Function to process a single batch of lecture content
-  async function generateBatchPlan(batchContent: string[]): Promise<AIMessage> {
-    const prompt = `
-            Create a partial lecture plan for generating summary notes based on the preferences:
-            - Note style: ${noteTakingStyle}
-            - Learning style: ${learningStyle}
-            - Level of study: ${levelOfStudy}
-            - Course: ${course}
-            - Lecture content: ${batchContent}
-        `;
-    return await llm.invoke(prompt);
+  export async function planChunk(
+    chunk1: string,
+    noteTakingStyle1: string,
+    learningStyle1: "visual" | "auditory" | "kinesthetic" | "analytical",
+    levelOfStudy1: "Bachelors" | "Associate" | "Masters" | "PhD",
+    course1: string
+  ): Promise<{ messages: AIMessage }> {
+    // Initialize the ChatOpenAI model with specific parameters
+    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18", temperature: 0.3 });
+  
+    // Create a pipeline for the prompt and LLM
+    const chain = planPrompt.pipe(llm);
+  
+    // Invoke the pipeline with input data
+    const result = await chain.invoke({
+      chunk1: chunk1,
+      noteTakingStyle1: noteTakingStyle1,
+      learningStyle1: learningStyle1,
+      levelOfStudy1: levelOfStudy1,
+      course1: course1,
+    });
+  
+    // Return the result as a structured response
+    return { messages: result };
   }
-
-  // Process lecture content in batches of 14 if needed
-  const batchSize = 14;
-  const batchCount = Math.ceil(lectureContent.length / batchSize);
-
-  for (let i = 0; i < batchCount; i++) {
-    const batchContent = lectureContent.slice(i * batchSize, (i + 1) * batchSize);
-    const batchPlan = await generateBatchPlan(batchContent);
-    fullPlan += `\n### Batch ${i + 1} Plan\n${batchPlan.content}`;
-  }
-  // Return combined plan as a single AIMessage
-  return new AIMessage(fullPlan.trim());
-}
-
 
 // Set up the state graph to control annotation processing flow
 export const graph = new StateGraph({

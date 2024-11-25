@@ -8,7 +8,7 @@ import {
   internalAction,
 } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph, planLectureNotes, TNoteBlock } from "./aiAgent/noteAgent1";
+import { graph, planChunk, TNoteBlock } from "./aiAgent/noteAgent1";
 
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
@@ -100,14 +100,7 @@ export const generateNotes = internalAction({
     // Initialize a memory manager for saving the processing state
     const memoryManager = new MemorySaver();
 
-    // Plan lecture notes based on the provided preferences and a portion of transcription chunks
-    const lectureNotePlan = planLectureNotes(
-      noteTakingStyle,
-      learningStyle,
-      levelOfStudy,
-      course,
-      transcriptionChunks
-    );
+
     // Store previous generated images
     const imgArr:string[] = []
 
@@ -120,17 +113,26 @@ export const generateNotes = internalAction({
     // Process each transcription chunk in parallel
     const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
-
+            
         // Prepare input data for each chunk, including user preferences and plan details
+        // Plan lecture notes based on the provided preferences and a portion of transcription chunk
+        const chunkNotePlan = await planChunk(
+          chunk,
+          noteTakingStyle,
+          learningStyle,
+          levelOfStudy,
+          course);
+
         const processingData = {
           chunk: chunk,
           noteTakingStyle: noteTakingStyle,
           learningStyle: learningStyle,
           levelOfStudy: levelOfStudy,
           course: course,
-          plan: lectureNotePlan
+          plan:chunkNotePlan,
+          imgArr:imgArr
         };
-
+        
         // Invoke the application graph with the current chunk data and config
         const processingResult = await appGraph.invoke(processingData, executionConfig);
         if(processingResult.ImageBlockSchema){
