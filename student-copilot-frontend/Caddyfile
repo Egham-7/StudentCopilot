@@ -1,8 +1,8 @@
-{
-    debug
-}
-
 www.studentcopilot.app {
+    tls {
+        issuer acme
+    }
+
     # Enhanced TLS configuration
     tls {
         protocols tls1.2 tls1.3
