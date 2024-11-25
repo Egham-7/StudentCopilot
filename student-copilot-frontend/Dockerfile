@@ -1,21 +1,22 @@
 # Build stage
-FROM node:23-alpine AS build
+FROM node:20-alpine AS build
 
 # Set working directory
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm@latest
+# Install pnpm and clean npm cache
+RUN npm install -g pnpm@latest && npm cache clean --force
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy package files first for better layer caching
+COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies
-RUN pnpm install
+# Install dependencies with frozen lockfile for consistency
+RUN pnpm install --frozen-lockfile
 
-# Copy all project files
+# Copy source files
 COPY . .
 
+# Build arguments
 ARG CONVEX_DEPLOY_KEY
 ARG VITE_CLERK_PUBLISHABLE_KEY
 ARG VITE_CLERK_SECRET_KEY
@@ -24,7 +25,7 @@ ARG VITE_CLERK_SIGN_UP_FORCE_REDIRECT_URL
 ARG VITE_CONVEX_URL
 ARG ENVIRONMENT=production
 
-# Build the app and deploy Convex functions with conditional preview flag
+# Build and deploy with improved conditional
 RUN if [ "$ENVIRONMENT" = "staging" ]; then \
   pnpm dlx convex deploy --preview-create staging --cmd 'pnpm vite build'; \
   else \
@@ -34,16 +35,21 @@ RUN if [ "$ENVIRONMENT" = "staging" ]; then \
 # Production stage
 FROM caddy:2-alpine
 
-# Copy the built assets from the build stage
-COPY --from=build /app/dist /srv
+WORKDIR /app
 
-# Copy Caddy configuration
-COPY Caddyfile /etc/caddy/Caddyfile
+COPY Caddyfile ./
+RUN caddy fmt Caddyfile --overwrite
+
+# Copy only the built assets
+COPY --from=build /app/dist ./dist
 
 # Expose ports
 EXPOSE 80
 EXPOSE 443
 
+# Use non-root user for better security
+USER 1000
+
 # Start Caddy
-CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
+CMD ["caddy", "run", "--config", "Caddyfile", "--adapter", "caddyfile"]
 
