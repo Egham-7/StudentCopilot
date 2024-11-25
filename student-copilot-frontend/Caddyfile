@@ -1,0 +1,32 @@
+www.studentcopilot.app {
+    # Handle static files
+    root * /usr/share/nginx/html
+    file_server
+    
+    # Set maximum upload size to 200MB
+    request_body {
+        max_size 200MB
+    }
+    
+    # Handle API requests
+    handle /api/* {
+        reverse_proxy c-api-production.up.railway.app {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            
+            # Pass through authorization headers
+            header_up Authorization {header.Authorization}
+            
+            # CORS headers
+            header Access-Control-Allow-Origin "*"
+            header Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE, PATCH"
+            header Access-Control-Allow-Headers "DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Range, Authorization"
+        }
+    }
+    
+    # SPA support
+    try_files {path} /index.html
+}
+
