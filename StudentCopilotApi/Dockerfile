@@ -1,5 +1,5 @@
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
 WORKDIR /src
 COPY *.csproj .
 RUN dotnet restore
@@ -7,7 +7,7 @@ COPY . .
 RUN dotnet publish -c Release -o /app
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview
 
 # Install FFmpeg
 RUN apt-get update && \
@@ -16,10 +16,6 @@ RUN apt-get update && \
 
 WORKDIR /app
 COPY --from=build /app .
-
-# Verify FFmpeg installation and path
-RUN ffmpeg -version && \
-  which ffmpeg
 
 # Create non-root user
 RUN useradd -m appuser && chown -R appuser:appuser /app
@@ -32,4 +28,3 @@ ENV FFmpeg__Path=/usr/bin/ffmpeg
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "StudentCopilotApi.dll"]
-
