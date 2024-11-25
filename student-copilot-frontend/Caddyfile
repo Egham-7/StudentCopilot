@@ -1,4 +1,16 @@
+{
+    # Enable debug logging for ACME
+    debug
+    # Enable automatic HTTPS
+    auto_https enable_tls_alpn_challenge
+}
+
 www.studentcopilot.app {
+    tls {
+        protocols tls1.2 tls1.3
+        alpn h2 http/1.1
+    }
+    
     # Handle static files
     root * /usr/share/nginx/html
     file_server
@@ -11,10 +23,7 @@ www.studentcopilot.app {
     # Handle API requests
     handle /api/* {
         reverse_proxy c-api-production.up.railway.app {
-            # Headers for upstream
             header_up Host {upstream_hostport}
-            
-            # CORS response headers
             header_down Access-Control-Allow-Origin "*"
             header_down Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE, PATCH"
             header_down Access-Control-Allow-Headers "DNT, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Range, Authorization"
