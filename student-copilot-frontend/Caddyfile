@@ -1,50 +1,34 @@
-{
-    admin off
-    persist_config off
-    auto_https off
-    log {
-        format json
-    }
-    servers {
-        trusted_proxies static private_ranges 100.0.0.0/8
-        protocols h1 h2c
-    }
-}
-
 :{$PORT:3000} {
     log {
         format json
     }
     
     bind 0.0.0.0
-
-    # Enhanced CORS and Headers configuration
+    
     header {
         Access-Control-Allow-Origin *
         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-        Access-Control-Allow-Headers "Authorization, Content-Type, Accept"
+        Access-Control-Allow-Headers "Authorization, Content-Type, Accept, X-Requested-With"
         Access-Control-Allow-Credentials true
         Access-Control-Max-Age 3600
         -Server
     }
 
-    # Handle OPTIONS preflight requests
     @options {
         method OPTIONS
     }
     respond @options 204
 
-    # Reverse proxy for API requests
-    handle /api/* {
+    handle */api/* {
         reverse_proxy https://c-api-production.up.railway.app {
             header_up Host {upstream_hostport}
             header_up X-Real-IP {remote_host}
             header_up X-Forwarded-For {remote_host}
             header_up X-Forwarded-Proto {scheme}
+            header_up Authorization {header.Authorization}
         }
     }
 
-    # Handle all other routes
     handle {
         root * dist
         encode gzip zstd
