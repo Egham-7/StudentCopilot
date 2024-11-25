@@ -1,5 +1,5 @@
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0-preview-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY *.csproj .
 RUN dotnet restore
@@ -7,36 +7,27 @@ COPY . .
 RUN dotnet publish -c Release -o /app
 
 # Runtime stage
-FROM alpine:latest
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 
-# Install FFmpeg and .NET runtime dependencies
-RUN apk add --no-cache \
-  ffmpeg \
-  icu-libs \
-  krb5-libs \
-  libgcc \
-  libintl \
-  libssl3 \
-  libstdc++ \
-  zlib
-
-# Copy .NET runtime from Microsoft image
-COPY --from=mcr.microsoft.com/dotnet/aspnet:9.0-preview-alpine /usr/share/dotnet /usr/share/dotnet
+# Install FFmpeg
+RUN apt-get update && \
+  apt-get install -y ffmpeg && \
+  rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=build /app .
 
-# Verify FFmpeg installation
-RUN ffmpeg -version
+# Verify FFmpeg installation and path
+RUN ffmpeg -version && \
+  which ffmpeg
 
 # Create non-root user
-RUN adduser -D appuser && chown -R appuser:appuser /app
+RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Configure environment
 ENV ASPNETCORE_URLS=http://+:8080
 ENV FFmpeg__Path=/usr/bin/ffmpeg
-ENV PATH="$PATH:/usr/share/dotnet"
 
 EXPOSE 8080
 
