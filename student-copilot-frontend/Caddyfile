@@ -7,6 +7,7 @@
     }
     servers {
         trusted_proxies static private_ranges 100.0.0.0/8
+        protocols h1 h2c
     }
 }
 
@@ -15,13 +16,20 @@
         format json
     }
 
-    # Disable IPv6 for this deployment
     bind 0.0.0.0
+
+    # Handle CORS
+    header {
+        Access-Control-Allow-Origin *
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers *
+        -Server
+    }
 
     rewrite /health /*
 
     root * dist
-    encode gzip
+    encode gzip zstd
     file_server
 
     try_files {path} /index.html
