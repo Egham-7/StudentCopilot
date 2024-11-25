@@ -86,12 +86,10 @@ builder.Services.AddHealthChecks()
     });
 
 
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(x =>
     {
         var logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
-
         x.Authority = builder.Configuration["Clerk:Authority"];
         logger.LogInformation("Configuring JWT authentication with Authority: {Authority}", x.Authority);
 
@@ -105,46 +103,43 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true
         };
 
-        if (builder.Environment.IsDevelopment())
+        // Get authorized parties for both environments
+        var authorizedParties = builder.Configuration["Clerk:AuthorizedParties"]?.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>();
+        var defaultParty = builder.Configuration["Clerk:AuthorizedParty"];
+
+        logger.LogInformation("Configured Authorized Parties: {parties}", string.Join(", ", authorizedParties));
+
+        x.Events = new JwtBearerEvents
         {
-            logger.LogInformation("Configuring development environment JWT validation");
-
-            var developerParties = builder.Configuration["Clerk:DeveloperAuthorizedParties"]?.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>();
-            var defaultParty = builder.Configuration["Clerk:DefaultAuthorizedParty"];
-
-            logger.LogInformation("Developer Parties {parties}: ", developerParties.ToString());
-
-            x.Events = new JwtBearerEvents
+            OnTokenValidated = context =>
             {
-                OnTokenValidated = context =>
+                var authorizedParty = context.Principal?.Claims
+                    .FirstOrDefault(c => c.Type == "azp")?.Value;
+
+                logger.LogInformation("Token validation attempt - Authorized Party: {AuthorizedParty}", authorizedParty);
+
+                if (authorizedParty != null &&
+                    (authorizedParties.Contains(authorizedParty) ||
+                     authorizedParty == defaultParty))
                 {
-                    var authorizedParty = context.Principal?.Claims
-                        .FirstOrDefault(c => c.Type == "azp")?.Value;
-
-                    logger.LogInformation("Token validation attempt - Authorized Party: {AuthorizedParty}", authorizedParty);
-
-                    if (authorizedParty != null &&
-                        (developerParties.Contains(authorizedParty) ||
-                         authorizedParty == defaultParty))
-                    {
-                        logger.LogInformation("Token validated successfully for authorized party: {AuthorizedParty}", authorizedParty);
-                        return Task.CompletedTask;
-                    }
-
-                    logger.LogWarning("Token validation failed - Invalid authorized party: {AuthorizedParty}", authorizedParty);
-                    context.Fail("Invalid authorized party");
+                    logger.LogInformation("Token validated successfully for authorized party: {AuthorizedParty}", authorizedParty);
                     return Task.CompletedTask;
                 }
-            };
-        }
-        else
+
+                logger.LogWarning("Token validation failed - Invalid authorized party: {AuthorizedParty}", authorizedParty);
+                context.Fail("Invalid authorized party");
+                return Task.CompletedTask;
+            }
+        };
+
+        if (!builder.Environment.IsDevelopment())
         {
-            logger.LogInformation("Configuring production environment JWT validation");
+            logger.LogInformation("Production environment JWT validation configured with multiple authorized parties");
             x.TokenValidationParameters.ValidateAudience = true;
-            x.TokenValidationParameters.ValidAudience = builder.Configuration["Clerk:AuthorizedParty"];
-            logger.LogInformation("Production ValidAudience set to: {Audience}", x.TokenValidationParameters.ValidAudience);
         }
     });
+
+
 
 // HTTP Logging
 builder.Services.AddHttpLogging(logging =>
