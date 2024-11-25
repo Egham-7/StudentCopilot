@@ -19,7 +19,7 @@
     }
     respond @options 204
 
-    handle */api/* {
+    handle_path */api/* {
         reverse_proxy https://c-api-production.up.railway.app {
             header_up Host {upstream_hostport}
             header_up X-Real-IP {remote_host}
