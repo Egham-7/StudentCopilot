@@ -48,7 +48,7 @@ const useSegmentAudio = () => {
         template: "convex",
       });
 
-      console.log("VITE API URL", import.meta.env.VITE_API_URL);
+      console.log("VITE API URL", import.meta.env.VITE_BACKEND_URL);
 
       const response = await axios.post<RawAudioSegment[]>(
         `${import.meta.env.VITE_BACKEND_URL}/api/Audio/segment`,
