@@ -1,11 +1,9 @@
 {
-    # Enable debug logging for ACME
     debug
-    # Enable automatic HTTPS
-    auto_https enable_tls_alpn_challenge
 }
 
 www.studentcopilot.app {
+    # Enhanced TLS configuration
     tls {
         protocols tls1.2 tls1.3
         alpn h2 http/1.1
