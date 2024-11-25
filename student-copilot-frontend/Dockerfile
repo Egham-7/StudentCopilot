@@ -10,7 +10,7 @@ RUN npm install -g pnpm@latest
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies (including dev dependencies)
+# Install dependencies
 RUN pnpm install
 
 # Copy all project files
@@ -32,17 +32,18 @@ RUN if [ "$ENVIRONMENT" = "staging" ]; then \
   fi
 
 # Production stage
-FROM nginx:alpine
+FROM caddy:2-alpine
 
 # Copy the built assets from the build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/dist /srv
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy Caddy configuration
+COPY Caddyfile /etc/caddy/Caddyfile
 
-# Expose port 80
+# Expose ports
 EXPOSE 80
+EXPOSE 443
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start Caddy
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
 
