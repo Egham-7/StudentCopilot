@@ -9,14 +9,13 @@ import { graph } from "./aiAgent/flashCardAgent";
 import { MemorySaver } from "@langchain/langgraph";
 import { flashCardPlanGenerationPrompt } from "./aiAgent/prompts/flashCardAgent";
 import { v4 as uuidv4 } from "uuid";
-import { Id } from "./_generated/dataModel";
-
+import { Doc } from "./_generated/dataModel";
 
 export async function planFlashcardNotes(
   learningStyle: string,
   levelOfStudy: string,
   course: string,
-  lectureContent: string[]
+  lectureContent: string[],
 ): Promise<AIMessage> {
   const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
 
@@ -25,7 +24,7 @@ export async function planFlashcardNotes(
       learningStyle,
       levelOfStudy,
       course,
-      content
+      content,
     });
 
     return llm.invoke(formattedPrompt);
@@ -34,11 +33,10 @@ export async function planFlashcardNotes(
   const results = await Promise.all(planPromises);
   const fullPlan = results
     .map((result, index) => `### Section ${index + 1}\n${result.content}`)
-    .join('\n\n');
+    .join("\n\n");
 
   return new AIMessage(fullPlan);
 }
-
 
 export const generateFlashCards = internalAction({
   args: {
@@ -51,16 +49,30 @@ export const generateFlashCards = internalAction({
     levelOfStudy: v.string(),
     description: v.optional(v.string()),
     title: v.string(),
-    moduleId: v.id("modules")
+    moduleId: v.id("modules"),
   },
-  handler: async (ctx, args) => {
-    const { userId, lectureIds, noteIds, flashCardSetId, learningStyle, course, levelOfStudy, title, description, moduleId } = args;
-
-    const contentData = await ctx.runAction(internal.flashCardActions.getContent, {
+  handler: async (ctx, args): Promise<Doc<"flashCardSets">> => {
+    const {
+      userId,
       lectureIds,
       noteIds,
-      userId
-    });
+      flashCardSetId,
+      learningStyle,
+      course,
+      levelOfStudy,
+      title,
+      description,
+      moduleId,
+    } = args;
+
+    const contentData = await ctx.runAction(
+      internal.flashCardActions.getContent,
+      {
+        lectureIds,
+        noteIds,
+        userId,
+      },
+    );
 
     if (!contentData) {
       throw new Error("Content must not be null or undefined.");
@@ -70,108 +82,124 @@ export const generateFlashCards = internalAction({
       throw new Error("Content is empty.");
     }
 
-    const plan = await planFlashcardNotes(learningStyle, levelOfStudy, course, contentData);
+    const plan = await planFlashcardNotes(
+      learningStyle,
+      levelOfStudy,
+      course,
+      contentData,
+    );
 
-    const allFlashCards = [];
-    for (const contentChunk of contentData) {
-      const flashCardsObject = await ctx.runAction(internal.flashCardActions.executeGraphLogic, {
+    const allFlashCards = flashCardSetId
+      ? await ctx.runQuery(internal.flashcards.getFlashCardsInternal, {
+          flashCardSetId,
+        })
+      : [];
+
+    // Process content chunks and generate flashcards
+    const flashCardPromises = contentData.map((contentChunk) =>
+      ctx.runAction(internal.flashCardActions.executeGraphLogic, {
         contentChunk,
         learningStyle,
         plan: plan.content as string,
-        course
-      });
+        course,
+      }),
+    );
 
-      if (flashCardsObject && flashCardsObject.flashCards) {
-        allFlashCards.push(...flashCardsObject.flashCards);
+    const flashCardResults = await Promise.all(flashCardPromises);
+
+    // Collect all valid flashcards
+    flashCardResults.forEach((result) => {
+      if (result?.flashCards) {
+        allFlashCards.push(...result.flashCards);
       }
-    }
+    });
 
     if (!allFlashCards.length) {
-      throw new Error("Flashcards response cannot be null.");
+      throw new Error("Failed to generate any flashcards");
     }
 
-    let setId: Id<"flashCardSets">;
+    console.log("Existing flashcard set Id: ", flashCardSetId);
 
-    if (!flashCardSetId) {
-      const response = await ctx.runMutation(internal.flashcards.createFlashCardSetInternal, {
-        title,
-        description,
-        lectureIds,
-        noteIds,
-        moduleId,
-        userId
-      })
+    // Create or update flashcard set
+    const setId = await (flashCardSetId
+      ? ctx.runMutation(internal.flashcards.updateFlashCardSet, {
+          title,
+          description,
+          lectureIds,
+          noteIds,
+          flashCardSetId,
+        })
+      : ctx.runMutation(internal.flashcards.createFlashCardSetInternal, {
+          title,
+          description,
+          lectureIds,
+          noteIds,
+          moduleId,
+          userId,
+        }));
 
-      if (!response) {
-        throw new Error("Failed to create flashcard set.");
-      }
-
-      setId = response;
-
-    } else {
-
-      const response = await ctx.runMutation(internal.flashcards.updateFlashCardSet, {
-        title,
-        description,
-        lectureIds,
-        noteIds,
-        flashCardSetId
-      })
-
-      if (!response) {
-        throw new Error("Failed to update flashcard set.");
-      }
-
-      setId = response;
+    if (!setId) {
+      throw new Error("Failed to manage flashcard set");
     }
 
-    for (const flashCard of allFlashCards) {
-      await ctx.runMutation(internal.flashcards.addFlashCardInternal, {
-        front: flashCard.front,
-        back: flashCard.back,
+    const BATCH_SIZE = 3; // Max Convex Concurrent writes.
+
+    for (let i = 0; i < allFlashCards.length; i += BATCH_SIZE) {
+      const batch = allFlashCards.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map((flashCard) =>
+          ctx.runMutation(internal.flashcards.addFlashCardInternal, {
+            front: flashCard.front,
+            back: flashCard.back,
+            flashCardSetId: setId,
+            userId,
+          }),
+        ),
+      );
+    }
+
+    const flashCardSet = await ctx.runQuery(
+      internal.flashcards.getFlashCardSetInternal,
+      {
         flashCardSetId: setId,
-        userId
-      });
-    }
-
-    const flashCardSet = await ctx.runQuery(internal.flashcards.getFlashCardSetInternal, {
-      flashCardSetId: setId
-    });
+      },
+    );
 
     if (!flashCardSet) {
       throw new Error("Flashcard set must have been successfully created.");
     }
 
-    await ctx.scheduler.runAfter(0, internal.notifications.store, {
-      userId: flashCardSet.userId,
-      message: `Flashcards have been successfully generated for ${flashCardSet.title}`,
-      type: "flashcards_generated",
-      relatedId: flashCardSet._id
-    });
+    await Promise.all([
+      ctx.scheduler.runAfter(0, internal.notifications.store, {
+        userId: flashCardSet.userId,
+        message: `Flashcards have been successfully generated for ${flashCardSet.title}`,
+        type: "flashcards_generated",
+        relatedId: flashCardSet._id,
+      }),
+      ctx.scheduler.runAfter(0, internal.activities.store, {
+        userId: flashCardSet.userId,
+        type: "flashcards_generated",
+        flashCardSetId: flashCardSet._id,
+      }),
+    ]);
 
-    // Track activity
-    await ctx.scheduler.runAfter(0, internal.activities.store, {
-      userId: flashCardSet.userId,
-      type: "flashcards_generated",
-      flashCardSetId: flashCardSet._id
-    });
-  }
+    return flashCardSet;
+  },
 });
-
 
 export const executeGraphLogic = internalAction({
   args: {
     contentChunk: v.string(),
     learningStyle: v.string(),
     plan: v.string(),
-    course: v.string()
+    course: v.string(),
   },
   handler: async (_ctx, args) => {
     const { contentChunk, learningStyle, plan, course } = args;
 
     const memoryManager = new MemorySaver();
     const flashCardGraph = graph.compile({
-      checkpointer: memoryManager
+      checkpointer: memoryManager,
     });
 
     const executionConfig = { configurable: { thread_id: uuidv4() } };
@@ -184,75 +212,73 @@ export const executeGraphLogic = internalAction({
 
     const response = await flashCardGraph.invoke(graphParams, executionConfig);
 
-
     if (!response.flashCardsObject) {
       throw new Error("Failed to get response from the model.");
     }
     return response.flashCardsObject;
-  }
+  },
 });
-
-
-
 
 export const getContent = internalAction({
   args: {
     lectureIds: v.optional(v.array(v.id("lectures"))),
     noteIds: v.optional(v.array(v.id("notes"))),
-    userId: v.string()
+    userId: v.string(),
   },
   handler: async (ctx, args): Promise<string[]> => {
     const { lectureIds, noteIds, userId } = args;
 
     const lectureTexts = lectureIds
-      ? await Promise.all(lectureIds.map(async (lectureId) => {
-        const lecture = await ctx.runQuery(internal.lectures.getLecture, {
-          lectureId
-        });
+      ? await Promise.all(
+          lectureIds.map(async (lectureId) => {
+            const lecture = await ctx.runQuery(internal.lectures.getLecture, {
+              lectureId,
+            });
 
-        if (!lecture) {
-          throw new Error("Lecture not found");
-        }
+            if (!lecture) {
+              throw new Error("Lecture not found");
+            }
 
-        return await ctx.runAction(internal.lectures.fetchTranscription, {
-          transcriptionIds: lecture.lectureTranscription
-        });
-      }))
+            return await ctx.runAction(internal.lectures.fetchTranscription, {
+              transcriptionIds: lecture.lectureTranscription,
+            });
+          }),
+        )
       : [];
 
     const noteTexts = noteIds
-      ? await Promise.all(noteIds.map(async (noteId) => {
-        const note = await ctx.runQuery(internal.notes.getNote, {
-          noteId,
-          userId
-        });
+      ? await Promise.all(
+          noteIds.map(async (noteId) => {
+            const note = await ctx.runQuery(internal.notes.getNote, {
+              noteId,
+              userId,
+            });
 
-        if (!note) {
-          throw new Error("Note ID must be valid.");
-        }
-
-        const chunkContents = await Promise.all(
-          note.textChunks.map(async (chunkId) => {
-            const url = await ctx.storage.getUrl(chunkId);
-            if (!url) {
-              throw new Error("Url cannot be null.");
+            if (!note) {
+              throw new Error("Note ID must be valid.");
             }
-            const response = await fetch(url);
 
-            if (!response.ok) {
-              throw new Error("Failed to fetch chunk");
-            }
-            return response.text();
-          })
-        );
+            const chunkContents = await Promise.all(
+              note.textChunks.map(async (chunkId) => {
+                const url = await ctx.storage.getUrl(chunkId);
+                if (!url) {
+                  throw new Error("Url cannot be null.");
+                }
+                const response = await fetch(url);
 
-        return chunkContents.join(' ');
-      }))
+                if (!response.ok) {
+                  throw new Error("Failed to fetch chunk");
+                }
+                return response.text();
+              }),
+            );
+
+            return chunkContents.join(" ");
+          }),
+        )
       : [];
 
     const flattenedLectureTexts = lectureTexts.flat();
     return [...flattenedLectureTexts, ...noteTexts];
-  }
+  },
 });
-
-
