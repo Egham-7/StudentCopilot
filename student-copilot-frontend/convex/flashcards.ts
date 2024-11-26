@@ -1,5 +1,9 @@
-
-import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -9,33 +13,26 @@ export const createFlashCardSet = mutation({
     title: v.string(),
     description: v.optional(v.string()),
     noteIds: v.optional(v.array(v.id("notes"))),
-    lectureIds: v.optional(v.array(v.id("lectures")))
+    lectureIds: v.optional(v.array(v.id("lectures"))),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
-      throw new Error("Must be authenticated to use this function.")
+      throw new Error("Must be authenticated to use this function.");
     }
 
-
     const moduleUser = await ctx.db.get(args.moduleId);
-
 
     if (!moduleUser) {
       throw new Error("Flashcard set must be associated with a module.");
     }
 
-
     const userId = moduleUser.userId;
-
 
     if (userId !== identity.subject) {
       throw new Error("Forbidden");
     }
-
-
-
 
     const flashCardSetId = await ctx.db.insert("flashCardSets", {
       moduleId: args.moduleId,
@@ -61,11 +58,8 @@ export const createFlashCardSet = mutation({
       type: "flashcard_set_created",
       flashCardSetId,
     });
-
-
   },
 });
-
 
 export const createFlashCardSetInternal = internalMutation({
   args: {
@@ -74,19 +68,16 @@ export const createFlashCardSetInternal = internalMutation({
     description: v.optional(v.string()),
     noteIds: v.optional(v.array(v.id("notes"))),
     lectureIds: v.optional(v.array(v.id("lectures"))),
-    userId: v.string()
+    userId: v.string(),
   },
   handler: async (ctx, args) => {
-
     const moduleUser = await ctx.db.get(args.moduleId);
-
 
     if (!moduleUser) {
       throw new Error("Flashcard set must be associated with a module.");
     }
 
     const userId = moduleUser.userId;
-
 
     if (userId !== args.userId) {
       throw new Error("Forbidden");
@@ -102,7 +93,6 @@ export const createFlashCardSetInternal = internalMutation({
       totalCards: 0,
       masteredCards: 0,
     });
-
 
     await ctx.scheduler.runAfter(0, internal.notifications.store, {
       userId,
@@ -122,15 +112,13 @@ export const createFlashCardSetInternal = internalMutation({
   },
 });
 
-
-
 export const updateFlashCardSet = internalMutation({
   args: {
     flashCardSetId: v.id("flashCardSets"),
     title: v.string(),
     description: v.optional(v.string()),
     noteIds: v.optional(v.array(v.id("notes"))),
-    lectureIds: v.optional(v.array(v.id("lectures")))
+    lectureIds: v.optional(v.array(v.id("lectures"))),
   },
   handler: async (ctx, args) => {
     const { flashCardSetId, title, description, noteIds, lectureIds } = args;
@@ -139,19 +127,19 @@ export const updateFlashCardSet = internalMutation({
       title,
       description,
       noteIds,
-      lectureIds
+      lectureIds,
     });
+
+    return flashCardSetId;
   },
 });
 
 export const getFlashCardSet = query({
-
   args: {
-    flashCardSetId: v.id("flashCardSets")
+    flashCardSetId: v.id("flashCardSets"),
   },
 
   handler: async (ctx, args) => {
-
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
@@ -166,41 +154,31 @@ export const getFlashCardSet = query({
 
     const moduleUser = await ctx.db.get(flashcardSet.moduleId);
 
-
     if (!moduleUser) {
       throw new Error("Flashcard set must be associated with a module.");
     }
 
-
     const userId = moduleUser.userId;
-
 
     if (userId !== identity.subject) {
       throw new Error("Forbidden");
     }
 
     return ctx.db.get(args.flashCardSetId);
-  }
-})
+  },
+});
 
 export const addFlashCardInternal = internalMutation({
-
   args: {
     flashCardSetId: v.id("flashCardSets"),
     userId: v.string(),
     front: v.string(),
     back: v.string(),
     tags: v.optional(v.array(v.string())),
-    sourceContentId: v.optional(
-      v.union(
-        v.id("lectures"),
-        v.id("notes")
-      )
-    ),
+    sourceContentId: v.optional(v.union(v.id("lectures"), v.id("notes"))),
   },
 
   handler: async (ctx, args) => {
-
     const cardId = await ctx.db.insert("flashcards", {
       flashCardSetId: args.flashCardSetId,
       front: args.front,
@@ -235,26 +213,22 @@ export const addFlashCardInternal = internalMutation({
     await ctx.scheduler.runAfter(0, internal.activities.store, {
       userId: args.userId,
       type: "flashcard_created",
-      flashCardSetId: flashCardSet._id
+      flashCardSetId: flashCardSet._id,
     });
 
     return cardId;
-
-
-  }
-
-})
+  },
+});
 
 export const getFlashCardSetInternal = internalQuery({
-
   args: {
-    flashCardSetId: v.id("flashCardSets")
+    flashCardSetId: v.id("flashCardSets"),
   },
 
   handler: async (ctx, args) => {
     return await ctx.db.get(args.flashCardSetId);
-  }
-})
+  },
+});
 
 export const addFlashCard = mutation({
   args: {
@@ -262,15 +236,9 @@ export const addFlashCard = mutation({
     front: v.string(),
     back: v.string(),
     tags: v.optional(v.array(v.string())),
-    sourceContentId: v.optional(
-      v.union(
-        v.id("lectures"),
-        v.id("notes")
-      )
-    ),
+    sourceContentId: v.optional(v.union(v.id("lectures"), v.id("notes"))),
   },
   handler: async (ctx, args) => {
-
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
@@ -285,13 +253,11 @@ export const addFlashCard = mutation({
 
     const moduleUser = await ctx.db.get(flashcardSet.moduleId);
 
-
     if (!moduleUser) {
       throw new Error("Flashcard set must be associated with a module.");
     }
 
     const userId = moduleUser.userId;
-
 
     if (userId !== identity.subject) {
       throw new Error("Forbidden");
@@ -331,26 +297,43 @@ export const addFlashCard = mutation({
     await ctx.scheduler.runAfter(0, internal.activities.store, {
       userId,
       type: "flashcard_created",
-      flashCardSetId: flashCardSet._id
+      flashCardSetId: flashCardSet._id,
     });
 
     return cardId;
   },
 });
 
+export const getFlashCardsInternal = internalQuery({
+  args: {
+    flashCardSetId: v.id("flashCardSets"),
+  },
+  handler: async (ctx, args) => {
+    const flashcardSet = await ctx.db.get(args.flashCardSetId);
+
+    if (!flashcardSet) {
+      throw new Error("Flashcard set cannot be null.");
+    }
+
+    return await ctx.db
+      .query("flashcards")
+      .withIndex("by_flashCardSetId", (q) =>
+        q.eq("flashCardSetId", args.flashCardSetId),
+      )
+      .collect();
+  },
+});
 
 export const getFlashCards = query({
   args: {
     flashCardSetId: v.id("flashCardSets"),
   },
   handler: async (ctx, args) => {
-
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
       throw new Error("Not authenticated.");
     }
-
 
     const flashcardSet = await ctx.db.get(args.flashCardSetId);
 
@@ -360,13 +343,11 @@ export const getFlashCards = query({
 
     const moduleUser = await ctx.db.get(flashcardSet.moduleId);
 
-
     if (!moduleUser) {
       throw new Error("Flashcard set must be associated with a module.");
     }
 
     const userId = moduleUser.userId;
-
 
     if (userId !== identity.subject) {
       throw new Error("Forbidden");
@@ -375,7 +356,7 @@ export const getFlashCards = query({
     return await ctx.db
       .query("flashcards")
       .withIndex("by_flashCardSetId", (q) =>
-        q.eq("flashCardSetId", args.flashCardSetId)
+        q.eq("flashCardSetId", args.flashCardSetId),
       )
       .collect();
   },
@@ -386,7 +367,6 @@ export const getDueCards = query({
     flashCardSetId: v.id("flashCardSets"),
   },
   handler: async (ctx, args) => {
-
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
@@ -401,18 +381,15 @@ export const getDueCards = query({
 
     const moduleUser = await ctx.db.get(flashcardSet.moduleId);
 
-
     if (!moduleUser) {
       throw new Error("Flashcard set must be associated with a module.");
     }
 
     const userId = moduleUser.userId;
 
-
     if (userId !== identity.subject) {
       throw new Error("Forbidden");
     }
-
 
     const now = new Date().toISOString();
     return await ctx.db
@@ -421,13 +398,12 @@ export const getDueCards = query({
       .filter((q) =>
         q.and(
           q.eq(q.field("flashCardSetId"), args.flashCardSetId),
-          q.lte(q.field("nextReviewDate"), now)
-        )
+          q.lte(q.field("nextReviewDate"), now),
+        ),
       )
       .collect();
   },
 });
-
 
 export const updateCardReview = mutation({
   args: {
@@ -435,17 +411,15 @@ export const updateCardReview = mutation({
     difficulty: v.union(
       v.literal("easy"),
       v.literal("medium"),
-      v.literal("hard")
+      v.literal("hard"),
     ),
   },
   handler: async (ctx, args) => {
-
     const identity = await ctx.auth.getUserIdentity();
 
     if (!identity) {
       throw new Error("Must be authenticated to use this function.");
     }
-
 
     const card = await ctx.db.get(args.cardId);
     if (!card) {
@@ -462,26 +436,20 @@ export const updateCardReview = mutation({
 
     const module = await ctx.db.get(moduleId);
 
-
     if (!module) {
       throw new Error("FLashcard sets must be associated with a module.");
     }
-
 
     if (module.userId !== identity.subject) {
       throw new Error("Forbidden");
     }
 
-
-    const nextReview = calculateNextReview(
-      card.status,
-      args.difficulty
-    );
+    const nextReview = calculateNextReview(card.status, args.difficulty);
 
     const newStatus = determineNewStatus(
       card.status,
       args.difficulty,
-      card.reviewCount || 0
+      card.reviewCount || 0,
     );
 
     await ctx.db.patch(args.cardId, {
@@ -491,12 +459,13 @@ export const updateCardReview = mutation({
       lastReviewDate: new Date().toISOString(),
       reviewCount: (card.reviewCount || 0) + 1,
       // Track success based on difficulty
-      correctCount: ["easy", "medium"].includes(args.difficulty) ?
-        (card.correctCount || 0) + 1 :
-        card.correctCount,
-      incorrectCount: args.difficulty === "hard" ?
-        (card.incorrectCount || 0) + 1 :
-        card.incorrectCount,
+      correctCount: ["easy", "medium"].includes(args.difficulty)
+        ? (card.correctCount || 0) + 1
+        : card.correctCount,
+      incorrectCount:
+        args.difficulty === "hard"
+          ? (card.incorrectCount || 0) + 1
+          : card.incorrectCount,
     });
 
     // Update mastered cards count if status changed to mastered
@@ -512,10 +481,7 @@ export const updateCardReview = mutation({
   },
 });
 
-function calculateNextReview(
-  currentStatus: string,
-  difficulty: string
-): Date {
+function calculateNextReview(currentStatus: string, difficulty: string): Date {
   const now = new Date();
   let intervalDays = 1;
 
@@ -555,13 +521,13 @@ enum FlashCardStatus {
   LEARNING = "learning",
   REVIEW = "review",
   NEW = "new",
-  MASTERED = "mastered"
+  MASTERED = "mastered",
 }
 
 function determineNewStatus(
   currentStatus: string,
   difficulty: string,
-  reviewCount: number
+  reviewCount: number,
 ): FlashCardStatus {
   // Hard responses always keep card in learning
   if (difficulty === "hard") {
@@ -595,8 +561,6 @@ function determineNewStatus(
   }
 }
 
-
-
 export const generateFlashCardsClient = mutation({
   args: {
     moduleId: v.id("modules"),
@@ -604,10 +568,17 @@ export const generateFlashCardsClient = mutation({
     description: v.optional(v.string()),
     lectureIds: v.array(v.id("lectures")),
     noteIds: v.array(v.id("notes")),
-    flashCardSetId: v.optional(v.id("flashCardSets"))
+    flashCardSetId: v.optional(v.id("flashCardSets")),
   },
   handler: async (ctx, args) => {
-    const { moduleId, title, description, lectureIds, noteIds, flashCardSetId } = args;
+    const {
+      moduleId,
+      title,
+      description,
+      lectureIds,
+      noteIds,
+      flashCardSetId,
+    } = args;
 
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -618,11 +589,9 @@ export const generateFlashCardsClient = mutation({
 
     const moduleUser = await ctx.db.get(moduleId);
 
-
     if (!moduleUser) {
       throw new Error("Flashcard set must be associated with a module.");
     }
-
 
     if (moduleUser.userId !== userId) {
       throw new Error("Forbidden.");
@@ -631,33 +600,34 @@ export const generateFlashCardsClient = mutation({
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerkId", (q) => q.eq("clerkId", userId))
-      .first()
-
+      .first();
 
     if (!user) {
       throw new Error("User not found.");
     }
     // Schedule the generation task
-    await ctx.scheduler.runAfter(0, internal.flashCardActions.generateFlashCards, {
-      flashCardSetId,
-      userId,
-      lectureIds,
-      noteIds,
-      title,
-      description,
-      learningStyle: user.learningStyle,
-      course: user.course,
-      levelOfStudy: user.levelOfStudy,
-      moduleId
-    });
-
+    await ctx.scheduler.runAfter(
+      0,
+      internal.flashCardActions.generateFlashCards,
+      {
+        flashCardSetId,
+        userId,
+        lectureIds,
+        noteIds,
+        title,
+        description,
+        learningStyle: user.learningStyle,
+        course: user.course,
+        levelOfStudy: user.levelOfStudy,
+        moduleId,
+      },
+    );
   },
 });
 
 export const deleteFlashcardSet = mutation({
   args: { id: v.id("flashCardSets") },
   handler: async (ctx, args) => {
-
     const flashCardSet = await ctx.db.get(args.id);
     if (!flashCardSet) {
       throw new Error("Flashcard set not found");
@@ -669,7 +639,7 @@ export const deleteFlashcardSet = mutation({
       .collect();
 
     await Promise.all(
-      flashcards.map((flashcard) => ctx.db.delete(flashcard._id))
+      flashcards.map((flashcard) => ctx.db.delete(flashcard._id)),
     );
 
     await ctx.db.delete(args.id);
@@ -690,7 +660,7 @@ export const deleteFlashcardSet = mutation({
 
     return { success: true };
   },
-})
+});
 
 export const getFlashcardsByModuleId = query({
   args: {
@@ -711,7 +681,6 @@ export const getFlashcardsByModuleId = query({
       .query("flashCardSets")
       .withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId))
       .collect();
-
 
     return flashcardSets;
   },

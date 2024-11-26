@@ -1,43 +1,60 @@
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { manualFormSchema } from "./forms";
-import { Id } from "convex/_generated/dataModel"
-import { api } from '../../../convex/_generated/api'
+import { Id } from "convex/_generated/dataModel";
+import { api } from "../../../convex/_generated/api";
 import { useMutation } from "convex/react";
+
 interface ManualFlashcardFormProps {
-  flashCardSetId: Id<"flashCardSets">
+  flashCardSetId: Id<"flashCardSets">;
 }
 
-export function ManualFlashcardForm({ flashCardSetId }: ManualFlashcardFormProps) {
+type FormData = z.infer<typeof manualFormSchema>;
 
-
-  const form = useForm<z.infer<typeof manualFormSchema>>({
+export function ManualFlashcardForm({
+  flashCardSetId,
+}: ManualFlashcardFormProps) {
+  const form = useForm<FormData>({
     resolver: zodResolver(manualFormSchema),
     defaultValues: {
       front: "",
       back: "",
       difficulty: "medium",
-      tags: "",
+      tags: [],
     },
-  })
+  });
 
-  const addFlashCard = useMutation(api.flashcards.addFlashCard)
+  const addFlashCard = useMutation(api.flashcards.addFlashCard);
 
+  async function onManualSubmit(values: FormData) {
+    if (!flashCardSetId) return;
 
-  async function onManualSubmit(values: z.infer<typeof manualFormSchema>) {
-    if (!flashCardSetId) return
     await addFlashCard({
       flashCardSetId,
       front: values.front,
       back: values.back,
-      tags: values.tags ? values.tags.split(',').map(t => t.trim()) : undefined,
-    })
-    form.reset()
+      tags: values.tags,
+    });
+
+    form.reset();
   }
 
   return (
@@ -50,12 +67,19 @@ export function ManualFlashcardForm({ flashCardSetId }: ManualFlashcardFormProps
             <FormItem>
               <FormLabel>Front</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Front of card" />
+                <Input
+                  placeholder="Front of card"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="back"
@@ -63,19 +87,30 @@ export function ManualFlashcardForm({ flashCardSetId }: ManualFlashcardFormProps
             <FormItem>
               <FormLabel>Back</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Back of card" />
+                <Input
+                  placeholder="Back of card"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="difficulty"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Difficulty</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                value={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select difficulty" />
@@ -91,6 +126,7 @@ export function ManualFlashcardForm({ flashCardSetId }: ManualFlashcardFormProps
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="tags"
@@ -98,15 +134,21 @@ export function ManualFlashcardForm({ flashCardSetId }: ManualFlashcardFormProps
             <FormItem>
               <FormLabel>Tags (comma separated)</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="tag1, tag2, tag3" />
+                <Input
+                  placeholder="tag1, tag2, tag3"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <Button type="submit">Add Card</Button>
       </form>
     </Form>
-  )
+  );
 }
-

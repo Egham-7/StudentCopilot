@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,18 +15,14 @@ import {
 import { Id } from "convex/_generated/dataModel";
 import { toast } from "../ui/use-toast";
 import { DialogTrigger } from "../ui/dialog";
-
-const formSchema = z.object({
-  lectureIds: z.array(z.string()),
-  noteIds: z.array(z.string()),
-});
+import { aiFormSchema } from "./forms";
 
 interface AIFlashcardUpdateFormProps {
   moduleId: Id<"modules">;
   flashCardSetId: Id<"flashCardSets">;
 }
 
-export function AIFlashcardUpdateForm({
+export function GenerateFlashCardsForm({
   moduleId,
   flashCardSetId,
 }: AIFlashcardUpdateFormProps) {
@@ -44,15 +40,25 @@ export function AIFlashcardUpdateForm({
     flashCardSetId,
   });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  useEffect(() => {
+    if (flashCardSet?.lectureIds) {
+      setSelectedLectures(flashCardSet.lectureIds);
+    }
+
+    if (flashCardSet?.noteIds) {
+      setSelectedNotes(flashCardSet.noteIds);
+    }
+  }, [flashCardSet]);
+
+  const form = useForm<z.infer<typeof aiFormSchema>>({
+    resolver: zodResolver(aiFormSchema),
     defaultValues: {
-      lectureIds: [],
-      noteIds: [],
+      lectureIds: flashCardSet?.lectureIds ?? [],
+      noteIds: flashCardSet?.noteIds ?? [],
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof aiFormSchema>) {
     try {
       const { lectureIds, noteIds } = values;
 
@@ -70,6 +76,12 @@ export function AIFlashcardUpdateForm({
         description: flashCardSet.description,
         lectureIds: lectureIds as Id<"lectures">[],
         noteIds: noteIds as Id<"notes">[],
+        flashCardSetId,
+      });
+
+      toast({
+        title: "Started generating flashcards.",
+        description: "Please wait. We will let you know when they are ready.",
       });
 
       form.reset();
