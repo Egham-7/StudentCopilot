@@ -78,7 +78,12 @@ export default function FlashcardPage() {
   };
 
   const prevCard = () => {
+    if (currentCard <= 0) {
+      setCurrentCard(0);
+      return;
+    }
     setIsFlipped(false);
+
     setTimeout(() => {
       if (currentCard > 0) {
         setCurrentCard((prev) => prev - 1);
