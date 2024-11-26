@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Id } from "convex/_generated/dataModel";
 import { ManualFlashcardForm } from "./manual-flashcard-form";
 import { GenerateFlashCardsForm } from "./generate-flashcards-form";
+import { useState } from "react";
 
 interface AddFlashcardDialogProps {
   flashCardSetId: Id<"flashCardSets">;
@@ -21,8 +22,13 @@ export function AddFlashcardDialog({
   moduleId,
   flashCardSetId,
 }: AddFlashcardDialogProps) {
+  const [open, setOpen] = useState(false);
+
+  const onComplete = () => {
+    setOpen(false);
+  };
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button aria-label="Open flashcard creation dialog">
           <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
@@ -49,7 +55,10 @@ export function AddFlashcardDialog({
             role="tabpanel"
             aria-label="Manual flashcard creation form"
           >
-            <ManualFlashcardForm flashCardSetId={flashCardSetId} />
+            <ManualFlashcardForm
+              flashCardSetId={flashCardSetId}
+              onComplete={onComplete}
+            />
           </TabsContent>
           <TabsContent
             value="ai"
@@ -59,6 +68,7 @@ export function AddFlashcardDialog({
             <GenerateFlashCardsForm
               moduleId={moduleId}
               flashCardSetId={flashCardSetId}
+              onComplete={onComplete}
             />
           </TabsContent>
         </Tabs>

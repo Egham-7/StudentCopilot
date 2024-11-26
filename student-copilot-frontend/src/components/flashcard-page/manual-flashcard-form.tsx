@@ -22,15 +22,18 @@ import { manualFormSchema } from "./forms";
 import { Id } from "convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
 import { useMutation } from "convex/react";
+import { toast } from "../ui/use-toast";
 
 interface ManualFlashcardFormProps {
   flashCardSetId: Id<"flashCardSets">;
+  onComplete: () => void;
 }
 
 type FormData = z.infer<typeof manualFormSchema>;
 
 export function ManualFlashcardForm({
   flashCardSetId,
+  onComplete,
 }: ManualFlashcardFormProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(manualFormSchema),
@@ -55,6 +58,12 @@ export function ManualFlashcardForm({
     });
 
     form.reset();
+    onComplete();
+
+    toast({
+      title: "Flashcard Created Successfully",
+      description: `Front: "${values.front}"${values.tags?.length ? ` • Tags: ${values.tags.join(", ")}` : ""}`,
+    });
   }
 
   return (

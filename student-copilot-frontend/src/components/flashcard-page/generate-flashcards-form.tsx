@@ -14,17 +14,18 @@ import {
 } from "@/components/ui/form";
 import { Id } from "convex/_generated/dataModel";
 import { toast } from "../ui/use-toast";
-import { DialogTrigger } from "../ui/dialog";
 import { aiFormSchema } from "./forms";
 
 interface AIFlashcardUpdateFormProps {
   moduleId: Id<"modules">;
   flashCardSetId: Id<"flashCardSets">;
+  onComplete: () => void;
 }
 
 export function GenerateFlashCardsForm({
   moduleId,
   flashCardSetId,
+  onComplete,
 }: AIFlashcardUpdateFormProps) {
   const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>(
     [],
@@ -83,8 +84,9 @@ export function GenerateFlashCardsForm({
         title: "Started generating flashcards.",
         description: "Please wait. We will let you know when they are ready.",
       });
-
       form.reset();
+
+      onComplete();
     } catch (error: unknown) {
       if (error instanceof Error) {
         toast({
@@ -165,16 +167,14 @@ export function GenerateFlashCardsForm({
         />
 
         <div className="flex justify-end">
-          <DialogTrigger asChild>
-            <Button
-              type="submit"
-              disabled={
-                selectedLectures.length === 0 && selectedNotes.length === 0
-              }
-            >
-              Generate Flashcards
-            </Button>
-          </DialogTrigger>
+          <Button
+            type="submit"
+            disabled={
+              selectedLectures.length === 0 && selectedNotes.length === 0
+            }
+          >
+            Generate Flashcards
+          </Button>
         </div>
       </form>
     </Form>
