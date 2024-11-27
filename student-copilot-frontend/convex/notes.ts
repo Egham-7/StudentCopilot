@@ -1,4 +1,3 @@
-
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
@@ -7,7 +6,7 @@ import {
   internalMutation,
   internalQuery,
   mutation,
-  query
+  query,
 } from "./_generated/server";
 import { generateEmbedding } from "./ai";
 
@@ -120,6 +119,39 @@ export const getNotesForModule = query({
     moduleId: v.id("modules"),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Not authorized to access.");
+    }
+
+    const moduleUser = await ctx.db.get(args.moduleId);
+
+    if (!moduleUser) {
+      throw new Error("Module must exist.");
+    }
+
+    const userId = moduleUser.userId;
+
+    if (userId !== identity.subject) {
+      throw new Error("Not authorized to access.");
+    }
+
+    const notes = await ctx.db
+      .query("notes")
+      .withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId))
+      .order("desc")
+      .collect();
+
+    return notes;
+  },
+});
+
+export const getNotesForModuleInternal = internalQuery({
+  args: {
+    moduleId: v.id("modules"),
+  },
+  handler: async (ctx, args) => {
     const notes = await ctx.db
       .query("notes")
       .withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId))
@@ -210,4 +242,3 @@ export const deleteNote = mutation({
     return { success: true, message: "Note deleted successfully." };
   },
 });
-

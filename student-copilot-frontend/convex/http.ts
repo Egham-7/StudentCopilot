@@ -35,4 +35,54 @@ http.route({
   }),
 });
 
+http.route({
+  path: "/getUserData",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const payload = await request.json();
+
+    if (!payload) {
+      return new Response("Missing payload", { status: 400 });
+    }
+
+    const moduleId = payload.moduleId;
+
+    if (!moduleId) {
+      return new Response("Payload missing moduleId", { status: 400 });
+    }
+
+    try {
+      const lectures = await ctx.runQuery(
+        internal.lectures.getLecturesByModuleIdInternal,
+        {
+          moduleId,
+        },
+      );
+
+      const notes = await ctx.runQuery(
+        internal.notes.getNotesForModuleInternal,
+        {
+          moduleId,
+        },
+      );
+
+      // Create a response body object and stringify it
+      const responseBody = {
+        lectures,
+        notes,
+      };
+
+      return new Response(JSON.stringify(responseBody), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } catch (error) {
+      console.error("Failed to retrieve lectures:", error);
+      return new Response("Lecture retrieval failed", { status: 500 });
+    }
+  }),
+});
+
 export default http;
