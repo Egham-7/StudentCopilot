@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,68 +13,80 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Id } from "convex/_generated/dataModel";
-import { Input } from "@/components/ui/input";
 import { toast } from "../ui/use-toast";
+import { aiFormSchema } from "./forms";
 
-const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  lectureIds: z.array(z.string()),
-  noteIds: z.array(z.string()),
-});
-
-interface AIFlashcardFormProps {
+interface AIFlashcardUpdateFormProps {
   moduleId: Id<"modules">;
+  flashCardSetId: Id<"flashCardSets">;
   onComplete: () => void;
 }
 
-export function AIFlashcardForm({
+export function GenerateFlashCardsForm({
   moduleId,
+  flashCardSetId,
   onComplete,
-}: AIFlashcardFormProps) {
+}: AIFlashcardUpdateFormProps) {
   const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>(
     [],
   );
   const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([]);
+
   const lectures = useQuery(api.lectures.getLecturesByModuleId, { moduleId });
   const notes = useQuery(api.notes.getNotesForModule, { moduleId });
   const generateFlashCard = useMutation(
     api.flashcards.generateFlashCardsClient,
   );
+  const flashCardSet = useQuery(api.flashcards.getFlashCardSet, {
+    flashCardSetId,
+  });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  useEffect(() => {
+    if (flashCardSet?.lectureIds) {
+      setSelectedLectures(flashCardSet.lectureIds);
+    }
+
+    if (flashCardSet?.noteIds) {
+      setSelectedNotes(flashCardSet.noteIds);
+    }
+  }, [flashCardSet]);
+
+  const form = useForm<z.infer<typeof aiFormSchema>>({
+    resolver: zodResolver(aiFormSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      lectureIds: [],
-      noteIds: [],
+      lectureIds: flashCardSet?.lectureIds ?? [],
+      noteIds: flashCardSet?.noteIds ?? [],
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof aiFormSchema>) {
     try {
-      const { title, description, lectureIds, noteIds } = values;
+      const { lectureIds, noteIds } = values;
 
       if (!lectureIds?.length && !noteIds?.length) {
         return;
       }
 
+      if (!flashCardSet) {
+        throw new Error("Flashcard set must be available.");
+      }
+
       await generateFlashCard({
         moduleId,
-        title,
-        description,
+        title: flashCardSet.title,
+        description: flashCardSet.description,
         lectureIds: lectureIds as Id<"lectures">[],
         noteIds: noteIds as Id<"notes">[],
+        flashCardSetId,
       });
-
-      form.reset();
-      onComplete?.();
 
       toast({
-        title: "Generating flashcards.",
-        description: "We will let you know when its done!",
+        title: "Started generating flashcards.",
+        description: "Please wait. We will let you know when they are ready.",
       });
+      form.reset();
+
+      onComplete();
     } catch (error: unknown) {
       if (error instanceof Error) {
         toast({
@@ -88,32 +100,6 @@ export function AIFlashcardForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <Input placeholder="Enter flashcard set title" {...field} />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <Input
-                placeholder="Enter what this flashcard set is about"
-                {...field}
-              />
-            </FormItem>
-          )}
-        />
-
         <FormField
           control={form.control}
           name="lectureIds"

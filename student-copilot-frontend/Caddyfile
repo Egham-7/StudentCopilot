@@ -1,0 +1,39 @@
+:{$PORT:3000} {
+    log {
+        format json
+    }
+    
+    bind 0.0.0.0
+    
+    header {
+        Access-Control-Allow-Origin *
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Authorization, Content-Type, Accept, X-Requested-With"
+        Access-Control-Allow-Credentials true
+        Access-Control-Max-Age 3600
+        -Server
+    }
+
+    @options {
+        method OPTIONS
+    }
+    respond @options 204
+
+    handle_path /api/* {
+        uri strip_prefix /api
+
+        reverse_proxy https://c-api-production.up.railway.app {
+            header_up Host {upstream_hostport}
+            header_up X-Real-IP {remote_host}
+            header_up Authorization {header.Authorization}
+        }
+    }
+
+    handle {
+        root * dist
+        encode gzip zstd
+        file_server
+        try_files {path} /index.html
+    }
+}
+

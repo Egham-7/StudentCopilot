@@ -1,68 +1,45 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { FileText, FileAudio, FileVideo } from 'lucide-react';
+import React from "react";
+import {
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { FileText, FileAudio, FileVideo } from "lucide-react";
 import { FaGlobe } from "react-icons/fa";
+import ChoiceSelection from "../choice-selection";
+
+const SelectionHeader: React.FC = () => {
+  return (
+    <DialogHeader>
+      <DialogTitle>Choose Upload Type</DialogTitle>
+      <DialogDescription>
+        Select the type of lecture you want to upload.
+      </DialogDescription>
+    </DialogHeader>
+  );
+};
 
 interface FileTypeSelectionProps {
-  onSelect: (type: 'pdf' | 'audio' | 'video' | 'website') => void;
+  onSelect: (type: "pdf" | "audio" | "video" | "website") => void;
 }
 
 const FileTypeSelection: React.FC<FileTypeSelectionProps> = ({ onSelect }) => {
+  const selectionOptions = [
+    { icon: FileText, label: "PDF", type: "pdf" as const },
+    { icon: FileAudio, label: "Audio", type: "audio" as const },
+    { icon: FileVideo, label: "Video", type: "video" as const },
+    { icon: FaGlobe, label: "Website", type: "website" as const },
+  ];
+
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>Choose Upload Type</DialogTitle>
-        <DialogDescription>
-          Select the type of lecture you want to upload.
-        </DialogDescription>
-      </DialogHeader>
-      <div className="grid grid-cols-2 gap-4 py-4">
-        <Button
-          variant="outline"
-          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
-          onClick={() => onSelect('pdf')}
-        >
-          <FileText className="w-8 h-8" />
-          <span>PDF</span>
-        </Button>
-        <Button
-          variant="outline"
-          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
-          onClick={() => onSelect('audio')}
-        >
-          <FileAudio className="w-8 h-8" />
-          <span>Audio</span>
-        </Button>
-
-        <Button
-          variant="outline"
-          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
-          onClick={() => onSelect('video')}
-        >
-          <FileVideo className="w-8 h-8" />
-          <span>Video</span>
-        </Button>
-
-
-        <Button
-          variant="outline"
-          className="h-32 flex flex-col items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
-          onClick={() => onSelect('website')}
-        >
-
-          <FaGlobe className='w-8 h-8' />
-
-          <span>Website</span>
-        </Button>
-
-
-
-
-      </div>
+      <SelectionHeader />
+      <ChoiceSelection
+        selectionOptions={selectionOptions}
+        onSelect={onSelect}
+      />
     </>
   );
 };
 
 export default FileTypeSelection;
-

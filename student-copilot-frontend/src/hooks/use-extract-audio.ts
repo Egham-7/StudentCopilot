@@ -22,9 +22,10 @@ const useExtractAudio = () => {
       });
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/Audio/convert`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/Audio/convert`,
         formData,
         {
+          withCredentials: true,
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",

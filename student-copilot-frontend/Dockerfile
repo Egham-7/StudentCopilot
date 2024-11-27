@@ -1,43 +1,56 @@
 # Build stage
-FROM node:23-alpine AS build
+FROM node:20-alpine AS build
 
 # Set working directory
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm@latest
+# Install pnpm and clean npm cache
+RUN npm install -g pnpm@latest && npm cache clean --force
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy package files first for better layer caching
+COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies (including dev dependencies)
-RUN pnpm install
+# Install dependencies with frozen lockfile for consistency
+RUN pnpm install --frozen-lockfile
 
-# Copy all project files
+# Copy source files
 COPY . .
 
+# Build arguments
 ARG CONVEX_DEPLOY_KEY
 ARG VITE_CLERK_PUBLISHABLE_KEY
 ARG VITE_CLERK_SECRET_KEY
 ARG VITE_CLERK_SIGN_IN_FORCE_REDIRECT_URL
 ARG VITE_CLERK_SIGN_UP_FORCE_REDIRECT_URL
 ARG VITE_CONVEX_URL
+ARG VITE_BACKEND_URL
+ARG ENVIRONMENT=production
 
-# Build the app and deploy Convex functions
-RUN pnpm dlx convex deploy --cmd 'pnpm vite build'
+# Build and deploy with improved conditional
+RUN if [ "$ENVIRONMENT" = "staging" ]; then \
+  pnpm dlx convex deploy --preview-create staging --cmd 'pnpm vite build'; \
+  else \
+  pnpm dlx convex deploy --cmd 'pnpm vite build'; \
+  fi
 
 # Production stage
-FROM nginx:alpine
+FROM caddy:2-alpine
 
-# Copy the built assets from the build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY Caddyfile ./
+RUN caddy fmt Caddyfile --overwrite
 
-# Expose port 80
+# Copy only the built assets
+COPY --from=build /app/dist ./dist
+
+# Expose ports
 EXPOSE 80
+EXPOSE 443
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use non-root user for better security
+USER 1000
+
+# Start Caddy
+CMD ["caddy", "run", "--config", "Caddyfile", "--adapter", "caddyfile"]
 

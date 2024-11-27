@@ -64,6 +64,47 @@ export const getLecturesByModuleId = query({
   },
 });
 
+export const getLecturesByModuleIdInternal = internalQuery({
+  args: { moduleId: v.id("modules") },
+  handler: async (ctx, args) => {
+    const lectures = await ctx.db
+      .query("lectures")
+      .withIndex("by_moduleId", (q) => q.eq("moduleId", args.moduleId))
+      .collect();
+
+    const lecturesWithUrl = await Promise.all(
+      lectures.map(async (lecture) => {
+        const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
+
+        const transcriptionIds = lecture.lectureTranscription;
+
+        const lectureTranscription = await Promise.all(
+          transcriptionIds.map((id) => ctx.storage.getUrl(id)),
+        );
+
+        const imageUrl =
+          lecture.image !== undefined
+            ? await ctx.storage.getUrl(lecture.image)
+            : undefined;
+
+        // Assert that these URLs are always strings
+        if (contentUrl === null) {
+          throw new Error("Expected content URL and image URL to be non-null");
+        }
+
+        return {
+          ...lecture,
+          contentUrl,
+          lectureTranscription,
+          image: imageUrl,
+        };
+      }),
+    );
+
+    return lecturesWithUrl;
+  },
+});
+
 export const getLecturesByIds = query({
   args: { lectureIds: v.array(v.id("lectures")) },
   handler: async (ctx, args) => {
@@ -426,4 +467,3 @@ export const getLecture = internalQuery({
     return lecture;
   },
 });
-

@@ -23,7 +23,7 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { cn } from "@/lib/utils";
-
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import CreateFlashCardsForm from "@/components/custom/module-page/create-flashcards-form";
 
@@ -83,9 +83,9 @@ export default function FlashcardSetsPage() {
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button variant="outline" className="w-full" asChild>
-                  <a href={`/flashcards/${moduleId}/${set._id}`}>
+                  <Link to={`/dashboard/flashcards/${moduleId}/${set._id}`}>
                     Review Cards
-                  </a>
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
