@@ -76,6 +76,12 @@ export const getLecturesByModuleIdInternal = internalQuery({
       lectures.map(async (lecture) => {
         const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
 
+        const transcriptionIds = lecture.lectureTranscription;
+
+        const lectureTranscription = await Promise.all(
+          transcriptionIds.map((id) => ctx.storage.getUrl(id)),
+        );
+
         const imageUrl =
           lecture.image !== undefined
             ? await ctx.storage.getUrl(lecture.image)
@@ -89,6 +95,7 @@ export const getLecturesByModuleIdInternal = internalQuery({
         return {
           ...lecture,
           contentUrl,
+          lectureTranscription,
           image: imageUrl,
         };
       }),
