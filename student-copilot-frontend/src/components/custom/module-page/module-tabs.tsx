@@ -18,13 +18,12 @@ import { LecturesData } from "@/lib/ui_utils";
 import { LectureSearchBar } from "./lecture-search-bar";
 import { NotesSearchBar } from "./notes-search-bar";
 import FlashcardSetsTab from "./flashcard-sets-tab";
+import { PiStackFill } from "react-icons/pi";
 
 type ModuleTabsProps = {
   moduleId: Id<"modules">;
   lectures: LecturesData[] | undefined;
   notes: Doc<"notes">[] | undefined;
-  selectedLectures: Id<"lectures">[];
-  setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
   flashCardSets: Doc<"flashCardSets">[] | undefined;
 };
 
@@ -32,15 +31,21 @@ export default function ModuleTabs({
   moduleId,
   lectures,
   notes,
-  selectedLectures,
-  setSelectedLectures,
-  flashCardSets
+  flashCardSets,
 }: ModuleTabsProps) {
   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
   const [activeTab, setActiveTab] = useState("lectures");
 
   const [filteredLectures, setFilteredLectures] = useState(lectures);
   const [filteredNotes, setFilteredNotes] = useState(notes);
+
+  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>(
+    [],
+  );
+
+  const [selectedFlashcards, setSelectedFlashcards] = useState<
+    Id<"flashCardSets">[]
+  >([]);
 
   useEffect(() => {
     setFilteredLectures(lectures);
@@ -78,30 +83,22 @@ export default function ModuleTabs({
     }
   };
 
-
-
   const handleLectureSearchResults = useCallback(
-
     (results: Id<"lectures">[]) => {
       setFilteredLectures(
-        lectures?.filter((lecture) => results.includes(lecture._id))
-      )
+        lectures?.filter((lecture) => results.includes(lecture._id)),
+      );
     },
-    [lectures]
+    [lectures],
   );
 
   const handleNotesSearchResults = useCallback(
-
     (results: Id<"notes">[]) => {
-
-      setFilteredNotes(
-        notes?.filter((note) => results.includes(note._id)),
-      );
-
+      setFilteredNotes(notes?.filter((note) => results.includes(note._id)));
     },
 
-    [notes]
-  )
+    [notes],
+  );
 
   return (
     <Tabs
@@ -135,6 +132,11 @@ export default function ModuleTabs({
                     </>
                   )}
                 </DropdownMenuItem>
+
+                <DropdownMenuItem>
+                  <PiStackFill className="w-4 h-4 mr-2" />
+                  Generate Flashcards
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -142,7 +144,10 @@ export default function ModuleTabs({
       </div>
 
       <TabsContent value="lectures">
-        <LectureSearchBar moduleId={moduleId} onSearchResults={handleLectureSearchResults} />
+        <LectureSearchBar
+          moduleId={moduleId}
+          onSearchResults={handleLectureSearchResults}
+        />
 
         <LecturesTab
           moduleId={moduleId}
@@ -153,7 +158,10 @@ export default function ModuleTabs({
       </TabsContent>
 
       <TabsContent value="notes">
-        <NotesSearchBar moduleId={moduleId} onSearchResults={handleNotesSearchResults} />
+        <NotesSearchBar
+          moduleId={moduleId}
+          onSearchResults={handleNotesSearchResults}
+        />
 
         <NotesTab notes={filteredNotes} />
       </TabsContent>
