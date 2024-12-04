@@ -102,6 +102,7 @@ export const generateFlashCards = internalAction({
         learningStyle,
         plan: plan.content as string,
         course,
+        allFlashCards,
       }),
     );
 
@@ -193,9 +194,10 @@ export const executeGraphLogic = internalAction({
     learningStyle: v.string(),
     plan: v.string(),
     course: v.string(),
+    allFlashCards: v.array(v.any()),
   },
   handler: async (_ctx, args) => {
-    const { contentChunk, learningStyle, plan, course } = args;
+    const { contentChunk, learningStyle, plan, course, allFlashCards } = args;
 
     const memoryManager = new MemorySaver();
     const flashCardGraph = graph.compile({
@@ -208,6 +210,7 @@ export const executeGraphLogic = internalAction({
       learningStyle,
       plan,
       course,
+      allFlashCards,
     };
 
     const response = await flashCardGraph.invoke(graphParams, executionConfig);
