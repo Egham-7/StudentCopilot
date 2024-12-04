@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -11,9 +11,6 @@ import ModuleChat from "@/components/custom/module-page/module-chat";
 
 export default function ModulePage() {
   const { moduleId } = useParams<{ moduleId: string }>();
-  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>(
-    [],
-  );
 
   const moduleUser = useQuery(
     api.modules.getById,
@@ -32,11 +29,14 @@ export default function ModulePage() {
     "skip",
   );
 
-  const flashCardSets = useQuery(api.flashcards.getFlashcardsByModuleId, moduleId ? {
-    moduleId: moduleId as Id<"modules">
-
-  } : "skip");
-
+  const flashCardSets = useQuery(
+    api.flashcards.getFlashcardsByModuleId,
+    moduleId
+      ? {
+          moduleId: moduleId as Id<"modules">,
+        }
+      : "skip",
+  );
 
   const latestNotification = userNotifications?.[0];
   const { toast } = useToast();
@@ -78,8 +78,6 @@ export default function ModulePage() {
           moduleId={moduleId as Id<"modules">}
           lectures={lectures}
           notes={notes}
-          selectedLectures={selectedLectures}
-          setSelectedLectures={setSelectedLectures}
           flashCardSets={flashCardSets}
         />
       )}
