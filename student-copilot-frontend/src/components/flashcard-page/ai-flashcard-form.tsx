@@ -15,13 +15,8 @@ import {
 import { Id } from "convex/_generated/dataModel";
 import { Input } from "@/components/ui/input";
 import { toast } from "../ui/use-toast";
-
-const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  lectureIds: z.array(z.string()),
-  noteIds: z.array(z.string()),
-});
+import { flashCardGenerateFormSchema } from "./forms";
+import GenerateFlashCardsFormSkeleton from "./skeletons/ai-flashcard-form-skeleton";
 
 interface AIFlashcardFormProps {
   moduleId: Id<"modules">;
@@ -42,8 +37,8 @@ export function AIFlashcardForm({
     api.flashcards.generateFlashCardsClient,
   );
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof flashCardGenerateFormSchema>>({
+    resolver: zodResolver(flashCardGenerateFormSchema),
     defaultValues: {
       title: "",
       description: "",
@@ -52,7 +47,7 @@ export function AIFlashcardForm({
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof flashCardGenerateFormSchema>) {
     try {
       const { title, description, lectureIds, noteIds } = values;
 
@@ -83,6 +78,10 @@ export function AIFlashcardForm({
         });
       }
     }
+  }
+
+  if (!lectures || !notes) {
+    return <GenerateFlashCardsFormSkeleton />;
   }
 
   return (

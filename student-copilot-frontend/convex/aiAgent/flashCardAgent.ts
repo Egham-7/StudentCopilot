@@ -1,34 +1,47 @@
 "use node";
 
-
-import { Annotation, END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
+import {
+  Annotation,
+  END,
+  MessagesAnnotation,
+  StateGraph,
+} from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
 import { FlashCardArray, flashcardArraySchema } from "./types/flashCardAgent";
 import { flashCardGeneratorPrompt } from "./prompts/flashCardAgent";
+import { Doc } from "convex/_generated/dataModel";
 
 type InputAnnotationState = typeof inputAnnotation.State;
 
 const inputAnnotation = Annotation.Root({
   ...MessagesAnnotation.spec,
   contentChunk: Annotation<string>,
-  learningStyle: Annotation<"visual" | "auditory" | "kinesthetic" | "analytical">,
+  learningStyle: Annotation<
+    "visual" | "auditory" | "kinesthetic" | "analytical"
+  >,
   levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
   course: Annotation<string>,
   plan: Annotation<string>,
+  allFlashCards: Annotation<Doc<"flashcards">[]>,
 });
 
-
 const outputAnnotation = Annotation.Root({
-
-  flashCardsObject: Annotation<FlashCardArray>
-})
+  flashCardsObject: Annotation<FlashCardArray>,
+});
 
 type OutputAnnotationState = typeof outputAnnotation.State;
 
-export async function generateFlashCard(state: InputAnnotationState): Promise<OutputAnnotationState> {
-
-  const { plan, contentChunk, learningStyle, levelOfStudy, course } = state;
-
+export async function generateFlashCard(
+  state: InputAnnotationState,
+): Promise<OutputAnnotationState> {
+  const {
+    plan,
+    contentChunk,
+    learningStyle,
+    levelOfStudy,
+    course,
+    allFlashCards,
+  } = state;
 
   const model = new ChatOpenAI({
     model: "gpt-4o-mini",
@@ -38,28 +51,35 @@ export async function generateFlashCard(state: InputAnnotationState): Promise<Ou
 
   const chain = flashCardGeneratorPrompt.pipe(structuredModel);
 
+  const allFlashCardFronts = allFlashCards.map(
+    (flashcard: Doc<"flashcards">) => {
+      return flashcard.front;
+    },
+  );
 
   const result = await chain.invoke({
     plan,
     contentChunk,
     learningStyle,
     levelOfStudy,
-    course
-  })
+    course,
+    allFlashCardFronts,
+  });
 
-  const uncheckedFlashCardStruct = await flashcardArraySchema.safeParseAsync(result);
+  const uncheckedFlashCardStruct =
+    await flashcardArraySchema.safeParseAsync(result);
 
   if (!uncheckedFlashCardStruct.success) {
-    throw new Error(`Failed to generate proper flashcard: ${uncheckedFlashCardStruct.error}`)
+    throw new Error(
+      `Failed to generate proper flashcard: ${uncheckedFlashCardStruct.error}`,
+    );
   }
 
   const flashCardsObject = uncheckedFlashCardStruct.data;
 
   return {
-    flashCardsObject
+    flashCardsObject,
   };
-
-
 }
 
 export const graph = new StateGraph({
@@ -69,4 +89,3 @@ export const graph = new StateGraph({
   .addNode("generate_flashcards", generateFlashCard)
   .addEdge("__start__", "generate_flashcards")
   .addEdge("generate_flashcards", END);
-

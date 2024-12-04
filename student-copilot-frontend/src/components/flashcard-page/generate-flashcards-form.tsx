@@ -15,6 +15,7 @@ import {
 import { Id } from "convex/_generated/dataModel";
 import { toast } from "../ui/use-toast";
 import { aiFormSchema } from "./forms";
+import GenerateFlashCardsFormSkeleton from "./skeletons/ai-flashcard-form-skeleton";
 
 interface AIFlashcardUpdateFormProps {
   moduleId: Id<"modules">;
@@ -27,11 +28,6 @@ export function GenerateFlashCardsForm({
   flashCardSetId,
   onComplete,
 }: AIFlashcardUpdateFormProps) {
-  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>(
-    [],
-  );
-  const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([]);
-
   const lectures = useQuery(api.lectures.getLecturesByModuleId, { moduleId });
   const notes = useQuery(api.notes.getNotesForModule, { moduleId });
   const generateFlashCard = useMutation(
@@ -41,40 +37,45 @@ export function GenerateFlashCardsForm({
     flashCardSetId,
   });
 
-  useEffect(() => {
-    if (flashCardSet?.lectureIds) {
-      setSelectedLectures(flashCardSet.lectureIds);
-    }
-
-    if (flashCardSet?.noteIds) {
-      setSelectedNotes(flashCardSet.noteIds);
-    }
-  }, [flashCardSet]);
+  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>(
+    [],
+  );
+  const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([]);
 
   const form = useForm<z.infer<typeof aiFormSchema>>({
     resolver: zodResolver(aiFormSchema),
     defaultValues: {
-      lectureIds: flashCardSet?.lectureIds ?? [],
-      noteIds: flashCardSet?.noteIds ?? [],
+      lectureIds: [],
+      noteIds: [],
     },
   });
+
+  useEffect(() => {
+    if (flashCardSet?.lectureIds) {
+      setSelectedLectures(flashCardSet.lectureIds);
+      form.setValue("lectureIds", flashCardSet.lectureIds);
+    }
+    if (flashCardSet?.noteIds) {
+      setSelectedNotes(flashCardSet.noteIds);
+      form.setValue("noteIds", flashCardSet.noteIds);
+    }
+  }, [flashCardSet, form]);
+
+  if (!flashCardSet || !lectures || !notes) {
+    return <GenerateFlashCardsFormSkeleton />;
+  }
 
   async function onSubmit(values: z.infer<typeof aiFormSchema>) {
     try {
       const { lectureIds, noteIds } = values;
-
       if (!lectureIds?.length && !noteIds?.length) {
         return;
       }
 
-      if (!flashCardSet) {
-        throw new Error("Flashcard set must be available.");
-      }
-
       await generateFlashCard({
         moduleId,
-        title: flashCardSet.title,
-        description: flashCardSet.description,
+        title: flashCardSet?.title ?? "",
+        description: flashCardSet?.description,
         lectureIds: lectureIds as Id<"lectures">[],
         noteIds: noteIds as Id<"notes">[],
         flashCardSetId,
@@ -84,8 +85,8 @@ export function GenerateFlashCardsForm({
         title: "Started generating flashcards.",
         description: "Please wait. We will let you know when they are ready.",
       });
-      form.reset();
 
+      form.reset();
       onComplete();
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -107,7 +108,7 @@ export function GenerateFlashCardsForm({
             <FormItem>
               <FormLabel>Select Lectures</FormLabel>
               <div className="grid grid-cols-2 gap-2">
-                {lectures?.map((lecture) => (
+                {lectures.map((lecture) => (
                   <Button
                     key={lecture._id}
                     type="button"
@@ -142,7 +143,7 @@ export function GenerateFlashCardsForm({
             <FormItem>
               <FormLabel>Select Notes</FormLabel>
               <div className="grid grid-cols-2 gap-2">
-                {notes?.map((note) => (
+                {notes.map((note) => (
                   <Button
                     key={note._id}
                     type="button"

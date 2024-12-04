@@ -45,3 +45,10 @@ export const aiFormSchema = z
       path: ["lectureIds"],
     },
   );
+
+export const flashCardGenerateFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  lectureIds: z.array(z.string()),
+  noteIds: z.array(z.string()),
+});
