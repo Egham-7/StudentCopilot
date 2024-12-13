@@ -14,15 +14,15 @@ jobs:
       run:
         working-directory: ./student-copilot-frontend
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
           
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 'latest'
           cache: 'pnpm'
           cache-dependency-path: './student-copilot-frontend/pnpm-lock.yaml'
           
@@ -39,15 +39,15 @@ jobs:
       run:
         working-directory: ./student-copilot-frontend
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
           
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 'latest'
           cache: 'pnpm'
           cache-dependency-path: './student-copilot-frontend/pnpm-lock.yaml'
           
@@ -64,15 +64,15 @@ jobs:
       run:
         working-directory: ./student-copilot-frontend
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
           
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 'latest'
           cache: 'pnpm'
           cache-dependency-path: './student-copilot-frontend/pnpm-lock.yaml'
           
@@ -82,7 +82,7 @@ jobs:
       - name: Build
         run: pnpm run build
         
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: ./student-copilot-frontend/dist
@@ -94,15 +94,15 @@ jobs:
       run:
         working-directory: ./student-copilot-frontend
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 8
           
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 'latest'
           cache: 'pnpm'
           cache-dependency-path: './student-copilot-frontend/pnpm-lock.yaml'
           
