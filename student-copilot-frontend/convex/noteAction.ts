@@ -3,10 +3,7 @@ import { internal } from "./_generated/api";
 
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
-import {
-  action,
-  internalAction,
-} from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { generateEmbedding } from "./ai";
 import { graph, planLectureNotes } from "./aiAgent/noteAgent";
 
@@ -96,17 +93,16 @@ export const generateNotes = internalAction({
       levelOfStudy,
     } = args;
 
-
     // Initialize a memory manager for saving the processing state
     const memoryManager = new MemorySaver();
 
     // Plan lecture notes based on the provided preferences and a portion of transcription chunks
-    const lectureNotePlan = planLectureNotes(
+    const lectureNotePlan = await planLectureNotes(
       noteTakingStyle,
       learningStyle,
       levelOfStudy,
       course,
-      transcriptionChunks
+      transcriptionChunks,
     );
 
     // Compile the application state graph with memory checkpointing enabled
@@ -118,7 +114,6 @@ export const generateNotes = internalAction({
     // Process each transcription chunk in parallel
     const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
-
         // Prepare input data for each chunk, including user preferences and plan details
         const processingData = {
           chunk: chunk,
@@ -126,34 +121,39 @@ export const generateNotes = internalAction({
           learningStyle: learningStyle,
           levelOfStudy: levelOfStudy,
           course: course,
-          plan: lectureNotePlan
+          plan: lectureNotePlan,
         };
 
         // Invoke the application graph with the current chunk data and config
-        const processingResult = await appGraph.invoke(processingData, executionConfig);
+        const processingResult = await appGraph.invoke(
+          processingData,
+          executionConfig,
+        );
 
         // Extract the generated note from the result and add it to the noteBlocks array
 
-
         // Convert the processed note into JSON format for storage
         const finalResultJson = JSON.stringify({
-          type: 'note',
-          blocks: processingResult.note
+          type: "note",
+          blocks: processingResult.note,
         });
 
         // Create a blob from the JSON data for storage
-        const noteChunkBlob = new Blob([finalResultJson], { type: "application/json" });
+        const noteChunkBlob = new Blob([finalResultJson], {
+          type: "application/json",
+        });
 
         // Store the blob in storage and retrieve the storage ID
         const storageId = await ctx.storage.store(noteChunkBlob);
 
         // Generate an embedding for the current chunk and return the storage ID with the embedding
-        const chunkEmbedding = await generateEmbedding(JSON.stringify(processingResult));
+        const chunkEmbedding = await generateEmbedding(
+          JSON.stringify(processingResult),
+        );
 
         return { storageId, chunkEmbedding };
       });
     });
-
 
     const processedChunks = await Promise.all(chunkProcessingPromises);
 
@@ -188,7 +188,6 @@ export const getNoteById = action({
   args: { noteId: v.id("notes") },
   handler: async (ctx, args): Promise<Doc<"notes" & { content: string }>> => {
     const identity = await ctx.auth.getUserIdentity();
-
 
     if (!identity) {
       throw new Error("Not authorized to use this action.");
@@ -235,4 +234,3 @@ export const getNoteById = action({
     };
   },
 });
-

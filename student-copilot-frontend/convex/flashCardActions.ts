@@ -1,5 +1,4 @@
 "use node";
-
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -9,7 +8,9 @@ import { graph } from "./aiAgent/flashCardAgent";
 import { MemorySaver } from "@langchain/langgraph";
 import { flashCardPlanGenerationPrompt } from "./aiAgent/prompts/flashCardAgent";
 import { v4 as uuidv4 } from "uuid";
-import { Doc } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
+
+type FlashCard = Omit<Doc<"flashcards">, "_id" | "_creationTime">;
 
 export async function planFlashcardNotes(
   learningStyle: string,
@@ -18,7 +19,6 @@ export async function planFlashcardNotes(
   lectureContent: string[],
 ): Promise<AIMessage> {
   const llm = new ChatOpenAI({ model: "gpt-4o-mini" });
-
   const planPromises = lectureContent.map(async (content) => {
     const formattedPrompt = await flashCardPlanGenerationPrompt.formatMessages({
       learningStyle,
@@ -26,15 +26,12 @@ export async function planFlashcardNotes(
       course,
       content,
     });
-
     return llm.invoke(formattedPrompt);
   });
-
   const results = await Promise.all(planPromises);
   const fullPlan = results
     .map((result, index) => `### Section ${index + 1}\n${result.content}`)
     .join("\n\n");
-
   return new AIMessage(fullPlan);
 }
 
@@ -77,7 +74,6 @@ export const generateFlashCards = internalAction({
     if (!contentData) {
       throw new Error("Content must not be null or undefined.");
     }
-
     if (contentData.length === 0) {
       throw new Error("Content is empty.");
     }
@@ -89,64 +85,69 @@ export const generateFlashCards = internalAction({
       contentData,
     );
 
-    const allFlashCards = flashCardSetId
+    const existingFlashCards = flashCardSetId
       ? await ctx.runQuery(internal.flashcards.getFlashCardsInternal, {
           flashCardSetId,
         })
       : [];
 
-    // Process content chunks and generate flashcards
+    const newFlashCards: FlashCard[] = [];
     const flashCardPromises = contentData.map((contentChunk) =>
       ctx.runAction(internal.flashCardActions.executeGraphLogic, {
         contentChunk,
         learningStyle,
         plan: plan.content as string,
         course,
-        allFlashCards,
+        allFlashCards: [...existingFlashCards, ...newFlashCards], // Pass both existing and new cards to prevent duplicates
       }),
     );
 
     const flashCardResults = await Promise.all(flashCardPromises);
 
-    // Collect all valid flashcards
     flashCardResults.forEach((result) => {
       if (result?.flashCards) {
-        allFlashCards.push(...result.flashCards);
+        const formattedCards = result.flashCards.map(
+          (card: {
+            status: "new" | "learning" | "review" | "mastered";
+            front: string;
+            back: string;
+            difficulty: "medium" | "easy" | "hard";
+            reviewCount: number;
+            correctCount: number;
+            sourceContentId?: string;
+          }) => ({
+            ...card,
+            flashCardSetId: setId,
+            incorrectCount: 0,
+            sourceContentId: card.sourceContentId as
+              | Id<"lectures">
+              | Id<"notes">
+              | undefined,
+          }),
+        );
+
+        newFlashCards.push(...formattedCards);
       }
     });
 
-    if (!allFlashCards.length) {
+    if (!newFlashCards.length) {
       throw new Error("Failed to generate any flashcards");
     }
 
-    console.log("Existing flashcard set Id: ", flashCardSetId);
+    const setId =
+      flashCardSetId ||
+      (await ctx.runMutation(internal.flashcards.createFlashCardSetInternal, {
+        title,
+        description,
+        lectureIds,
+        noteIds,
+        moduleId,
+        userId,
+      }));
 
-    // Create or update flashcard set
-    const setId = await (flashCardSetId
-      ? ctx.runMutation(internal.flashcards.updateFlashCardSet, {
-          title,
-          description,
-          lectureIds,
-          noteIds,
-          flashCardSetId,
-        })
-      : ctx.runMutation(internal.flashcards.createFlashCardSetInternal, {
-          title,
-          description,
-          lectureIds,
-          noteIds,
-          moduleId,
-          userId,
-        }));
-
-    if (!setId) {
-      throw new Error("Failed to manage flashcard set");
-    }
-
-    const BATCH_SIZE = 3; // Max Convex Concurrent writes.
-
-    for (let i = 0; i < allFlashCards.length; i += BATCH_SIZE) {
-      const batch = allFlashCards.slice(i, i + BATCH_SIZE);
+    const BATCH_SIZE = 3;
+    for (let i = 0; i < newFlashCards.length; i += BATCH_SIZE) {
+      const batch = newFlashCards.slice(i, i + BATCH_SIZE);
       await Promise.all(
         batch.map((flashCard) =>
           ctx.runMutation(internal.flashcards.addFlashCardInternal, {
@@ -198,12 +199,10 @@ export const executeGraphLogic = internalAction({
   },
   handler: async (_ctx, args) => {
     const { contentChunk, learningStyle, plan, course, allFlashCards } = args;
-
     const memoryManager = new MemorySaver();
     const flashCardGraph = graph.compile({
       checkpointer: memoryManager,
     });
-
     const executionConfig = { configurable: { thread_id: uuidv4() } };
     const graphParams = {
       contentChunk,
@@ -212,9 +211,7 @@ export const executeGraphLogic = internalAction({
       course,
       allFlashCards,
     };
-
     const response = await flashCardGraph.invoke(graphParams, executionConfig);
-
     if (!response.flashCardsObject) {
       throw new Error("Failed to get response from the model.");
     }
@@ -237,11 +234,9 @@ export const getContent = internalAction({
             const lecture = await ctx.runQuery(internal.lectures.getLecture, {
               lectureId,
             });
-
             if (!lecture) {
               throw new Error("Lecture not found");
             }
-
             return await ctx.runAction(internal.lectures.fetchTranscription, {
               transcriptionIds: lecture.lectureTranscription,
             });
@@ -256,11 +251,9 @@ export const getContent = internalAction({
               noteId,
               userId,
             });
-
             if (!note) {
               throw new Error("Note ID must be valid.");
             }
-
             const chunkContents = await Promise.all(
               note.textChunks.map(async (chunkId) => {
                 const url = await ctx.storage.getUrl(chunkId);
@@ -268,14 +261,12 @@ export const getContent = internalAction({
                   throw new Error("Url cannot be null.");
                 }
                 const response = await fetch(url);
-
                 if (!response.ok) {
                   throw new Error("Failed to fetch chunk");
                 }
                 return response.text();
               }),
             );
-
             return chunkContents.join(" ");
           }),
         )
