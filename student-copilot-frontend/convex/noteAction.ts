@@ -3,10 +3,7 @@ import { internal } from "./_generated/api";
 
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
-import {
-  action,
-  internalAction,
-} from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { generateEmbedding } from "./ai";
 import { graph, planChunk, TNoteBlock } from "./aiAgent/noteAgent1";
 
@@ -96,7 +93,6 @@ export const generateNotes = internalAction({
       levelOfStudy,
     } = args;
 
-
     // Initialize a memory manager for saving the processing state
     const memoryManager = new MemorySaver();
 
@@ -143,7 +139,9 @@ export const generateNotes = internalAction({
         const finalResultJson = JSON.stringify(processingResult.note);
 
         // Create a blob from the JSON data for storage
-        const noteChunkBlob = new Blob([finalResultJson], { type: "application/json" });
+        const noteChunkBlob = new Blob([finalResultJson], {
+          type: "application/json",
+        });
 
         // Store the blob in storage and retrieve the storage ID
         const storageId = await ctx.storage.store(noteChunkBlob);
@@ -154,7 +152,6 @@ export const generateNotes = internalAction({
         return { storageId, chunkEmbedding }; 
       });
     });
-
 
     const processedChunks = await Promise.all(chunkProcessingPromises);
 
@@ -200,7 +197,6 @@ export const getNoteById = action({
   args: { noteId: v.id("notes") },
   handler: async (ctx, args): Promise<Doc<"notes" & { content: string }>> => {
     const identity = await ctx.auth.getUserIdentity();
-
 
     if (!identity) {
       throw new Error("Not authorized to use this action.");
@@ -248,4 +244,3 @@ export const getNoteById = action({
     };
   },
 });
-

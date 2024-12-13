@@ -1,9 +1,14 @@
 "use node";
 import { AIMessage } from "@langchain/core/messages";
-import { Annotation, END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
+import {
+  Annotation,
+  END,
+  MessagesAnnotation,
+  StateGraph,
+} from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
-import axios from 'axios';
-import { z } from 'zod';
+import axios from "axios";
+import { z } from "zod";
 
 // Define schema for image block data
 const ImageBlockSchema = z.object({
@@ -32,7 +37,6 @@ const HeaderBlockSchema = z.object({
   level: z.string().describe("Heading level, e.g., '1' for H1, '2' for H2, etc."),
 });
 
-
 // Define schema for note blocks, which can be of header, paragraph, or image type
 export const NoteBlockSchema = z.object({
   type: z.enum(['header', 'paragraph', 'image']),
@@ -41,7 +45,6 @@ export const NoteBlockSchema = z.object({
 
 // Define TypeScript types from Zod schemas
 export type TNoteBlock = z.infer<typeof NoteBlockSchema>;
-
 
 // Define input annotations for processing note data
 const InputAnnotation = Annotation.Root({
@@ -200,7 +203,6 @@ export async function generateNotes(_state: typeof InputAnnotation.State): Promi
   return [dataResponse.data];
 }
 
-
 // Function to create a lecture plan based on preferences and lecture content
 export async function planLectureNotes(
   noteTakingStyle: string,
@@ -238,7 +240,6 @@ export async function planLectureNotes(
   // Return combined plan as a single AIMessage
   return new AIMessage(fullPlan.trim());
 }
-
 
 // Set up the state graph to control annotation processing flow
 export const graph = new StateGraph({

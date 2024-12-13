@@ -16,9 +16,7 @@ type InputAnnotationState = typeof inputAnnotation.State;
 const inputAnnotation = Annotation.Root({
   ...MessagesAnnotation.spec,
   contentChunk: Annotation<string>,
-  learningStyle: Annotation<
-    "visual" | "auditory" | "kinesthetic" | "analytical"
-  >,
+  learningStyle: Annotation<string>,
   levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
   course: Annotation<string>,
   plan: Annotation<string>,
