@@ -20,6 +20,7 @@ Guidelines:
 - Ensure all content aligns with the course objectives
 - Review previous flashcards to avoid duplication and ensure progression
 - Build upon existing knowledge from previous flashcards
+- Do not return the previous flashcards in your response, only the new flashcards.
 
 Return all content as plain text without any markdown formatting.`,
   ),
