@@ -46,7 +46,10 @@ const router = createBrowserRouter([
           { path: "lectures/:moduleId", element: <LecturesPage /> },
           { path: "notes/:moduleId", element: <NotesPage /> },
           { path: "flashcards/:moduleId", element: <FlashcardSetsPage /> },
-          { path: "flashcards/:moduleId/:flashCardSetId", element: <FlashcardPage /> }
+          {
+            path: "flashcards/:moduleId/:flashCardSetId",
+            element: <FlashcardPage />,
+          },
         ],
       },
     ],
