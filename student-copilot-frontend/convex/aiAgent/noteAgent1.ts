@@ -120,7 +120,9 @@ async function collector(_state: typeof InputAnnotation.State): Promise<typeof O
     for (let index = 0; index < _state.messages.length; index++) {
       const message = _state.messages[index];
       const msgStr = message.content as string;
-      const htmlContent = await marked(msgStr);
+      
+      const htmlContent = msgStr//await marked(msgStr);
+      console.log(htmlContent);
       if (index === _state.messages.length - 3 && index == 0) {
         // Add an image block
         let url = "";
