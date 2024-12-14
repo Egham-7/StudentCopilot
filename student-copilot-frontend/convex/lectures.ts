@@ -9,7 +9,7 @@ import {
 import { v } from "convex/values";
 import { generateEmbedding, transcribeAudioChunk } from "./ai";
 import { internal } from "./_generated/api";
-
+import { Id } from "./_generated/dataModel";
 export const getLecturesByModuleId = query({
   args: { moduleId: v.id("modules") },
   handler: async (ctx, args) => {
@@ -465,5 +465,29 @@ export const getLecture = internalQuery({
       throw new Error("Lecture not found");
     }
     return lecture;
+  },
+});
+
+export const getLectureContent = internalAction({
+  args: { lectureId: v.id("lectures") },
+  handler: async (ctx, args): Promise<string[]> => {
+    const lecture = await ctx.runQuery(internal.lectures.getLecture, {
+      lectureId: args.lectureId,
+    });
+    if (!lecture) {
+      throw new Error(`Lecture ${args.lectureId} not found`);
+    }
+
+    const chunks: string[] = [];
+    for (const chunkId of lecture.lectureTranscription) {
+      const url = await ctx.storage.getUrl(chunkId as Id<"_storage">);
+      if (!url) continue;
+
+      const response = await fetch(url);
+      const text = await response.text();
+      chunks.push(text);
+    }
+
+    return chunks;
   },
 });

@@ -1,30 +1,19 @@
 import { useState, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { FileText, Loader2 } from "lucide-react";
 import { Id, Doc } from "convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import { toast } from "@/components/ui/use-toast";
 import LecturesTab from "./lectures-tab";
 import NotesTab from "./notes-tab";
 import { LecturesData } from "@/lib/ui_utils";
 import { LectureSearchBar } from "./lecture-search-bar";
 import { NotesSearchBar } from "./notes-search-bar";
 import FlashcardSetsTab from "./flashcard-sets-tab";
+import { LectureQuickActions } from "./lecture-quick-actions";
+import { FlashcardQuickActions } from "./flashcard-quick-actions";
 
 type ModuleTabsProps = {
   moduleId: Id<"modules">;
   lectures: LecturesData[] | undefined;
   notes: Doc<"notes">[] | undefined;
-  selectedLectures: Id<"lectures">[];
-  setSelectedLectures: React.Dispatch<React.SetStateAction<Id<"lectures">[]>>;
   flashCardSets: Doc<"flashCardSets">[] | undefined;
 };
 
@@ -32,15 +21,30 @@ export default function ModuleTabs({
   moduleId,
   lectures,
   notes,
-  selectedLectures,
-  setSelectedLectures,
-  flashCardSets
+  flashCardSets,
 }: ModuleTabsProps) {
-  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
   const [activeTab, setActiveTab] = useState("lectures");
 
   const [filteredLectures, setFilteredLectures] = useState(lectures);
   const [filteredNotes, setFilteredNotes] = useState(notes);
+
+  const [selectedLectures, setSelectedLectures] = useState<Id<"lectures">[]>(
+    [],
+  );
+
+  const [selectedFlashcards, setSelectedFlashcards] = useState<
+    Id<"flashCardSets">[]
+  >([]);
+
+  const handleSelectFlashcards = (flashcardSetId: Id<"flashCardSets">) => {
+    setSelectedFlashcards((prev) => {
+      if (prev.includes(flashcardSetId)) {
+        return prev.filter((id) => id !== flashcardSetId);
+      } else {
+        return [...prev, flashcardSetId];
+      }
+    });
+  };
 
   useEffect(() => {
     setFilteredLectures(lectures);
@@ -50,58 +54,22 @@ export default function ModuleTabs({
     setFilteredNotes(notes);
   }, [notes]);
 
-  const generateNotes = useMutation(api.notes.storeClient);
-
-  const handleGenerateNotes = async () => {
-    setIsGeneratingNotes(true);
-    try {
-      await generateNotes({
-        lectureIds: selectedLectures,
-        moduleId,
-      });
-      toast({
-        title: "Generated notes successfully.",
-        description:
-          "We are just generating your notes! We will let you know when it's done.",
-      });
-    } catch (error) {
-      console.error("Failed to generate notes:", error);
-      toast({
-        title: "Failed to generate notes",
-        description:
-          "An error occurred while generating notes. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingNotes(false);
-      setSelectedLectures([]);
-    }
-  };
-
-
-
   const handleLectureSearchResults = useCallback(
-
     (results: Id<"lectures">[]) => {
       setFilteredLectures(
-        lectures?.filter((lecture) => results.includes(lecture._id))
-      )
+        lectures?.filter((lecture) => results.includes(lecture._id)),
+      );
     },
-    [lectures]
+    [lectures],
   );
 
   const handleNotesSearchResults = useCallback(
-
     (results: Id<"notes">[]) => {
-
-      setFilteredNotes(
-        notes?.filter((note) => results.includes(note._id)),
-      );
-
+      setFilteredNotes(notes?.filter((note) => results.includes(note._id)));
     },
 
-    [notes]
-  )
+    [notes],
+  );
 
   return (
     <Tabs
@@ -116,33 +84,27 @@ export default function ModuleTabs({
           <TabsTrigger value="flashcards">Flashcard Sets</TabsTrigger>
         </TabsList>
         {selectedLectures.length > 0 && activeTab === "lectures" && (
-          <div className="flex space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">Actions</Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={handleGenerateNotes}>
-                  {isGeneratingNotes ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="w-4 h-4 mr-2" />
-                      Generate Notes
-                    </>
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <LectureQuickActions
+            moduleId={moduleId}
+            selectedLectures={selectedLectures}
+            onActionComplete={() => setSelectedFlashcards([])}
+          />
+        )}
+
+        {selectedFlashcards.length > 0 && activeTab === "flashcards" && (
+          <FlashcardQuickActions
+            moduleId={moduleId}
+            selectedFlashcards={selectedFlashcards}
+            onActionComplete={() => setSelectedFlashcards([])}
+          />
         )}
       </div>
 
       <TabsContent value="lectures">
-        <LectureSearchBar moduleId={moduleId} onSearchResults={handleLectureSearchResults} />
+        <LectureSearchBar
+          moduleId={moduleId}
+          onSearchResults={handleLectureSearchResults}
+        />
 
         <LecturesTab
           moduleId={moduleId}
@@ -153,13 +115,21 @@ export default function ModuleTabs({
       </TabsContent>
 
       <TabsContent value="notes">
-        <NotesSearchBar moduleId={moduleId} onSearchResults={handleNotesSearchResults} />
+        <NotesSearchBar
+          moduleId={moduleId}
+          onSearchResults={handleNotesSearchResults}
+        />
 
         <NotesTab notes={filteredNotes} />
       </TabsContent>
 
       <TabsContent value="flashcards">
-        <FlashcardSetsTab moduleId={moduleId} flashcardSets={flashCardSets} />
+        <FlashcardSetsTab
+          selectedFlashcards={selectedFlashcards}
+          moduleId={moduleId}
+          flashcardSets={flashCardSets}
+          handleSelectFlashcards={handleSelectFlashcards}
+        />
       </TabsContent>
       <TabsContent value="discussions">Discussions content here</TabsContent>
     </Tabs>
