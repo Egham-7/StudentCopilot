@@ -79,6 +79,7 @@ export default defineSchema({
   notes: defineTable({
     moduleId: v.id("modules"),
     lectureIds: v.array(v.id("lectures")),
+    flashCardSetIds: v.optional(v.array(v.id("flashCardSets"))),
     textChunks: v.array(v.id("_storage")),
     noteEmbedding: v.array(v.float64()),
   })
@@ -148,7 +149,6 @@ export default defineSchema({
     buttonText: v.string(),
   }).index("byStripeProductId", ["stripeId"]),
 
-
   flashCardSets: defineTable({
     moduleId: v.id("modules"),
     userId: v.string(),
@@ -170,13 +170,13 @@ export default defineSchema({
     difficulty: v.union(
       v.literal("easy"),
       v.literal("medium"),
-      v.literal("hard")
+      v.literal("hard"),
     ),
     status: v.union(
       v.literal("new"),
       v.literal("learning"),
       v.literal("review"),
-      v.literal("mastered")
+      v.literal("mastered"),
     ),
     nextReviewDate: v.optional(v.string()),
     lastReviewDate: v.optional(v.string()),
@@ -184,12 +184,7 @@ export default defineSchema({
     correctCount: v.number(),
     incorrectCount: v.number(),
     tags: v.optional(v.array(v.string())),
-    sourceContentId: v.optional(
-      v.union(
-        v.id("lectures"),
-        v.id("notes")
-      )
-    ),
+    sourceContentId: v.optional(v.union(v.id("lectures"), v.id("notes"))),
   })
     .index("by_flashCardSetId", ["flashCardSetId"])
     .index("by_status", ["status"])

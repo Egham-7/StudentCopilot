@@ -685,3 +685,23 @@ export const getFlashcardsByModuleId = query({
     return flashcardSets;
   },
 });
+
+export const getFlashcardContent = internalQuery({
+  args: {
+    flashCardSetId: v.id("flashCardSets"),
+  },
+  handler: async (ctx, args): Promise<string[]> => {
+    const flashcards = await ctx.runQuery(
+      internal.flashcards.getFlashCardsInternal,
+      {
+        flashCardSetId: args.flashCardSetId,
+      },
+    );
+
+    const contentChunks = flashcards.map(
+      (card) => `Question: ${card.front}\nAnswer: ${card.back}`,
+    );
+
+    return contentChunks;
+  },
+});

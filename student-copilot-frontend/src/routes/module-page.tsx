@@ -46,7 +46,6 @@ export default function ModulePage() {
       toast({
         title: "New Notification",
         description: latestNotification.message,
-        duration: 5000, // Display for 5 seconds
       });
     }
   }, [latestNotification, toast]);

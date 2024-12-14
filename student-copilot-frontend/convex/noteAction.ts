@@ -11,9 +11,10 @@ import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
 import { MemorySaver } from "@langchain/langgraph";
 
-export const fetchAndProcessTranscriptions = internalAction({
+export const fetchAndProcessContent = internalAction({
   args: {
     lectureIds: v.array(v.id("lectures")),
+    flashCardSetIds: v.array(v.id("flashCardSets")),
     noteTakingStyle: v.string(),
     learningStyle: v.union(
       v.literal("auditory"),
@@ -29,34 +30,28 @@ export const fetchAndProcessTranscriptions = internalAction({
       v.literal("PhD"),
     ),
   },
-
   handler: async (ctx, args) => {
-    const transcriptionChunks: string[] = [];
+    const [lectureChunks, flashcardChunks] = await Promise.all([
+      Promise.all(
+        args.lectureIds.map((lectureId) =>
+          ctx.runAction(internal.lectures.getLectureContent, { lectureId }),
+        ),
+      ),
+      Promise.all(
+        args.flashCardSetIds.map((flashCardSetId) =>
+          ctx.runQuery(internal.flashcards.getFlashcardContent, {
+            flashCardSetId,
+          }),
+        ),
+      ),
+    ]);
 
-    for (const lectureId of args.lectureIds) {
-      const lecture = await ctx.runQuery(internal.notes.getLecture, {
-        lectureId,
-      });
-      if (!lecture) {
-        throw new Error(`Lecture with ID ${lectureId} not found.`);
-      }
+    const contentChunks = [...lectureChunks.flat(), ...flashcardChunks.flat()];
 
-      for (const chunkId of lecture.lectureTranscription) {
-        const chunkUrl = await ctx.storage.getUrl(chunkId as Id<"_storage">);
-        if (!chunkUrl) {
-          throw new Error(`Transcription chunk with ID ${chunkId} not found.`);
-        }
-
-        const response = await fetch(chunkUrl);
-        const chunkText = await response.text();
-        transcriptionChunks.push(chunkText);
-      }
-    }
-
-    // Schedule the note generation task
     await ctx.scheduler.runAfter(0, internal.noteAction.generateNotes, {
-      transcriptionChunks,
+      contentChunks,
       lectureIds: args.lectureIds,
+      flashCardSetIds: args.flashCardSetIds,
       noteTakingStyle: args.noteTakingStyle,
       learningStyle: args.learningStyle,
       course: args.course,
@@ -67,8 +62,9 @@ export const fetchAndProcessTranscriptions = internalAction({
 
 export const generateNotes = internalAction({
   args: {
-    transcriptionChunks: v.array(v.string()),
+    contentChunks: v.array(v.string()),
     lectureIds: v.array(v.id("lectures")),
+    flashCardSetIds: v.array(v.id("flashCardSets")),
     noteTakingStyle: v.string(),
     learningStyle: v.union(
       v.literal("auditory"),
@@ -86,11 +82,13 @@ export const generateNotes = internalAction({
   },
   handler: async (ctx, args) => {
     const {
-      transcriptionChunks,
+      contentChunks,
       noteTakingStyle,
       learningStyle,
       course,
       levelOfStudy,
+      lectureIds,
+      flashCardSetIds,
     } = args;
 
     // Initialize a memory manager for saving the processing state
@@ -102,7 +100,7 @@ export const generateNotes = internalAction({
       learningStyle,
       levelOfStudy,
       course,
-      transcriptionChunks,
+      contentChunks,
     );
 
     // Compile the application state graph with memory checkpointing enabled
@@ -112,7 +110,7 @@ export const generateNotes = internalAction({
     const executionConfig = { configurable: { thread_id: uuidv4() } };
 
     // Process each transcription chunk in parallel
-    const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
+    const chunkProcessingPromises = contentChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
         // Prepare input data for each chunk, including user preferences and plan details
         const processingData = {
@@ -178,7 +176,8 @@ export const generateNotes = internalAction({
     // Store the list of note chunk IDs and the concatenated embedding in the database
     await ctx.runMutation(internal.notes.storeNotes, {
       noteChunkIds: noteChunkIds,
-      lectureIds: args.lectureIds,
+      lectureIds: lectureIds,
+      flashCardSetIds: flashCardSetIds,
       embedding: concatenatedEmbedding,
     });
   },
