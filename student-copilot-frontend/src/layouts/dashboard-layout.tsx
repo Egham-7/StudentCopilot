@@ -9,7 +9,9 @@ export default function DashboardLayout() {
       <SidebarProvider>
         <AppSidebar />
         <main className="h-full w-full">
-          <SidebarTrigger className="fixed" />
+          <div className="p-4">
+            <SidebarTrigger className="fixed" />
+          </div>
           <Outlet />
         </main>
       </SidebarProvider>

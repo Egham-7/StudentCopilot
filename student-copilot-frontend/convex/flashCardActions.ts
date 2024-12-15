@@ -102,6 +102,17 @@ export const generateFlashCards = internalAction({
       }),
     );
 
+    const setId =
+      flashCardSetId ||
+      (await ctx.runMutation(internal.flashcards.createFlashCardSetInternal, {
+        title,
+        description,
+        lectureIds,
+        noteIds,
+        moduleId,
+        userId,
+      }));
+
     const flashCardResults = await Promise.all(flashCardPromises);
 
     flashCardResults.forEach((result) => {
@@ -133,17 +144,6 @@ export const generateFlashCards = internalAction({
     if (!newFlashCards.length) {
       throw new Error("Failed to generate any flashcards");
     }
-
-    const setId =
-      flashCardSetId ||
-      (await ctx.runMutation(internal.flashcards.createFlashCardSetInternal, {
-        title,
-        description,
-        lectureIds,
-        noteIds,
-        moduleId,
-        userId,
-      }));
 
     const BATCH_SIZE = 3;
     for (let i = 0; i < newFlashCards.length; i += BATCH_SIZE) {
