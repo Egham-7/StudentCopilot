@@ -117,7 +117,7 @@ export const storeNotes = internalMutation({
 
     await ctx.scheduler.runAfter(0, internal.activities.store, {
       userId: moduleUser.userId,
-      type: "note_created",
+      type: "Note Created",
       noteId,
     });
   },

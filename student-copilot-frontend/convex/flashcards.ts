@@ -55,7 +55,7 @@ export const createFlashCardSet = mutation({
     // Track activity
     await ctx.scheduler.runAfter(0, internal.activities.store, {
       userId,
-      type: "flashcard_set_created",
+      type: "Flashcard Set Created",
       flashCardSetId,
     });
   },
@@ -104,7 +104,7 @@ export const createFlashCardSetInternal = internalMutation({
     // Track activity
     await ctx.scheduler.runAfter(0, internal.activities.store, {
       userId,
-      type: "flashcard_set_created",
+      type: "Flashcard Set Created",
       flashCardSetId,
     });
 
@@ -212,7 +212,7 @@ export const addFlashCardInternal = internalMutation({
     // Track activity
     await ctx.scheduler.runAfter(0, internal.activities.store, {
       userId: args.userId,
-      type: "flashcard_created",
+      type: "Flashcard Set Created",
       flashCardSetId: flashCardSet._id,
     });
 
@@ -296,7 +296,7 @@ export const addFlashCard = mutation({
     // Track activity
     await ctx.scheduler.runAfter(0, internal.activities.store, {
       userId,
-      type: "flashcard_created",
+      type: "Flashcard Created",
       flashCardSetId: flashCardSet._id,
     });
 
@@ -654,7 +654,7 @@ export const deleteFlashcardSet = mutation({
     // Track activity
     await ctx.scheduler.runAfter(0, internal.activities.store, {
       userId: flashCardSet.userId,
-      type: "flashcard_set_deleted",
+      type: "Flashcard Set Deleted",
       flashCardSetId: args.id,
     });
 

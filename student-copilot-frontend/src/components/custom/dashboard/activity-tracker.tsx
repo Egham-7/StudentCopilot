@@ -11,16 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Doc } from "convex/_generated/dataModel";
 
-const activityTypes = {
-  lecture_created: "Created a lecture",
-  note_created: "Created a note",
-  module_created: "Created a module",
-  lecture_completed: "Completed a lecture",
-} as const;
-
-type ActivityType = keyof typeof activityTypes;
-
-
 export default function ActivityTracker() {
   const currentYear = new Date().getFullYear();
 
@@ -30,7 +20,6 @@ export default function ActivityTracker() {
       year: currentYear,
     },
   );
-
 
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
   const months = [
@@ -194,10 +183,11 @@ export default function ActivityTracker() {
                               <Tooltip key={dayIndex}>
                                 <TooltipTrigger asChild>
                                   <div
-                                    className={`w-4 h-4 m-px rounded-sm transition-colors ${day
-                                      ? getActivityColor(day.count)
-                                      : "bg-muted"
-                                      }`}
+                                    className={`w-4 h-4 m-px rounded-sm transition-colors ${
+                                      day
+                                        ? getActivityColor(day.count)
+                                        : "bg-muted"
+                                    }`}
                                   />
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -223,8 +213,7 @@ export default function ActivityTracker() {
                                             key={index}
                                             className="text-xs text-muted-foreground"
                                           >
-                                            {activityTypes[activity.type as ActivityType]}:{" "}
-                                            {activity.count}
+                                            {activity.type}: {activity.count}
                                           </p>
                                         ))}
                                     </div>
