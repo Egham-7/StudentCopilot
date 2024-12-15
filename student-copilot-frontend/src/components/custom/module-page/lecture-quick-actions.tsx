@@ -6,11 +6,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FileText } from "lucide-react";
-import { PiStackFill } from "react-icons/pi";
 import { Id } from "convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { toast } from "@/components/ui/use-toast";
+import { QuickAddFlashCardSet } from "./quick-add-flashcards";
 
 interface LectureQuickActionsProps {
   moduleId: Id<"modules">;
@@ -59,10 +59,10 @@ export function LectureQuickActions({
             <FileText className="w-4 h-4 mr-2" />
             Generate Notes
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <PiStackFill className="w-4 h-4 mr-2" />
-            Generate Flashcards
-          </DropdownMenuItem>
+          <QuickAddFlashCardSet
+            moduleId={moduleId}
+            lectureIds={selectedLectures}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
