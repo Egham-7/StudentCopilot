@@ -12,23 +12,23 @@ import { api } from "../../../../convex/_generated/api";
 import { toast } from "@/components/ui/use-toast";
 import { QuickAddFlashCardSet } from "./quick-add-flashcards";
 
-interface LectureQuickActionsProps {
+interface NotesQuickActionsProps {
   moduleId: Id<"modules">;
-  selectedLectures: Id<"lectures">[];
+  selectedNotes: Id<"notes">[];
   onActionComplete: () => void;
 }
 
-export function LectureQuickActions({
+export function NotesQuickActions({
   moduleId,
-  selectedLectures,
+  selectedNotes,
   onActionComplete,
-}: LectureQuickActionsProps) {
+}: NotesQuickActionsProps) {
   const generateNotes = useMutation(api.notes.storeClient);
 
   const handleGenerateNotes = async () => {
     try {
       await generateNotes({
-        lectureIds: selectedLectures,
+        noteIds: selectedNotes,
         moduleId,
       });
 
@@ -52,17 +52,14 @@ export function LectureQuickActions({
     <div className="flex space-x-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">Lecture Actions</Button>
+          <Button variant="outline">Note Actions</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuItem onClick={handleGenerateNotes}>
             <FileText className="w-4 h-4 mr-2" />
             Generate Notes
           </DropdownMenuItem>
-          <QuickAddFlashCardSet
-            moduleId={moduleId}
-            lectureIds={selectedLectures}
-          />
+          <QuickAddFlashCardSet moduleId={moduleId} noteIds={selectedNotes} />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

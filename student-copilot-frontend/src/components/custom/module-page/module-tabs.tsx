@@ -9,6 +9,7 @@ import { NotesSearchBar } from "./notes-search-bar";
 import FlashcardSetsTab from "./flashcard-sets-tab";
 import { LectureQuickActions } from "./lecture-quick-actions";
 import { FlashcardQuickActions } from "./flashcard-quick-actions";
+import { NotesQuickActions } from "./notes-quick-actions";
 
 type ModuleTabsProps = {
   moduleId: Id<"modules">;
@@ -35,6 +36,18 @@ export default function ModuleTabs({
   const [selectedFlashcards, setSelectedFlashcards] = useState<
     Id<"flashCardSets">[]
   >([]);
+
+  const [selectedNotes, setSelectedNotes] = useState<Id<"notes">[]>([]);
+
+  const handleSelectNotes = (noteId: Id<"notes">) => {
+    setSelectedNotes((prevNotes) => {
+      if (prevNotes.includes(noteId)) {
+        return prevNotes.filter((id) => id !== noteId);
+      }
+
+      return [...prevNotes, noteId];
+    });
+  };
 
   const handleSelectFlashcards = (flashcardSetId: Id<"flashCardSets">) => {
     setSelectedFlashcards((prev) => {
@@ -87,7 +100,7 @@ export default function ModuleTabs({
           <LectureQuickActions
             moduleId={moduleId}
             selectedLectures={selectedLectures}
-            onActionComplete={() => setSelectedFlashcards([])}
+            onActionComplete={() => setSelectedLectures([])}
           />
         )}
 
@@ -96,6 +109,14 @@ export default function ModuleTabs({
             moduleId={moduleId}
             selectedFlashcards={selectedFlashcards}
             onActionComplete={() => setSelectedFlashcards([])}
+          />
+        )}
+
+        {selectedNotes.length > 0 && activeTab === "notes" && (
+          <NotesQuickActions
+            selectedNotes={selectedNotes}
+            moduleId={moduleId}
+            onActionComplete={() => setSelectedNotes([])}
           />
         )}
       </div>
@@ -120,7 +141,11 @@ export default function ModuleTabs({
           onSearchResults={handleNotesSearchResults}
         />
 
-        <NotesTab notes={filteredNotes} />
+        <NotesTab
+          notes={filteredNotes}
+          setSelectedNotes={handleSelectNotes}
+          selectedNotes={selectedNotes}
+        />
       </TabsContent>
 
       <TabsContent value="flashcards">
