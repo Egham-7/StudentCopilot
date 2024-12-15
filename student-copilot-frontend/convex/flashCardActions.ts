@@ -180,7 +180,7 @@ export const generateFlashCards = internalAction({
       }),
       ctx.scheduler.runAfter(0, internal.activities.store, {
         userId: flashCardSet.userId,
-        type: "flashcards_generated",
+        type: "Flashcards Generated",
         flashCardSetId: flashCardSet._id,
       }),
     ]);

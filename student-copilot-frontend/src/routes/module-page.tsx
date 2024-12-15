@@ -1,9 +1,7 @@
-import { useEffect } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "convex/_generated/dataModel";
-import { useToast } from "@/components/ui/use-toast";
 import ModuleHeader from "@/components/custom/module-page/module-header";
 import ModuleProgress from "@/components/custom/module-page/module-progress";
 import ModuleTabs from "@/components/custom/module-page/module-tabs";
@@ -24,10 +22,6 @@ export default function ModulePage() {
     api.notes.getNotesForModule,
     moduleId ? { moduleId: moduleId as Id<"modules"> } : "skip",
   );
-  const userNotifications = useQuery(
-    api.notifications.getUserNotifications,
-    "skip",
-  );
 
   const flashCardSets = useQuery(
     api.flashcards.getFlashcardsByModuleId,
@@ -37,18 +31,6 @@ export default function ModulePage() {
         }
       : "skip",
   );
-
-  const latestNotification = userNotifications?.[0];
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (latestNotification) {
-      toast({
-        title: "New Notification",
-        description: latestNotification.message,
-      });
-    }
-  }, [latestNotification, toast]);
 
   const completedLectures =
     lectures?.filter((lecture) => lecture.completed) || [];

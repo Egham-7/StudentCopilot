@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMediaQuery } from '@/hooks/use-media-query';
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Drawer,
   DrawerClose,
@@ -22,35 +22,47 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useMutation } from 'convex/react';
-import { ModuleForm } from './module-form';
+import { useMutation } from "convex/react";
+import { ModuleForm } from "./module-form";
 import { api } from "../../../../convex/_generated/api.js";
-import { renderTriggerCard } from '@/lib/ui_utils.js';
-import { Id } from 'convex/_generated/dataModel.js';
-
+import { renderTriggerCard } from "@/lib/ui_utils.js";
+import { Id } from "convex/_generated/dataModel.js";
 
 const MAX_FILE_SIZE = 5000000; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Module name must be at least 2 characters." }),
-  department: z.string().min(2, { message: "Department must be at least 2 characters." }),
+  name: z
+    .string()
+    .min(2, { message: "Module name must be at least 2 characters." }),
+  department: z
+    .string()
+    .min(2, { message: "Department must be at least 2 characters." }),
   credits: z.number().min(1, { message: "Credits must be at least 1." }),
-  image: z.any()
+  image: z
+    .any()
     .refine((files) => files?.length == 1, "Image is required.")
-    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => files?.[0]?.size <= MAX_FILE_SIZE,
+      `Max file size is 5MB.`,
+    )
     .refine(
       (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
-      ".jpg, .jpeg, .png and .webp files are accepted."
-    ).optional(),
+      ".jpg, .jpeg, .png and .webp files are accepted.",
+    )
+    .optional(),
   semester: z.enum(["Fall", "Spring", "Summer"]),
-  year: z.string().regex(/^\d{4}$/, { message: "Year must be a 4-digit number." }),
+  year: z
+    .string()
+    .regex(/^\d{4}$/, { message: "Year must be a 4-digit number." }),
   description: z.string().optional(),
   prerequisites: z.array(z.string()).optional(),
-  instructors: z.array(z.string()).min(1, { message: "At least one instructor is required." }),
+  instructors: z
+    .array(z.string())
+    .min(1, { message: "At least one instructor is required." }),
 });
 
-export type ModuleFormValues = z.infer<typeof formSchema>
+export type ModuleFormValues = z.infer<typeof formSchema>;
 
 const AddModuleCard: React.FC = () => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -81,10 +93,10 @@ const AddModuleCard: React.FC = () => {
         const imageResult = await fetch(postUrl, {
           method: "POST",
           headers: { "Content-Type": values.image[0].type },
-          body: values.image[0]
+          body: values.image[0],
         });
         if (!imageResult.ok) {
-          throw new Error('Failed to upload image');
+          throw new Error("Failed to upload image");
         }
         const uploadResult = await imageResult.json();
         storageId = uploadResult.storageId;
@@ -95,25 +107,20 @@ const AddModuleCard: React.FC = () => {
         image: storageId,
       };
 
-      const storedId = await storeModule(moduleData);
-      console.log("Module stored with ID:", storedId);
-
+      await storeModule(moduleData);
       setOpen(false);
-
-
     } catch (err: unknown) {
       console.error("Error: ", err);
       // Add error notification here
     }
   };
 
-  const triggerCardTitle = "Add New Module"
-  const triggerCardDescription = "Click to add a new module to your dashboard"
+  const triggerCardTitle = "Add New Module";
+  const triggerCardDescription = "Click to add a new module to your dashboard";
 
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
   };
-
 
   if (isDesktop) {
     return (
@@ -162,4 +169,3 @@ const AddModuleCard: React.FC = () => {
 };
 
 export default AddModuleCard;
-
