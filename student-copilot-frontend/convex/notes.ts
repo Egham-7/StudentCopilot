@@ -14,6 +14,7 @@ export const storeClient = mutation({
   args: {
     lectureIds: v.optional(v.array(v.id("lectures"))),
     flashCardSetIds: v.optional(v.array(v.id("flashCardSets"))),
+    noteIds: v.optional(v.array(v.id("notes"))),
     moduleId: v.id("modules"),
   },
   handler: async (ctx, args) => {
@@ -46,11 +47,13 @@ export const storeClient = mutation({
       internal.noteAction.fetchAndProcessContent,
       {
         lectureIds: args.lectureIds ?? [],
+        noteIds: args.noteIds ?? [],
         noteTakingStyle: user.noteTakingStyle,
         learningStyle: user.learningStyle,
         course: user.course,
         levelOfStudy: user.levelOfStudy,
         flashCardSetIds: args.flashCardSetIds ?? [],
+        userId: user.clerkId,
       },
     );
 

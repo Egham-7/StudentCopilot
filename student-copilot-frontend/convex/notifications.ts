@@ -70,7 +70,7 @@ export const getUserNotifications = query({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Authentication required");
+      return null;
     }
 
     const notifications = await ctx.db

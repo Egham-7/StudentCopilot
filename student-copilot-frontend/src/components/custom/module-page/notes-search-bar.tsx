@@ -13,28 +13,31 @@ const NOTES_SEARCH_OPTIONS = [
   { value: "content", label: "Content" },
 ];
 
-export function NotesSearchBar({ moduleId, onSearchResults }: NotesSearchBarProps) {
+export function NotesSearchBar({
+  moduleId,
+  onSearchResults,
+}: NotesSearchBarProps) {
   const searchNotesByContent = useAction(api.notes.searchNotesByContent);
   const notes = useQuery(api.notes.getNotesForModule, { moduleId });
 
   const handleSearch = async (searchTerm: string, searchBy: string) => {
     if (!searchTerm.trim()) {
       const allNotes = notes || [];
-      onSearchResults(allNotes.map(n => n._id));
+      onSearchResults(allNotes.map((n) => n._id));
       return;
     }
 
     let results: Id<"notes">[] = [];
 
-    if (searchBy === 'content') {
+    if (searchBy === "content") {
       const searchResults = await searchNotesByContent({
         moduleId,
-        query: searchTerm
+        query: searchTerm,
       });
 
       if (searchResults.length > 0) {
         const maxScoreResult = searchResults.reduce((max, current) =>
-          current._score > max._score ? current : max
+          current._score > max._score ? current : max,
         );
         results = [maxScoreResult._id as Id<"notes">];
       }
@@ -53,4 +56,3 @@ export function NotesSearchBar({ moduleId, onSearchResults }: NotesSearchBarProp
     />
   );
 }
-

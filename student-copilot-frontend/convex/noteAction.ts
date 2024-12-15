@@ -6,14 +6,15 @@ import { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 import { generateEmbedding } from "./ai";
 import { graph, planLectureNotes } from "./aiAgent/noteAgent";
-
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
 import { MemorySaver } from "@langchain/langgraph";
 
 export const fetchAndProcessContent = internalAction({
   args: {
+    userId: v.string(),
     lectureIds: v.array(v.id("lectures")),
+    noteIds: v.array(v.id("notes")),
     flashCardSetIds: v.array(v.id("flashCardSets")),
     noteTakingStyle: v.string(),
     learningStyle: v.union(
@@ -31,7 +32,7 @@ export const fetchAndProcessContent = internalAction({
     ),
   },
   handler: async (ctx, args) => {
-    const [lectureChunks, flashcardChunks] = await Promise.all([
+    const [lectureChunks, flashcardChunks, noteChunks] = await Promise.all([
       Promise.all(
         args.lectureIds.map((lectureId) =>
           ctx.runAction(internal.lectures.getLectureContent, { lectureId }),
@@ -44,9 +45,22 @@ export const fetchAndProcessContent = internalAction({
           }),
         ),
       ),
+
+      Promise.all(
+        args.noteIds.map((noteId) =>
+          ctx.runAction(internal.noteAction.getNoteContents, {
+            noteId,
+            userId: args.userId,
+          }),
+        ),
+      ),
     ]);
 
-    const contentChunks = [...lectureChunks.flat(), ...flashcardChunks.flat()];
+    const contentChunks = [
+      ...lectureChunks.flat(),
+      ...flashcardChunks.flat(),
+      ...noteChunks.flat(),
+    ];
 
     await ctx.scheduler.runAfter(0, internal.noteAction.generateNotes, {
       contentChunks,
@@ -231,5 +245,26 @@ export const getNoteById = action({
       ...note,
       content: fullContent,
     };
+  },
+});
+
+export const getNoteContents = internalAction({
+  args: { noteId: v.id("notes"), userId: v.string() },
+  handler: async (ctx, args): Promise<string[]> => {
+    // Get the note
+    const note = await ctx.runQuery(internal.notes.getNote, args);
+
+    if (!note) {
+      throw new Error("Cannot get content for a nonexistent note.");
+    }
+
+    const contents = await Promise.all(
+      note.textChunks.map(async (storageId) => {
+        const content = await ctx.storage.get(storageId);
+        return content?.toString() ?? "";
+      }),
+    );
+
+    return contents;
   },
 });
