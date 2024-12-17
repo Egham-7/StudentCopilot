@@ -5,8 +5,8 @@ import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph, planChunk, TNoteBlock } from "./aiAgent/noteAgent1";
-
+import { graph}from "./aiAgent/noteAgent";
+import{TNoteBlock} from "./aiAgent/types/noteAgent"
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
 import { MemorySaver } from "@langchain/langgraph";
@@ -29,7 +29,7 @@ export const fetchAndProcessTranscriptions = internalAction({
       v.literal("PhD"),
     ),
   },
-
+  
   handler: async (ctx, args) => {
     const transcriptionChunks: string[] = [];
 
@@ -98,7 +98,7 @@ export const generateNotes = internalAction({
 
 
     // Store previous generated images
-    const imgArr:string[] = []
+    const imgArr:string[] = [];
 
     // Compile the application state graph with memory checkpointing enabled
     const appGraph = graph.compile({ checkpointer: memoryManager });
@@ -106,18 +106,16 @@ export const generateNotes = internalAction({
     // Configuration for the application with a unique thread ID
     const executionConfig = { configurable: { thread_id: uuidv4() } };
 
+    // Previous generated note
+    let prev_note:string;
+    prev_note="";
     // Process each transcription chunk in parallel
-    const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
+    const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {  
       return exponentialBackoff(async () => {
             
         // Prepare input data for each chunk, including user preferences and plan details
         // Plan lecture notes based on the provided preferences and a portion of transcription chunk
-        const chunkNotePlan = await planChunk(
-          chunk,
-          noteTakingStyle,
-          learningStyle,
-          levelOfStudy,
-          course);
+      
 
         const processingData = {
           chunk: chunk,
@@ -125,18 +123,21 @@ export const generateNotes = internalAction({
           learningStyle: learningStyle,
           levelOfStudy: levelOfStudy,
           course: course,
-          plan:chunkNotePlan,
-          imgArr:imgArr
+          imgArr:imgArr,
+          prev_note:prev_note
         };
-        
+
         // Invoke the application graph with the current chunk data and config
         const processingResult = await appGraph.invoke(processingData, executionConfig);
+        prev_note = processingResult.note;
+        console.log("RESULT:",prev_note);
+        
         if(processingResult.ImageBlockSchema){
           imgArr.push(processingResult.ImageBlockSchema.caption);
         }
         
         // Convert the processed note into JSON format for storage
-        const finalResultJson = JSON.stringify(processingResult.note);
+        const finalResultJson = prev_note;
 
         // Create a blob from the JSON data for storage
         const noteChunkBlob = new Blob([finalResultJson], {
@@ -182,7 +183,7 @@ export const generateNotes = internalAction({
   },
 });
 
-export function flattenNotes(blocks: TNoteBlock[]): any[] {
+export function flattenNotes(blocks: TNoteBlock[]): TNoteBlock[] {//it was []
   return blocks.reduce<TNoteBlock[]>((acc, block) => {
     // If block is an array, recursively flatten it
     if (Array.isArray(block)) {

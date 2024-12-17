@@ -3,51 +3,16 @@ import { AIMessage } from "@langchain/core/messages";
 import { Annotation, END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
 import axios from 'axios';
-import { z } from 'zod';
+import z from 'zod';
 import { marked } from "marked";
 import {titlePrompt,
   paragraphPrompt,
   imageGenerationPrompt,
   planPrompt} from "./prompts/noteAgent.ts"
-// Define schema for image block data
-const ImageBlockSchema = z.object({
-  file: z.object({
-    url: z.string()
-      .url()
-      .describe("URL of the image relevant to the notes.")
-  }),
-  caption: z.string().optional(),
-  withBorder: z.boolean().optional(),
-  withBackground: z.boolean().optional(),
-  stretched: z.boolean().optional(),
-});
-
-// Define schema for paragraph block data
-const ParagraphBlockSchema = z.object({
-  text: z.string().describe("Content of the paragraph"),
-  alignment: z.enum(['left', 'center', 'right'])
-    .optional()
-    .describe("Text alignment in the paragraph (optional)"),
-});
-
-// Define schema for header block data
-const HeaderBlockSchema = z.object({
-  text: z.string().describe("Title or header text"),
-  level: z.string().describe("Heading level, e.g., '1' for H1, '2' for H2, etc."),
-});
-
-
-// Define schema for note blocks, which can be of header, paragraph, or image type
-export const NoteBlockSchema = z.object({
-  type: z.enum(['header', 'paragraph', 'image']),
-  data: z.union([HeaderBlockSchema, ParagraphBlockSchema, ImageBlockSchema]),
-});
-
-// Define TypeScript types from Zod schemas
-export type TNoteBlock = z.infer<typeof NoteBlockSchema>;
-
-
+// import schema for image block data
+import{TNoteBlock} from "./types/noteAgent"
 // Define input annotations for processing note data
+
 const InputAnnotation = Annotation.Root({
   ...MessagesAnnotation.spec,
   chunk: Annotation<string>,
@@ -108,20 +73,23 @@ async function generateImageSearchQuery(_state: typeof InputAnnotation.State): P
   return {messages:result};
 }
 
+export function getParagraphLines(text: string): string[] {
+  return text.split('\n').filter(line => line.trim().length > 0);
+}
+
 // Function to generate an image search query based on note context and retrieve an image link
 async function collector(_state: typeof InputAnnotation.State): Promise<typeof OutputAnnotation.State> {
     const combinedNotes: TNoteBlock[] = [];
 
     //const imageUrl = await fetchImageLink(result.content.toString());
   
-   
-    // Check if _state.messages[0] exists and print it
+
     // Iterate through _state.messages and process them
     for (let index = 0; index < _state.messages.length; index++) {
       const message = _state.messages[index];
       const msgStr = message.content as string;
       
-      const htmlContent = msgStr//await marked(msgStr);
+      const htmlContent = await marked(msgStr);
       console.log(htmlContent);
       if (index === _state.messages.length - 3 && index == 0) {
         // Add an image block
@@ -158,12 +126,14 @@ async function collector(_state: typeof InputAnnotation.State): Promise<typeof O
         });
       }
     else if (index === _state.messages.length -1){
+
         // Add a paragraph block
+        const listContent=getParagraphLines(htmlContent);
         combinedNotes.push({
-          type: "paragraph",
+          type: "list",
           data: {
-            text: htmlContent,
-            alignment: "center",
+            style: "unordered",
+            items: listContent,
           },
         });
       }

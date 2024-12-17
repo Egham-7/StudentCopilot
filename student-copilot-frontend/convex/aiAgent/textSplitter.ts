@@ -69,7 +69,7 @@ export async function splitBySentence(text: string): Promise<string[]> {
         chunkOverlap: 10,
       });
     const output = await splitter.createDocuments([text]);
-    let arr:string[] = []; 
+    const arr:string[] = []; 
     output.forEach((doc) => {
       arr.push(doc.pageContent);
   });
