@@ -62,13 +62,14 @@ export const deleteNotification = mutation({
   },
 });
 
-// Get notifications for a specific user
 export const getUserNotifications = query({
   args: {
     limit: v.optional(v.number()),
+    readStatus: v.optional(v.boolean()), // Add this argument
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
+
     if (!identity) {
       return null;
     }
@@ -76,6 +77,11 @@ export const getUserNotifications = query({
     const notifications = await ctx.db
       .query("notifications")
       .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .filter((q) =>
+        args.readStatus !== undefined
+          ? q.eq(q.field("isRead"), args.readStatus)
+          : true,
+      )
       .order("desc")
       .take(args.limit ?? 20);
 
