@@ -8,9 +8,15 @@ import { generateEmbedding } from "./ai";
 import { graph } from "./aiAgent/noteAgent";
 
 import { exponentialBackoff } from "./utils";
-export const fetchAndProcessTranscriptions = internalAction({
+import { v4 as uuidv4 } from "uuid";
+import { MemorySaver } from "@langchain/langgraph";
+
+export const fetchAndProcessContent = internalAction({
   args: {
+    userId: v.string(),
     lectureIds: v.array(v.id("lectures")),
+    noteIds: v.array(v.id("notes")),
+    flashCardSetIds: v.array(v.id("flashCardSets")),
     noteTakingStyle: v.string(),
     learningStyle: v.union(
       v.literal("auditory"),
@@ -26,34 +32,41 @@ export const fetchAndProcessTranscriptions = internalAction({
       v.literal("PhD"),
     ),
   },
-
   handler: async (ctx, args) => {
-    const transcriptionChunks: string[] = [];
+    const [lectureChunks, flashcardChunks, noteChunks] = await Promise.all([
+      Promise.all(
+        args.lectureIds.map((lectureId) =>
+          ctx.runAction(internal.lectures.getLectureContent, { lectureId }),
+        ),
+      ),
+      Promise.all(
+        args.flashCardSetIds.map((flashCardSetId) =>
+          ctx.runQuery(internal.flashcards.getFlashcardContent, {
+            flashCardSetId,
+          }),
+        ),
+      ),
 
-    for (const lectureId of args.lectureIds) {
-      const lecture = await ctx.runQuery(internal.notes.getLecture, {
-        lectureId,
-      });
-      if (!lecture) {
-        throw new Error(`Lecture with ID ${lectureId} not found.`);
-      }
+      Promise.all(
+        args.noteIds.map((noteId) =>
+          ctx.runAction(internal.noteAction.getNoteContents, {
+            noteId,
+            userId: args.userId,
+          }),
+        ),
+      ),
+    ]);
 
-      for (const chunkId of lecture.lectureTranscription) {
-        const chunkUrl = await ctx.storage.getUrl(chunkId as Id<"_storage">);
-        if (!chunkUrl) {
-          throw new Error(`Transcription chunk with ID ${chunkId} not found.`);
-        }
+    const contentChunks = [
+      ...lectureChunks.flat(),
+      ...flashcardChunks.flat(),
+      ...noteChunks.flat(),
+    ];
 
-        const response = await fetch(chunkUrl);
-        const chunkText = await response.text();
-        transcriptionChunks.push(chunkText);
-      }
-    }
-
-    // Schedule the note generation task
     await ctx.scheduler.runAfter(0, internal.noteAction.generateNotes, {
-      transcriptionChunks,
+      contentChunks,
       lectureIds: args.lectureIds,
+      flashCardSetIds: args.flashCardSetIds,
       noteTakingStyle: args.noteTakingStyle,
       learningStyle: args.learningStyle,
       course: args.course,
@@ -64,8 +77,9 @@ export const fetchAndProcessTranscriptions = internalAction({
 
 export const generateNotes = internalAction({
   args: {
-    transcriptionChunks: v.array(v.string()),
+    contentChunks: v.array(v.string()),
     lectureIds: v.array(v.id("lectures")),
+    flashCardSetIds: v.array(v.id("flashCardSets")),
     noteTakingStyle: v.string(),
     learningStyle: v.union(
       v.literal("auditory"),
@@ -83,11 +97,13 @@ export const generateNotes = internalAction({
   },
   handler: async (ctx, args) => {
     const {
-      transcriptionChunks,
+      contentChunks,
       noteTakingStyle,
       learningStyle,
       course,
       levelOfStudy,
+      lectureIds,
+      flashCardSetIds,
     } = args;
 
     // Initialize a memory manager for saving the processing state
@@ -105,7 +121,7 @@ export const generateNotes = internalAction({
     let prev_note: string = "";
     
     // Process each transcription chunk in parallel
-    const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
+    const chunkProcessingPromises = contentChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
         // Prepare input data for each chunk, including user preferences and plan details
         const processingData = {
@@ -171,7 +187,8 @@ export const generateNotes = internalAction({
     // Store the list of note chunk IDs and the concatenated embedding in the database
     await ctx.runMutation(internal.notes.storeNotes, {
       noteChunkIds: noteChunkIds,
-      lectureIds: args.lectureIds,
+      lectureIds: lectureIds,
+      flashCardSetIds: flashCardSetIds,
       embedding: concatenatedEmbedding,
     });
   },
@@ -225,5 +242,26 @@ export const getNoteById = action({
       ...note,
       content: fullContent,
     };
+  },
+});
+
+export const getNoteContents = internalAction({
+  args: { noteId: v.id("notes"), userId: v.string() },
+  handler: async (ctx, args): Promise<string[]> => {
+    // Get the note
+    const note = await ctx.runQuery(internal.notes.getNote, args);
+
+    if (!note) {
+      throw new Error("Cannot get content for a nonexistent note.");
+    }
+
+    const contents = await Promise.all(
+      note.textChunks.map(async (storageId) => {
+        const content = await ctx.storage.get(storageId);
+        return content?.toString() ?? "";
+      }),
+    );
+
+    return contents;
   },
 });

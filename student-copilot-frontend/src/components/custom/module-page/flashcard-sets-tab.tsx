@@ -1,25 +1,24 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, Brain } from "lucide-react";
 import StudyFlashcardsButton from "./study-flashcards-button";
 import DeleteFlashcardSetDialog from "./delete-flashcards-set";
 import CreateFlashCardsForm from "./create-flashcards-form";
-
+import { SelectionCheckbox } from "@/components/ui/selection-checkbox";
 
 type FlashcardSetsTabProps = {
   moduleId: Id<"modules">;
   flashcardSets: Doc<"flashCardSets">[] | undefined;
+  selectedFlashcards: Id<"flashCardSets">[];
+  handleSelectFlashcards: (id: Id<"flashCardSets">) => void;
 };
 
 export default function FlashcardSetsTab({
   moduleId,
   flashcardSets,
+  selectedFlashcards,
+  handleSelectFlashcards,
 }: FlashcardSetsTabProps) {
   const visibleSets = flashcardSets?.slice(0, 6);
 
@@ -29,17 +28,27 @@ export default function FlashcardSetsTab({
         {visibleSets?.map((set) => {
           const masteryPercentage = (set.masteredCards / set.totalCards) * 100;
           const daysAgo = set.lastStudied
-            ? Math.floor((new Date().getTime() - new Date(set.lastStudied).getTime()) / (1000 * 3600 * 24))
+            ? Math.floor(
+                (new Date().getTime() - new Date(set.lastStudied).getTime()) /
+                  (1000 * 3600 * 24),
+              )
             : null;
 
           return (
             <Card
               key={set._id}
-              className="group hover:shadow-lg transition-all duration-300"
+              className={`relative ${selectedFlashcards.includes(set._id) ? "border-primary border-2" : ""}`}
             >
+              <SelectionCheckbox
+                itemId={set._id}
+                selectedItems={selectedFlashcards}
+                onSelect={handleSelectFlashcards}
+              />
               <CardHeader>
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-xl font-bold">{set.title}</CardTitle>
+                  <CardTitle className="text-xl font-bold">
+                    {set.title}
+                  </CardTitle>
                   <DeleteFlashcardSetDialog setId={set._id} />
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
@@ -88,4 +97,3 @@ export default function FlashcardSetsTab({
     </div>
   );
 }
-

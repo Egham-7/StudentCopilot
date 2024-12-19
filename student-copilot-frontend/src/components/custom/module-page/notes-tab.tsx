@@ -24,12 +24,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { SelectionCheckbox } from "@/components/ui/selection-checkbox";
 
 type NotesTabProps = {
   notes: Doc<"notes">[] | undefined;
+  setSelectedNotes: (id: Id<"notes">) => void;
+  selectedNotes: Id<"notes">[];
 };
 
-export default function NotesTab({ notes }: NotesTabProps) {
+export default function NotesTab({
+  notes,
+  setSelectedNotes,
+  selectedNotes,
+}: NotesTabProps) {
   const navigate = useNavigate();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<Id<"notes"> | null>(null);
@@ -76,6 +83,11 @@ export default function NotesTab({ notes }: NotesTabProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {visibleNotes?.map((note, index) => (
           <Card key={note._id} className="relative">
+            <SelectionCheckbox
+              itemId={note._id}
+              selectedItems={selectedNotes}
+              onSelect={setSelectedNotes}
+            />
             <CardHeader className="flex justify-between items-center flex-row">
               <CardTitle>Note {index + 1}</CardTitle>
               <div className="space-x-2">

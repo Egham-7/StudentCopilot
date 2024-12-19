@@ -49,7 +49,7 @@ export const store = mutation({
 
     await ctx.scheduler.runAfter(0, internal.activities.store, {
       userId,
-      type: "module_created",
+      type: "Module Created",
       moduleId,
     });
 

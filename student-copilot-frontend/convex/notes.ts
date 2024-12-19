@@ -12,7 +12,9 @@ import { generateEmbedding } from "./ai";
 
 export const storeClient = mutation({
   args: {
-    lectureIds: v.array(v.id("lectures")),
+    lectureIds: v.optional(v.array(v.id("lectures"))),
+    flashCardSetIds: v.optional(v.array(v.id("flashCardSets"))),
+    noteIds: v.optional(v.array(v.id("notes"))),
     moduleId: v.id("modules"),
   },
   handler: async (ctx, args) => {
@@ -42,13 +44,16 @@ export const storeClient = mutation({
 
     await ctx.scheduler.runAfter(
       0,
-      internal.noteAction.fetchAndProcessTranscriptions,
+      internal.noteAction.fetchAndProcessContent,
       {
-        lectureIds: args.lectureIds,
+        lectureIds: args.lectureIds ?? [],
+        noteIds: args.noteIds ?? [],
         noteTakingStyle: user.noteTakingStyle,
         learningStyle: user.learningStyle,
         course: user.course,
         levelOfStudy: user.levelOfStudy,
+        flashCardSetIds: args.flashCardSetIds ?? [],
+        userId: user.clerkId,
       },
     );
 
@@ -59,31 +64,37 @@ export const storeClient = mutation({
   },
 });
 
-export const getLecture = internalQuery({
-  args: { lectureId: v.id("lectures") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.lectureId);
-  },
-});
-
 export const storeNotes = internalMutation({
   args: {
     noteChunkIds: v.array(v.id("_storage")),
     lectureIds: v.array(v.id("lectures")),
+    flashCardSetIds: v.array(v.id("flashCardSets")),
     embedding: v.array(v.float64()),
   },
   handler: async (ctx, args) => {
-    const firstLectureId = args.lectureIds[0];
+    const getModuleId = async () => {
+      const sources = [
+        { type: "lecture", ids: args.lectureIds },
+        { type: "flashcard", ids: args.flashCardSetIds },
+      ];
 
-    const firstLecture = await ctx.db.get(firstLectureId);
+      for (const source of sources) {
+        if (source.ids.length > 0) {
+          const item = await ctx.db.get(source.ids[0]);
+          if (item?.moduleId) {
+            return item.moduleId;
+          }
+        }
+      }
+      throw new Error("No valid source found to extract moduleId");
+    };
 
-    if (firstLecture == null) {
-      throw new Error("Lectures must be present for notes.");
-    }
-
-    const moduleId = firstLecture?.moduleId;
+    const moduleId = await getModuleId();
 
     const moduleUser = await ctx.db.get(moduleId);
+    if (!moduleUser) {
+      throw new Error("Module not found");
+    }
 
     if (moduleUser == null) {
       throw new Error("Module cannot be null.");
@@ -92,6 +103,7 @@ export const storeNotes = internalMutation({
     const noteId = await ctx.db.insert("notes", {
       textChunks: args.noteChunkIds,
       lectureIds: args.lectureIds,
+      flashCardSetIds: args.flashCardSetIds,
       moduleId: moduleId,
       noteEmbedding: args.embedding,
     });
@@ -108,7 +120,7 @@ export const storeNotes = internalMutation({
 
     await ctx.scheduler.runAfter(0, internal.activities.store, {
       userId: moduleUser.userId,
-      type: "note_created",
+      type: "Note Created",
       noteId,
     });
   },
