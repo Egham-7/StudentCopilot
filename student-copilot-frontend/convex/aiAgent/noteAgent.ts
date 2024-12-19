@@ -1,126 +1,112 @@
 "use node";
-import { AIMessage } from "@langchain/core/messages";
-import { Annotation, END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
-import { ChatOpenAI } from "@langchain/openai";
-import axios from 'axios';
+
 import {
-  paragraphPrompt,
-  planPrompt} from "./prompts/noteAgent.ts"
-// import schema for image block data
+  Annotation,
+  END,
+  MessagesAnnotation,
+  StateGraph,
+} from "@langchain/langgraph";
+import { ChatOpenAI } from "@langchain/openai";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
+import { imageSearchTool } from "./utils";
+import { notePrompt } from "./prompts/noteAgent";
 
-// Define input annotations for processing note data
-
-const InputAnnotation = Annotation.Root({
+const inputAnnotation = Annotation.Root({
   ...MessagesAnnotation.spec,
   chunk: Annotation<string>,
   noteTakingStyle: Annotation<string>,
-  learningStyle: Annotation<"visual" | "auditory" | "kinesthetic" | "analytical">,
+  learningStyle: Annotation<
+    "visual" | "auditory" | "kinesthetic" | "analytical"
+  >,
   levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
   course: Annotation<string>,
-  prev_note:Annotation<string>,
-});
-
-// Define output annotation structure
-const OutputAnnotation = Annotation.Root({
+  prev_note: Annotation<string>,
   note: Annotation<string>,
 });
 
-// API keys for Google Custom Search
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-const CX = process.env.CX;
+const outputAnnotation = Annotation.Root({
+  note: Annotation<string>,
+});
 
-// Utility function to fetch an image link from Google Custom Search based on a query
-export async function fetchImageLink(query: string): Promise<string> {
-  const searchUrl = `https://www.googleapis.com/customsearch/v1?q=${query}&cx=${CX}&key=${GOOGLE_API_KEY}&searchType=image&num=1`;
+const tools = [imageSearchTool];
+const toolNode = new ToolNode(tools);
 
-  try {
-    const response = await axios.get(searchUrl);
-    const imageLink = response?.data?.items?.[0]?.link;
-    if (imageLink) {
-      return imageLink;
-    } else {
-      console.error('Unexpected response structure:', response.data);
-      throw new Error('Unexpected response structure: no image link found');
-    }
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('Error with Axios:', error.message);
-      if (error.response) {
-        console.error('Server response error:', error.response.data);
-        console.error('Status code:', error.response.status);
-      } else if (error.request) {
-        console.error('No response received:', error.request);
-      }
-    } else {
-      console.error('Error during request:', error);
-    }
-    throw new Error('Image link retrieval failed');
-  }
+export async function generateNote(
+  state: typeof inputAnnotation.State,
+): Promise<typeof outputAnnotation.State> {
+  const {
+    chunk,
+    noteTakingStyle,
+    learningStyle,
+    levelOfStudy,
+    course,
+    prev_note,
+  } = state;
+
+  const model = new ChatOpenAI({
+    model: "gpt-4o-mini",
+  });
+
+  const chain = notePrompt.pipe(model);
+
+  const result = await chain.invoke({
+    chunk,
+    noteTakingStyle,
+    learningStyle,
+    levelOfStudy,
+    course,
+    prev_note,
+  });
+
+  return {
+    note: result.content.toString(),
+  };
 }
 
+export async function enhanceWithImages(state: typeof inputAnnotation.State) {
+  const { note } = state;
+  const model = new ChatOpenAI({
+    model: "gpt-4o-mini",
+  }).bindTools(tools);
 
+  const sections = note.split("\n#");
+  let enhancedNote = sections[0];
 
+  for (const section of sections.slice(1)) {
+    const imageDecision = await model.invoke(`
+      Analyze this markdown section and decide if it needs an image:
+      ${section}
+      
+      If visual aid would help, use the image_search tool with a specific search query.
+      If no image is needed, respond with 'No image needed'.
+    `);
 
-// Function to generate structured lecture notes
-export async function generateParagraph(_state: typeof InputAnnotation.State): Promise<typeof OutputAnnotation.State> {
-    
-  
-    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18"});
-
-    const chain = paragraphPrompt.pipe(llm);
-
-    const {chunk,prev_note} = _state;
-
-    const plan = _state.messages[_state.messages.length-1];
-  
-    const result = await chain.invoke({
-      chunk,
-      plan,
-      prev_note
-    });
-    const string_result = result.content as string
-    
-
-    return {note:string_result };
+    if (imageDecision.tool_calls?.length) {
+      const imageUrl = await imageSearchTool.invoke({
+        query: imageDecision.tool_calls[0].args.query,
+      });
+      enhancedNote += `\n#${section}\n![](${imageUrl})`;
+    } else {
+      enhancedNote += "\n#" + section;
+    }
   }
 
+  return {
+    note: enhancedNote,
+  };
+}
 
+function shouldContinue(state: typeof inputAnnotation.State) {
+  return state.note ? "enhance_images" : "generate_note";
+}
 
-
-  export async function planChunk(
-    _state: typeof InputAnnotation.State
-  ): Promise<{ messages: AIMessage }> {
-    // Initialize the ChatOpenAI model with specific parameters
-    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18", temperature: 0.3 });
-  
-    // Create a pipeline for the prompt and LLM
-    const chain = planPrompt.pipe(llm);
-  
-    // Invoke the pipeline with input data
-    const result = await chain.invoke({
-      chunk1: _state.chunk,
-      noteTakingStyle1: _state.noteTakingStyle,
-      learningStyle1: _state.learningStyle,
-      levelOfStudy1:_state.levelOfStudy,
-      course1: _state.course,
-    });
-  
-    // Return the result as a structured response
-    return { messages: result };
-  }
-
-
-
-// Set up the state graph to control annotation processing flow
-export const graph = new StateGraph({
-  input: InputAnnotation,
-  output: OutputAnnotation,
+export const noteGraph = new StateGraph({
+  input: inputAnnotation,
+  output: outputAnnotation,
 })
-.addNode("gen_plan",planChunk)
-.addNode("gen_paragraph",generateParagraph)
-
-.addEdge("__start__", "gen_plan")
-.addEdge("gen_plan","gen_paragraph")
-.addEdge("gen_paragraph",END)
-
-
+  .addNode("generate_note", generateNote)
+  .addNode("enhance_images", enhanceWithImages)
+  .addNode("image_search", toolNode)
+  .addEdge("__start__", "generate_note")
+  .addConditionalEdges("generate_note", shouldContinue)
+  .addEdge("enhance_images", END);

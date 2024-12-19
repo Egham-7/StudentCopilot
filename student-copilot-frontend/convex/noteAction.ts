@@ -1,12 +1,13 @@
 "use node";
+
 import { internal } from "./_generated/api";
 
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph } from "./aiAgent/noteAgent";
-
+import { noteGraph } from "./aiAgent/noteAgent";
+import { MemorySaver } from "@langchain/langgraph";
 import { exponentialBackoff } from "./utils";
 
 export const fetchAndProcessContent = internalAction({
@@ -73,6 +74,33 @@ export const fetchAndProcessContent = internalAction({
   },
 });
 
+export const processChunkWithGraph = internalAction({
+  args: {
+    chunk: v.string(),
+    noteTakingStyle: v.string(),
+    learningStyle: v.union(
+      v.literal("auditory"),
+      v.literal("visual"),
+      v.literal("kinesthetic"),
+      v.literal("analytical"),
+    ),
+    levelOfStudy: v.union(
+      v.literal("Bachelors"),
+      v.literal("Associate"),
+      v.literal("Masters"),
+      v.literal("PhD"),
+    ),
+    course: v.string(),
+    prev_note: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const checkpointer = new MemorySaver();
+    const compiledGraph = noteGraph.compile({ checkpointer });
+    const processingResult = await compiledGraph.invoke(args);
+    return processingResult;
+  },
+});
+
 export const generateNotes = internalAction({
   args: {
     contentChunks: v.array(v.string()),
@@ -104,58 +132,32 @@ export const generateNotes = internalAction({
       flashCardSetIds,
     } = args;
 
-    // Initialize a memory manager for saving the processing state
-    //const memoryManager = new MemorySaver();
+    let prevNote = "";
 
-    // Plan lecture notes based on the provided preferences and a portion of transcription chunks
-
-
-    // Compile the application state graph with memory checkpointing enabled
-    const appGraph = graph.compile();
-
-    // Configuration for the application with a unique thread ID
-    //const executionConfig = { configurable: { thread_id: uuidv4() } };
-
-    let prev_note: string = "";
-    
-    // Process each transcription chunk in parallel
     const chunkProcessingPromises = contentChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
-        // Prepare input data for each chunk, including user preferences and plan details
-        const processingData = {
-          chunk: chunk,
-          noteTakingStyle: noteTakingStyle,
-          learningStyle: learningStyle,
-          levelOfStudy: levelOfStudy,
-          course: course,
-          prev_note:prev_note,
-        };
-
-        // Invoke the application graph with the current chunk data and config
-        const processingResult = await appGraph.invoke(
-          processingData
+        const processingResult = await ctx.runAction(
+          internal.noteAction.processChunkWithGraph,
+          {
+            chunk,
+            noteTakingStyle,
+            learningStyle,
+            levelOfStudy,
+            course,
+            prev_note: prevNote,
+          },
         );
-        
-        prev_note=processingResult.note.toString();
-        // Extract the generated note from the result and add it to the noteBlocks array
 
-        // Convert the processed note into JSON format for storage
-        const finalResultJson = JSON.stringify({
-          type: "note",
-          blocks: processingResult.note,
-        });
+        prevNote = prevNote + processingResult.note;
 
-        // Create a blob from the JSON data for storage
-        const noteChunkBlob = new Blob([finalResultJson], {
-          type: "application/json",
-        });
+        console.log("Curr Note: ", prevNote);
 
-        // Store the blob in storage and retrieve the storage ID
-        const storageId = await ctx.storage.store(noteChunkBlob);
+        const storageId = await ctx.storage.store(
+          new Blob([processingResult.note.toString()], { type: "text/plain" }),
+        );
 
-        // Generate an embedding for the current chunk and return the storage ID with the embedding
         const chunkEmbedding = await generateEmbedding(
-          JSON.stringify(processingResult),
+          processingResult.note.toString(),
         );
 
         return { storageId, chunkEmbedding };
@@ -172,22 +174,24 @@ export const generateNotes = internalAction({
       allEmbeddings.push(chunkEmbedding);
     }
 
-    // Concatenate embeddings into a single 1536-dimensional vector
-    const concatenatedEmbedding: number[] = [];
-    for (let i = 0; i < 1536; i++) {
-      const sum = allEmbeddings.reduce(
-        (acc, embedding) => acc + (embedding[i] || 0),
-        0,
-      );
-      concatenatedEmbedding.push(sum / allEmbeddings.length);
+    const concatenatedEmbedding = new Float32Array(1536);
+    const embeddingCount = allEmbeddings.length;
+
+    for (const embedding of allEmbeddings) {
+      for (let i = 0; i < 1536; i++) {
+        concatenatedEmbedding[i] += embedding[i] || 0;
+      }
     }
 
-    // Store the list of note chunk IDs and the concatenated embedding in the database
+    for (let i = 0; i < 1536; i++) {
+      concatenatedEmbedding[i] /= embeddingCount;
+    }
+
     await ctx.runMutation(internal.notes.storeNotes, {
       noteChunkIds: noteChunkIds,
       lectureIds: lectureIds,
       flashCardSetIds: flashCardSetIds,
-      embedding: concatenatedEmbedding,
+      embedding: Array.from(concatenatedEmbedding),
     });
   },
 });
