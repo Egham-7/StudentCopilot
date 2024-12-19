@@ -5,12 +5,9 @@ import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 import { generateEmbedding } from "./ai";
-import { graph, planLectureNotes } from "./aiAgent/noteAgent";
+import { graph } from "./aiAgent/noteAgent";
 
 import { exponentialBackoff } from "./utils";
-import { v4 as uuidv4 } from "uuid";
-import { MemorySaver } from "@langchain/langgraph";
-
 export const fetchAndProcessTranscriptions = internalAction({
   args: {
     lectureIds: v.array(v.id("lectures")),
@@ -94,23 +91,19 @@ export const generateNotes = internalAction({
     } = args;
 
     // Initialize a memory manager for saving the processing state
-    const memoryManager = new MemorySaver();
+    //const memoryManager = new MemorySaver();
 
     // Plan lecture notes based on the provided preferences and a portion of transcription chunks
-    const lectureNotePlan = await planLectureNotes(
-      noteTakingStyle,
-      learningStyle,
-      levelOfStudy,
-      course,
-      transcriptionChunks,
-    );
+
 
     // Compile the application state graph with memory checkpointing enabled
-    const appGraph = graph.compile({ checkpointer: memoryManager });
+    const appGraph = graph.compile();
 
     // Configuration for the application with a unique thread ID
-    const executionConfig = { configurable: { thread_id: uuidv4() } };
+    //const executionConfig = { configurable: { thread_id: uuidv4() } };
 
+    let prev_note: string = "";
+    
     // Process each transcription chunk in parallel
     const chunkProcessingPromises = transcriptionChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
@@ -121,15 +114,15 @@ export const generateNotes = internalAction({
           learningStyle: learningStyle,
           levelOfStudy: levelOfStudy,
           course: course,
-          plan: lectureNotePlan,
+          prev_note:prev_note,
         };
 
         // Invoke the application graph with the current chunk data and config
         const processingResult = await appGraph.invoke(
-          processingData,
-          executionConfig,
+          processingData
         );
-
+        
+        prev_note=processingResult.note.toString();
         // Extract the generated note from the result and add it to the noteBlocks array
 
         // Convert the processed note into JSON format for storage

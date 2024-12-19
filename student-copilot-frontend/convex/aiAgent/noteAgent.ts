@@ -3,10 +3,8 @@ import { AIMessage } from "@langchain/core/messages";
 import { Annotation, END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
 import axios from 'axios';
-import z from 'zod';
 import {titlePrompt,
   paragraphPrompt,
-  imageGenerationPrompt,
   planPrompt} from "./prompts/noteAgent.ts"
 // import schema for image block data
 
@@ -19,8 +17,7 @@ const InputAnnotation = Annotation.Root({
   learningStyle: Annotation<"visual" | "auditory" | "kinesthetic" | "analytical">,
   levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
   course: Annotation<string>,
-  plan: Annotation<string>,
-  ImgArr: Annotation<string[]>,
+  prev_note:Annotation<string>,
 });
 
 // Define output annotation structure
@@ -169,18 +166,22 @@ export async function generateParagraph(_state: typeof InputAnnotation.State): P
 
     const chain = paragraphPrompt.pipe(llm);
 
-    const {chunk,plan} = _state;
+    const {chunk,prev_note} = _state;
+
+    const plan = _state.messages[_state.messages.length-1];
   
     const result = await chain.invoke({
       chunk,
-      plan
+      plan,
+      prev_note
     });
     const string_result = result.content as string
-   
+    
+
     return {note:string_result };
   }
 
-
+  /*
   export const decideIfImageNeeded = async (state: typeof InputAnnotation.State) => {
   
     // Invoke the model
@@ -210,7 +211,7 @@ export async function generateParagraph(_state: typeof InputAnnotation.State): P
       throw new Error("Failed to determine if a title is needed.");
     }
   };
-
+  */
 
 
   export async function planChunk(
