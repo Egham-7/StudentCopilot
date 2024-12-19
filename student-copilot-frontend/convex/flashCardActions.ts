@@ -8,7 +8,7 @@ import { graph } from "./aiAgent/flashCardAgent";
 import { MemorySaver } from "@langchain/langgraph";
 import { flashCardPlanGenerationPrompt } from "./aiAgent/prompts/flashCardAgent";
 import { v4 as uuidv4 } from "uuid";
-import { Doc, Id } from "./_generated/dataModel";
+import { Doc } from "./_generated/dataModel";
 
 type FlashCard = Omit<Doc<"flashcards">, "_id" | "_creationTime">;
 
@@ -117,33 +117,33 @@ export const generateFlashCards = internalAction({
 
     flashCardResults.forEach((result) => {
       if (result?.flashCards) {
-        const formattedCards = result.flashCards.map(
-          (card: {
-            status: "new" | "learning" | "review" | "mastered";
-            front: string;
-            back: string;
-            difficulty: "medium" | "easy" | "hard";
-            reviewCount: number;
-            correctCount: number;
-            sourceContentId?: string;
-          }) => ({
-            ...card,
-            flashCardSetId: setId,
-            incorrectCount: 0,
-            sourceContentId: card.sourceContentId as
-              | Id<"lectures">
-              | Id<"notes">
-              | undefined,
-          }),
-        );
+        const formattedCards: FlashCard[] = result.flashCards.map((card) => ({
+          flashCardSetId: setId,
+          front: card.front,
+          back: card.back,
+          image: card.image,
+          difficulty: card.difficulty,
+          status: card.status,
+          reviewCount: 0,
+          correctCount: 0,
+          incorrectCount: 0,
+          tags: card.tags,
+          sourceContentId: undefined,
+          nextReviewDate: new Date(Date.now()).toISOString(),
+          lastReviewDate: new Date(Date.now()).toISOString(),
+        }));
 
         newFlashCards.push(...formattedCards);
       }
     });
 
+    console.log("New flashcards: ", newFlashCards);
+
     if (!newFlashCards.length) {
       throw new Error("Failed to generate any flashcards");
     }
+
+    console.log("New Flashcards: ", newFlashCards);
 
     const BATCH_SIZE = 3;
     for (let i = 0; i < newFlashCards.length; i += BATCH_SIZE) {
@@ -154,6 +154,11 @@ export const generateFlashCards = internalAction({
             front: flashCard.front,
             back: flashCard.back,
             flashCardSetId: setId,
+            status: flashCard.status,
+            tags: flashCard.tags,
+            image: flashCard.image,
+            sourceContentId: flashCard.sourceContentId,
+            difficulty: flashCard.difficulty,
             userId,
           }),
         ),

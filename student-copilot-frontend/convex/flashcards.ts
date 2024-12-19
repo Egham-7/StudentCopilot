@@ -172,10 +172,22 @@ export const addFlashCardInternal = internalMutation({
   args: {
     flashCardSetId: v.id("flashCardSets"),
     userId: v.string(),
+    image: v.optional(v.union(v.string(), v.id("_storage"))),
     front: v.string(),
+    status: v.union(
+      v.literal("new"),
+      v.literal("learning"),
+      v.literal("review"),
+      v.literal("mastered"),
+    ),
     back: v.string(),
     tags: v.optional(v.array(v.string())),
     sourceContentId: v.optional(v.union(v.id("lectures"), v.id("notes"))),
+    difficulty: v.union(
+      v.literal("easy"),
+      v.literal("medium"),
+      v.literal("hard"),
+    ),
   },
 
   handler: async (ctx, args) => {
@@ -183,13 +195,14 @@ export const addFlashCardInternal = internalMutation({
       flashCardSetId: args.flashCardSetId,
       front: args.front,
       back: args.back,
-      difficulty: "medium",
-      status: "new",
+      difficulty: args.difficulty,
+      status: args.status,
       reviewCount: 0,
       correctCount: 0,
       incorrectCount: 0,
       tags: args.tags,
       sourceContentId: args.sourceContentId,
+      image: args.image,
     });
 
     // Update total cards count
