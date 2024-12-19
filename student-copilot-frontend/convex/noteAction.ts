@@ -8,8 +8,6 @@ import { generateEmbedding } from "./ai";
 import { graph } from "./aiAgent/noteAgent";
 
 import { exponentialBackoff } from "./utils";
-import { v4 as uuidv4 } from "uuid";
-import { MemorySaver } from "@langchain/langgraph";
 
 export const fetchAndProcessContent = internalAction({
   args: {
