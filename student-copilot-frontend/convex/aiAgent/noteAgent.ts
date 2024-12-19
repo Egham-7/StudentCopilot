@@ -3,7 +3,7 @@ import { AIMessage } from "@langchain/core/messages";
 import { Annotation, END, MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
 import axios from 'axios';
-import {titlePrompt,
+import {
   paragraphPrompt,
   planPrompt} from "./prompts/noteAgent.ts"
 // import schema for image block data
@@ -58,6 +58,7 @@ export async function fetchImageLink(query: string): Promise<string> {
   }
 }
 
+
 /*
 // Function to generate an image search query based on note context and retrieve an image link
 async function generateImageSearchQuery(_state: typeof InputAnnotation.State): Promise<{messages:AIMessage}> {
@@ -75,71 +76,6 @@ export function getParagraphLines(text: string): string[] {
 }
 
 
-/*
-// Function to generate an image search query based on note context and retrieve an image link
-async function collector(_state: typeof InputAnnotation.State): Promise<typeof OutputAnnotation.State> {
-    const combinedNotes: TNoteBlock[] = [];
-
-    //const imageUrl = await fetchImageLink(result.content.toString());
-  
-
-    // Iterate through _state.messages and process them
-    for (let index = 0; index < _state.messages.length; index++) {
-      const message = _state.messages[index];
-      const msgStr = message.content as string;
-      
-      const htmlContent = await marked(msgStr);
-      console.log(htmlContent);
-      if (index === _state.messages.length - 3 && index == 0) {
-        // Add an image block
-        let url = "";
-        try {
-          url = await fetchImageLink(msgStr);
-        } catch (error) {
-          console.error("Error fetching image link:", error);
-          url = ""; // Fallback to an empty string
-        }
-        if(url!=""){
-        combinedNotes.push({
-          type: "image",
-          data: {
-            file: {
-              url: url,
-            },
-            caption: msgStr,
-            withBorder: true,
-            withBackground: false,
-            stretched: false,
-          },
-        });
-      }
-      } 
-      else if (index === _state.messages.length - 2) {
-        // Add a header block
-        combinedNotes.push({
-          type: "header",
-          data: {
-            text: htmlContent,
-            level: "1",
-          },
-        });
-      }
-    else if (index === _state.messages.length -1){
-
-        // Add a paragraph block
-        const listContent=getParagraphLines(htmlContent);
-        combinedNotes.push({
-          type: "list",
-          data: {
-            style: "unordered",
-            items: listContent,
-          },
-        });
-      }
-      }
-    return { note: combinedNotes };
-  }
-  */
 // Function to generate structured lecture notes
 export async function generateTitle(_state: typeof InputAnnotation.State): Promise<{messages:AIMessage}> {
     
@@ -156,7 +92,7 @@ export async function generateTitle(_state: typeof InputAnnotation.State): Promi
     return {messages:result};
 
   }
-
+*/
 
 // Function to generate structured lecture notes
 export async function generateParagraph(_state: typeof InputAnnotation.State): Promise<typeof OutputAnnotation.State> {
