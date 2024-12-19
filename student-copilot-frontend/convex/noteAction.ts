@@ -150,8 +150,6 @@ export const generateNotes = internalAction({
 
         prevNote = prevNote + processingResult.note;
 
-        console.log("Curr Note: ", prevNote);
-
         const storageId = await ctx.storage.store(
           new Blob([processingResult.note.toString()], { type: "text/plain" }),
         );
