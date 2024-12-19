@@ -3,7 +3,6 @@ import { Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Doc } from "convex/_generated/dataModel";
-
 import DeleteFlashcardDialog from "./flashcard-delete-dialog";
 import { EditFlashcardDialog } from "./edit-flashcard-dialog";
 
@@ -43,19 +42,32 @@ export function FlashcardDisplay({
           onClick={(e) => e.stopPropagation()}
         >
           <EditFlashcardDialog card={card} />
-
           <DeleteFlashcardDialog flashCardId={card._id} />
         </div>
 
-        <div className="text-center">
-          <h2 className="text-2xl font-heading font-bold mb-4">{card.front}</h2>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {card.tags?.map((tag: string, index: number) => (
-              <Badge key={index} variant="secondary">
-                <Tag className="w-3 h-3 mr-1" />
-                {tag}
-              </Badge>
-            ))}
+        <div className="flex flex-col items-center gap-4 w-full">
+          {card.image && (
+            <div className="relative w-full max-w-md h-48 rounded-lg overflow-hidden">
+              <img
+                src={card.image}
+                alt="Flashcard visual"
+                className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          )}
+
+          <div className="text-center">
+            <h2 className="text-2xl font-heading font-bold mb-4">
+              {card.front}
+            </h2>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {card.tags?.map((tag: string, index: number) => (
+                <Badge key={index} variant="secondary">
+                  <Tag className="w-3 h-3 mr-1" />
+                  {tag}
+                </Badge>
+              ))}
+            </div>
           </div>
         </div>
       </motion.div>
