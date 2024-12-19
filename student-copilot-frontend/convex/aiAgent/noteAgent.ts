@@ -59,40 +59,7 @@ export async function fetchImageLink(query: string): Promise<string> {
 }
 
 
-/*
-// Function to generate an image search query based on note context and retrieve an image link
-async function generateImageSearchQuery(_state: typeof InputAnnotation.State): Promise<{messages:AIMessage}> {
-  const prompt = `
-    Create a succinct search query, limited to 4-6 words, that captures the core theme of the following lecture content:
-    ${_state.chunk}
-    `;
-  const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18" });
-  const result = await llm.invoke(prompt);
-  return {messages:result};
-}
 
-export function getParagraphLines(text: string): string[] {
-  return text.split('\n').filter(line => line.trim().length > 0);
-}
-
-
-// Function to generate structured lecture notes
-export async function generateTitle(_state: typeof InputAnnotation.State): Promise<{messages:AIMessage}> {
-    
-  
-    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18" });
-  
-    const chain = titlePrompt.pipe(llm);
-    
-    const chunk = _state.chunk;
-
-    const result = await chain.invoke({
-      chunk
-   })
-    return {messages:result};
-
-  }
-*/
 
 // Function to generate structured lecture notes
 export async function generateParagraph(_state: typeof InputAnnotation.State): Promise<typeof OutputAnnotation.State> {
@@ -117,37 +84,7 @@ export async function generateParagraph(_state: typeof InputAnnotation.State): P
     return {note:string_result };
   }
 
-  /*
-  export const decideIfImageNeeded = async (state: typeof InputAnnotation.State) => {
-  
-    // Invoke the model
-    const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18"});
 
-    const chain = imageGenerationPrompt.pipe(llm);
-
-    const {  chunk , ImgArr } = state;
-    
-    try {
-      // Invoke the model
-      const categorizationResponse = await chain.invoke({ chunk, ImgArr });
-      
-      // Validate response using Zod
-      const schema = z.object({
-        requiresTitle: z.enum(["Yes", "No"]),
-      });
-  
-      const validatedResponse = schema.parse({
-        requiresTitle: categorizationResponse.content,
-      });
-      
-      // Return parsed result
-      return { messages: validatedResponse.requiresTitle };
-    } catch (error) {
-      console.error("Error in decideIfImageNeeded:", error);
-      throw new Error("Failed to determine if a title is needed.");
-    }
-  };
-  */
 
 
   export async function planChunk(
