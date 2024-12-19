@@ -37,7 +37,7 @@ Course: {course}
 Content: {contentChunk}
 Previous Flashcards: {allFlashCardFronts}
 
-Generate an ARRAY of flashcard objects, each with "front" and "back" properties, following the progression outlined in the plan.
+Generate an ARRAY of flashcard objects following the progression outlined in the plan.
 
 Each response must contain at least 5 flashcards. Return content as plain text only, no markdown formatting.`,
   ),

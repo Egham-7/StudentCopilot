@@ -19,6 +19,7 @@ import type * as aiAgent_flashCardAgent from "../aiAgent/flashCardAgent.js";
 import type * as aiAgent_noteAgent from "../aiAgent/noteAgent.js";
 import type * as aiAgent_prompts_flashCardAgent from "../aiAgent/prompts/flashCardAgent.js";
 import type * as aiAgent_types_flashCardAgent from "../aiAgent/types/flashCardAgent.js";
+import type * as aiAgent_utils from "../aiAgent/utils.js";
 import type * as aiChats from "../aiChats.js";
 import type * as flashCardActions from "../flashCardActions.js";
 import type * as flashcards from "../flashcards.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   "aiAgent/noteAgent": typeof aiAgent_noteAgent;
   "aiAgent/prompts/flashCardAgent": typeof aiAgent_prompts_flashCardAgent;
   "aiAgent/types/flashCardAgent": typeof aiAgent_types_flashCardAgent;
+  "aiAgent/utils": typeof aiAgent_utils;
   aiChats: typeof aiChats;
   flashCardActions: typeof flashCardActions;
   flashcards: typeof flashcards;
