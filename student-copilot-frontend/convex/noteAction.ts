@@ -277,7 +277,7 @@ export const getNoteById = action({
 
 export const getNoteContents = internalAction({
   args: { noteId: v.id("notes"), userId: v.string() },
-  handler: async (ctx, args): Promise<string> => {
+  handler: async (ctx, args): Promise<string[]> => {
     // Get the note
     const note = await ctx.runQuery(internal.notes.getNote, args);
 
@@ -292,7 +292,6 @@ export const getNoteContents = internalAction({
       }),
     );
 
-    // Join chunks with double newline to create proper markdown spacing
-    return contents.join("\n\n").trim();
+    return contents;
   },
 });
