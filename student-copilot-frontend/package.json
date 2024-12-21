@@ -13,6 +13,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@blocknote/core": "^0.21.0",
+    "@blocknote/mantine": "^0.21.0",
+    "@blocknote/react": "^0.21.0",
     "@clerk/backend": "^1.21.2",
     "@clerk/clerk-react": "^5.20.2",
     "@convex-dev/action-retrier": "^0.1.4",
