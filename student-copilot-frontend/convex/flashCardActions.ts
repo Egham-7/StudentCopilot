@@ -1,14 +1,18 @@
 "use node";
 import { v } from "convex/values";
-import { internalAction } from "./_generated/server";
+import { internalAction, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { AIMessage } from "@langchain/core/messages";
 import { ChatOpenAI } from "@langchain/openai";
 import { graph } from "./aiAgent/flashCardAgent";
 import { MemorySaver } from "@langchain/langgraph";
-import { flashCardPlanGenerationPrompt } from "./aiAgent/prompts/flashCardAgent";
+import {
+  flashCardPlanGenerationPrompt,
+  imageQueryPrompt,
+} from "./aiAgent/prompts/flashCardAgent";
 import { v4 as uuidv4 } from "uuid";
 import { Doc } from "./_generated/dataModel";
+import { fetchImageLink } from "./aiAgent/utils";
 
 type FlashCard = Omit<Doc<"flashcards">, "_id" | "_creationTime">;
 
@@ -279,5 +283,28 @@ export const getContent = internalAction({
 
     const flattenedLectureTexts = lectureTexts.flat();
     return [...flattenedLectureTexts, ...noteTexts];
+  },
+});
+
+export const generateFlashcardImage = action({
+  args: {
+    cardId: v.id("flashcards"),
+    front: v.string(),
+  },
+
+  handler: async (_ctx, args) => {
+    const model = new ChatOpenAI({
+      model: "gpt-4o-mini",
+    });
+
+    const chain = imageQueryPrompt.pipe(model);
+
+    const query = await chain.invoke({
+      content: args.front,
+    });
+
+    const imageLink = await fetchImageLink(query.content.toString());
+
+    return imageLink;
   },
 });

@@ -74,3 +74,26 @@ export const flashCardPlanGenerationPrompt = ChatPromptTemplate.fromMessages([
     - For analytical learners: Include logical frameworks and patterns`,
   ),
 ]);
+
+export const imageQueryPrompt = ChatPromptTemplate.fromMessages([
+  SystemMessagePromptTemplate.fromTemplate(
+    `You are an expert at generating precise, concise image search queries that capture the essence of educational content.
+
+    Guidelines for creating image search queries:
+    - Keep the query short and specific
+    - Focus on the most visually representative aspects
+    - Aim for clarity and directness
+    - Avoid overly complex or abstract language
+    - Prioritize visual representation of the core concept`,
+  ),
+  HumanMessagePromptTemplate.fromTemplate(
+    `Generate a focused image search query for the following educational content:
+
+    Content: {content}
+
+    Query should be:
+    - Concise (5-7 words)
+    - Visually descriptive
+    - Directly related to the core concept`,
+  ),
+]);
