@@ -24,7 +24,7 @@ export async function fetchImageLink(query: string): Promise<string> {
       }
     }
     throw new Error("Image link retrieval failed");
-  }
+  } 
 }
 
 export const imageSearchTool = tool(

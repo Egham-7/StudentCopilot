@@ -54,6 +54,7 @@
     "lodash-es": "^4.17.21",
     "lucide-react": "^0.468.0",
     "openai": "^4.76.3",
+    "pdf-img-convert": "^2.0.0",
     "pdfjs-dist": "^4.9.155",
     "react": "^19.0.0",
     "react-arborist": "^3.4.0",
