@@ -53,7 +53,7 @@ export async function generateNote(
     plan,
     prev_note,
   });
-
+  console.log(result);
   return {
     note: result.content.toString(),
   };
