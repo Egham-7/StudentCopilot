@@ -1,20 +1,13 @@
 import LoadingPage from "@/components/custom/loading";
-import { Id } from "convex/_generated/dataModel";
+import { Doc, Id } from "convex/_generated/dataModel";
 import { useAction } from "convex/react";
 import "katex/dist/katex.min.css";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import Editor from "@/components/note/editor";
-import ReactMarkdown from "react-markdown";
 
-interface Note {
-  _id: Id<"notes">;
-  moduleId: Id<"modules">;
-  lectureIds: Id<"lectures">[];
-  textChunks: Id<"_storage">[];
-  content: string;
-}
+type Note = Doc<"notes"> & { content: string };
 
 export default function NotePage() {
   const getNoteById = useAction(api.noteAction.getNoteById); // gets the note id from this api
@@ -50,23 +43,5 @@ export default function NotePage() {
     return <div>Note not found</div>;
   }
 
-  return (
-    <main className="flex-1 overflow-hidden flex flex-col">
-      <header className="flex items-center justify-between p-4 border-b"></header>
-
-      {/* Markdown Display */}
-      <div className="p-4 prose prose-invert max-w-none">
-        <ReactMarkdown>{currentNote.content}</ReactMarkdown>
-      </div>
-
-      <div className="p-4 flex-grow overflow-auto h-screen">
-        <Editor
-          content={currentNote.content}
-          onChange={(newContent) =>
-            setCurrentNote({ ...currentNote, content: newContent })
-          }
-        />
-      </div>
-    </main>
-  );
+  return <Editor noteContent={currentNote.content} />;
 }
