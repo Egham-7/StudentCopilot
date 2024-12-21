@@ -94,10 +94,32 @@ export const processChunkWithGraph = internalAction({
     prev_note: v.string(),
   },
   handler: async (_ctx, args) => {
-    const checkpointer = new MemorySaver();
-    const compiledGraph = noteGraph.compile({ checkpointer });
-    const processingResult = await compiledGraph.invoke(args);
-    return processingResult;
+    try {
+      const checkpointer = new MemorySaver();
+      const compiledGraph = noteGraph.compile({ checkpointer });
+
+      // Add more detailed logging
+      console.log("Processing chunk with args:", JSON.stringify(args, null, 2));
+
+      const processingResult = await compiledGraph.invoke({
+        chunk: args.chunk,
+        noteTakingStyle: args.noteTakingStyle,
+        learningStyle: args.learningStyle,
+        levelOfStudy: args.levelOfStudy,
+        course: args.course,
+        prev_note: args.prev_note,
+      });
+
+      // Validate the processing result
+      if (!processingResult || !processingResult.note) {
+        throw new Error("No note generated from chunk processing");
+      }
+
+      return processingResult;
+    } catch (error) {
+      console.error("Error in processChunkWithGraph:", error);
+      throw error;
+    }
   },
 });
 
