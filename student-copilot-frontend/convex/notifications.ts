@@ -65,7 +65,7 @@ export const deleteNotification = mutation({
 export const getUserNotifications = query({
   args: {
     limit: v.optional(v.number()),
-    readStatus: v.optional(v.boolean()), // Add this argument
+    readStatus: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -99,16 +99,24 @@ export const getGlobalNotifications = query({
       .filter((q) => q.eq(q.field("_creationTime"), null))
       .order("asc")
       .take(args.limit ?? 50);
-
     return notifications;
   },
 });
 
 export const markAsRead = mutation({
   args: { notificationIds: v.array(v.id("notifications")) },
+
   handler: async (ctx, args) => {
-    for (const notificationId of args.notificationIds) {
-      await ctx.db.patch(notificationId, { isRead: true });
+    const batchSize = 3;
+    const notifications = args.notificationIds;
+
+    for (let i = 0; i < notifications.length; i += batchSize) {
+      const batch = notifications.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map((notificationId) =>
+          ctx.db.patch(notificationId, { isRead: true }),
+        ),
+      );
     }
   },
 });
