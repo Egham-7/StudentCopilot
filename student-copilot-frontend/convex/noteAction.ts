@@ -148,7 +148,7 @@ export const generateNotes = internalAction({
           },
         );
 
-        prevNote = prevNote + processingResult.note;
+        prevNote = processingResult.note;
 
         console.log("Curr Note: ", prevNote);
 
