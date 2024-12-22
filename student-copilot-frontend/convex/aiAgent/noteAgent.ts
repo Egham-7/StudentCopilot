@@ -9,7 +9,7 @@ import {
 import { ChatOpenAI } from "@langchain/openai";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { imageSearchTool } from "./utils";
-import {  paragraphPrompt, planPrompt } from "./prompts/noteAgent";
+import { paragraphPrompt, planPrompt } from "./prompts/noteAgent";
 import { AIMessage } from "@langchain/core/messages";
 
 const inputAnnotation = Annotation.Root({
@@ -22,8 +22,6 @@ const inputAnnotation = Annotation.Root({
   levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
   course: Annotation<string>,
   note: Annotation<string>,
-  prev_note: Annotation<string>,
-  note: Annotation<string>
 });
 
 const outputAnnotation = Annotation.Root({
@@ -36,12 +34,9 @@ const toolNode = new ToolNode(tools);
 export async function generateNote(
   state: typeof inputAnnotation.State,
 ): Promise<typeof outputAnnotation.State> {
-  const {
-    chunk,
-    prev_note,
-  } = state;
-  
-  const plan = state.messages[state.messages.length-1];
+  const { chunk } = state;
+
+  const plan = state.messages[state.messages.length - 1];
 
   const model = new ChatOpenAI({
     model: "gpt-4o-mini-2024-07-18",
@@ -52,7 +47,6 @@ export async function generateNote(
   const result = await chain.invoke({
     chunk,
     plan,
-    prev_note,
   });
   console.log(result);
   return {
@@ -61,10 +55,13 @@ export async function generateNote(
 }
 
 export async function planChunk(
-  _state: typeof inputAnnotation.State
+  _state: typeof inputAnnotation.State,
 ): Promise<{ messages: AIMessage }> {
   // Initialize the ChatOpenAI model with specific parameters
-  const llm = new ChatOpenAI({ model: "gpt-4o-mini-2024-07-18", temperature: 0.3 });
+  const llm = new ChatOpenAI({
+    model: "gpt-4o-mini-2024-07-18",
+    temperature: 0.3,
+  });
 
   // Create a pipeline for the prompt and LLM
   const chain = planPrompt.pipe(llm);
@@ -74,7 +71,7 @@ export async function planChunk(
     chunk1: _state.chunk,
     noteTakingStyle1: _state.noteTakingStyle,
     learningStyle1: _state.learningStyle,
-    levelOfStudy1:_state.levelOfStudy,
+    levelOfStudy1: _state.levelOfStudy,
     course1: _state.course,
   });
 
@@ -125,11 +122,11 @@ export const noteGraph = new StateGraph({
   input: inputAnnotation,
   output: outputAnnotation,
 })
-  .addNode("generate_plan",planChunk)
+  .addNode("generate_plan", planChunk)
   .addNode("generate_note", generateNote)
   .addNode("enhance_images", enhanceWithImages)
   .addNode("image_search", toolNode)
   .addEdge("__start__", "generate_plan")
-  .addEdge("generate_plan","generate_note")
+  .addEdge("generate_plan", "generate_note")
   .addConditionalEdges("generate_note", shouldContinue)
   .addEdge("enhance_images", END);
