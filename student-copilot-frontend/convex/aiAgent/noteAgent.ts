@@ -20,7 +20,6 @@ const inputAnnotation = Annotation.Root({
   >,
   levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
   course: Annotation<string>,
-  prev_note: Annotation<string>,
   note: Annotation<string>,
 });
 
@@ -34,14 +33,7 @@ const toolNode = new ToolNode(tools);
 export async function generateNote(
   state: typeof inputAnnotation.State,
 ): Promise<typeof outputAnnotation.State> {
-  const {
-    chunk,
-    noteTakingStyle,
-    learningStyle,
-    levelOfStudy,
-    course,
-    prev_note,
-  } = state;
+  const { chunk, noteTakingStyle, learningStyle, levelOfStudy, course } = state;
 
   const model = new ChatOpenAI({
     model: "gpt-4o-mini",
@@ -55,7 +47,6 @@ export async function generateNote(
     learningStyle,
     levelOfStudy,
     course,
-    prev_note,
   });
 
   return {
@@ -85,7 +76,9 @@ export async function enhanceWithImages(state: typeof inputAnnotation.State) {
       const imageUrl = await imageSearchTool.invoke({
         query: imageDecision.tool_calls[0].args.query,
       });
-      enhancedNote += `\n#${section}\n![](${imageUrl})`;
+      if (imageUrl) {
+        enhancedNote += `\n#${section}\n![](${imageUrl})`;
+      }
     } else {
       enhancedNote += "\n#" + section;
     }
