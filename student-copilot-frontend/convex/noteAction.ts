@@ -11,6 +11,10 @@ import { MemorySaver } from "@langchain/langgraph";
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
 
+const checkpointer = new MemorySaver();
+const compiledGraph = noteGraph.compile({ checkpointer });
+const executionConfig = { configurable: { thread_id: uuidv4() } };
+
 export const fetchAndProcessContent = internalAction({
   args: {
     userId: v.string(),
@@ -92,15 +96,9 @@ export const processChunkWithGraph = internalAction({
       v.literal("PhD"),
     ),
     course: v.string(),
-    prev_note: v.string(),
   },
   handler: async (_ctx, args) => {
     try {
-      const checkpointer = new MemorySaver();
-      const compiledGraph = noteGraph.compile({ checkpointer });
-
-      const executionConfig = { configurable: { thread_id: uuidv4() } };
-
       // Add more detailed logging
       console.log("Processing chunk with args:", JSON.stringify(args, null, 2));
 
@@ -111,7 +109,6 @@ export const processChunkWithGraph = internalAction({
           learningStyle: args.learningStyle,
           levelOfStudy: args.levelOfStudy,
           course: args.course,
-          prev_note: args.prev_note,
         },
         executionConfig,
       );
@@ -162,8 +159,6 @@ export const generateNotes = internalAction({
       flashCardSetIds,
     } = args;
 
-    let prevNote = "";
-
     const chunkProcessingPromises = contentChunks.map(async (chunk) => {
       return exponentialBackoff(async () => {
         const processingResult = await ctx.runAction(
@@ -174,11 +169,8 @@ export const generateNotes = internalAction({
             learningStyle,
             levelOfStudy,
             course,
-            prev_note: prevNote,
           },
         );
-
-        prevNote = prevNote + processingResult.note;
 
         const storageId = await ctx.storage.store(
           new Blob([processingResult.note.toString()], { type: "text/plain" }),
@@ -266,7 +258,7 @@ export const getNoteById = action({
     );
 
     // Combine all text chunks
-    const fullContent = textContent.join("\n\n");
+    const fullContent = textContent.join("\n\n\n\n");
 
     return {
       ...note,
