@@ -4,37 +4,27 @@ import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
 import { useEffect } from "react";
 
-const sampleMarkdown = `# Welcome to My Notes
+interface EditorProps {
+  noteContent: string;
+}
 
-## Key Points
-- First important point
-- Second key insight
-- Third major takeaway
-
-## Code Example
-\`\`\`javascript
-console.log("Hello World!");
-\`\`\`
-
-> Important quote or reminder here
-`;
-
-export default function Editor() {
+export default function Editor({ noteContent }: EditorProps) {
+  // Creates a new editor instance.
   const editor = useCreateBlockNote();
 
+  // For initialization; on mount, convert the initial Markdown to blocks and replace the default editor's content
   useEffect(() => {
-    async function loadSampleMarkdown() {
-      const blocks = await editor.tryParseMarkdownToBlocks(sampleMarkdown);
-      // replace current blocks with the converted markdown blocks - editor.replaceBlocks(blocksToRemove, blocksToInsert)
-      editor.replaceBlocks(editor.document, blocks); // editor.document - everything in current document
+    async function loadInitialMarkdown() {
+      console.log("Note Content: ", noteContent);
+      const blocks = await editor.tryParseMarkdownToBlocks(noteContent);
+      editor.replaceBlocks(editor.document, blocks);
     }
-    loadSampleMarkdown();
-  }, [editor]);
+    loadInitialMarkdown();
+  }, [editor, noteContent]);
 
   return (
     <div className="p-4">
-      <BlockNoteView editor={editor} />{" "}
-      {/*BlockNoteView is a (react?) component - it has many other props - check documentation.*/}
+      <BlockNoteView editor={editor} />
     </div>
   );
 }

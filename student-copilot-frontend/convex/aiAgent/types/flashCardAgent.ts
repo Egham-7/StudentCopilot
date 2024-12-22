@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 export const flashCardSetSchema = z.object({
@@ -9,32 +8,26 @@ export const flashCardSetSchema = z.object({
   contentIds: z.array(z.string()),
   lastStudied: z.string().optional(),
   totalCards: z.number().min(0),
-  masteredCards: z.number().min(0)
+  masteredCards: z.number().min(0),
 });
 
-
-
-
-
 export const flashcardSchema = z.object({
-  flashCardSetId: z.string(),
   front: z.string(),
   back: z.string(),
   difficulty: z.enum(["easy", "medium", "hard"]),
   status: z.enum(["new", "learning", "review", "mastered"]),
-  nextReviewDate: z.string().optional(),
-  lastReviewDate: z.string().optional(),
-  reviewCount: z.number().min(0),
-  correctCount: z.number().min(0),
-  incorrectCount: z.number().min(0),
   tags: z.array(z.string()).optional(),
-  sourceContentId: z.string().optional()
+  image: z.string().optional(),
 });
 
-
 export const flashcardArraySchema = z.object({
-  flashCards: z.array(flashcardSchema)
+  flashCards: z.array(flashcardSchema),
 });
 
 export type FlashCard = z.infer<typeof flashcardSchema>;
 export type FlashCardArray = z.infer<typeof flashcardArraySchema>;
+
+export const imageDecisionSchema = z.object({
+  needsImage: z.boolean(),
+  imageQuery: z.string().optional(),
+});

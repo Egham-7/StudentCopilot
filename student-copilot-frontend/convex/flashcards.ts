@@ -172,10 +172,22 @@ export const addFlashCardInternal = internalMutation({
   args: {
     flashCardSetId: v.id("flashCardSets"),
     userId: v.string(),
+    image: v.optional(v.union(v.string(), v.id("_storage"))),
     front: v.string(),
+    status: v.union(
+      v.literal("new"),
+      v.literal("learning"),
+      v.literal("review"),
+      v.literal("mastered"),
+    ),
     back: v.string(),
     tags: v.optional(v.array(v.string())),
     sourceContentId: v.optional(v.union(v.id("lectures"), v.id("notes"))),
+    difficulty: v.union(
+      v.literal("easy"),
+      v.literal("medium"),
+      v.literal("hard"),
+    ),
   },
 
   handler: async (ctx, args) => {
@@ -183,13 +195,14 @@ export const addFlashCardInternal = internalMutation({
       flashCardSetId: args.flashCardSetId,
       front: args.front,
       back: args.back,
-      difficulty: "medium",
-      status: "new",
+      difficulty: args.difficulty,
+      status: args.status,
       reviewCount: 0,
       correctCount: 0,
       incorrectCount: 0,
       tags: args.tags,
       sourceContentId: args.sourceContentId,
+      image: args.image,
     });
 
     // Update total cards count
@@ -703,5 +716,110 @@ export const getFlashcardContent = internalQuery({
     );
 
     return contentChunks;
+  },
+});
+
+export const updateFlashCard = mutation({
+  args: {
+    cardId: v.id("flashcards"),
+    front: v.string(),
+    back: v.string(),
+    tags: v.optional(v.array(v.string())),
+    image: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Must be authenticated to use this function.");
+    }
+
+    const card = await ctx.db.get(args.cardId);
+    if (!card) {
+      throw new Error("Card not found");
+    }
+
+    const flashCardSet = await ctx.db.get(card.flashCardSetId);
+    if (!flashCardSet) {
+      throw new Error("Flashcard set not found");
+    }
+
+    const moduleUser = await ctx.db.get(flashCardSet.moduleId);
+    if (!moduleUser || moduleUser.userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
+    await ctx.db.patch(args.cardId, {
+      front: args.front,
+      back: args.back,
+      tags: args.tags,
+      image: args.image,
+    });
+
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId: moduleUser.userId,
+      message: `Flashcard "${args.front}" has been updated`,
+      type: "flashcard_updated",
+      relatedId: args.cardId,
+    });
+
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId: moduleUser.userId,
+      type: "Flashcard Updated",
+      flashCardSetId: card.flashCardSetId,
+    });
+
+    return args.cardId;
+  },
+});
+
+export const deleteFlashCard = mutation({
+  args: {
+    cardId: v.id("flashcards"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Must be authenticated to use this function.");
+    }
+
+    const card = await ctx.db.get(args.cardId);
+    if (!card) {
+      throw new Error("Card not found");
+    }
+
+    const flashCardSet = await ctx.db.get(card.flashCardSetId);
+    if (!flashCardSet) {
+      throw new Error("Flashcard set not found");
+    }
+
+    const moduleUser = await ctx.db.get(flashCardSet.moduleId);
+    if (!moduleUser || moduleUser.userId !== identity.subject) {
+      throw new Error("Forbidden");
+    }
+
+    await ctx.db.patch(card.flashCardSetId, {
+      totalCards: Math.max(0, (flashCardSet.totalCards || 0) - 1),
+      masteredCards:
+        card.status === "mastered"
+          ? Math.max(0, (flashCardSet.masteredCards || 0) - 1)
+          : flashCardSet.masteredCards,
+    });
+
+    await ctx.db.delete(args.cardId);
+
+    await ctx.scheduler.runAfter(0, internal.notifications.store, {
+      userId: moduleUser.userId,
+      message: `Flashcard "${card.front}" has been deleted`,
+      type: "flashcard_deleted",
+      relatedId: args.cardId,
+    });
+
+    await ctx.scheduler.runAfter(0, internal.activities.store, {
+      userId: moduleUser.userId,
+      type: "Flashcard Deleted",
+      flashCardSetId: card.flashCardSetId,
+    });
+
+    return { success: true };
   },
 });

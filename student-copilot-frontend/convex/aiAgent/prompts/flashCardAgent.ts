@@ -37,7 +37,7 @@ Course: {course}
 Content: {contentChunk}
 Previous Flashcards: {allFlashCardFronts}
 
-Generate an ARRAY of flashcard objects, each with "front" and "back" properties, following the progression outlined in the plan.
+Generate an ARRAY of flashcard objects following the progression outlined in the plan.
 
 Each response must contain at least 5 flashcards. Return content as plain text only, no markdown formatting.`,
   ),
@@ -72,5 +72,28 @@ export const flashCardPlanGenerationPrompt = ChatPromptTemplate.fromMessages([
     - For auditory learners: Add mnemonics and verbal patterns
     - For kinesthetic learners: Include hands-on exercises
     - For analytical learners: Include logical frameworks and patterns`,
+  ),
+]);
+
+export const imageQueryPrompt = ChatPromptTemplate.fromMessages([
+  SystemMessagePromptTemplate.fromTemplate(
+    `You are an expert at generating precise, concise image search queries that capture the essence of educational content.
+
+    Guidelines for creating image search queries:
+    - Keep the query short and specific
+    - Focus on the most visually representative aspects
+    - Aim for clarity and directness
+    - Avoid overly complex or abstract language
+    - Prioritize visual representation of the core concept`,
+  ),
+  HumanMessagePromptTemplate.fromTemplate(
+    `Generate a focused image search query for the following educational content:
+
+    Content: {content}
+
+    Query should be:
+    - Concise (5-7 words)
+    - Visually descriptive
+    - Directly related to the core concept`,
   ),
 ]);
