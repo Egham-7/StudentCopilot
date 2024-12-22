@@ -17,11 +17,6 @@ export default function NotePage() {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  // New state for chat
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatWidth, setChatWidth] = useState(500);
-  const [isDragging, setIsDragging] = useState(false);
-
   // Function to fetch ai generated notes
   useEffect(() => {
     const fetchNote = async () => {
@@ -37,36 +32,8 @@ export default function NotePage() {
         }
       }
     };
-    // call function fetchNote()
     fetchNote();
-  }, [noteId, getNoteById]); // Handle side effect - Dependency array to break down, clean up and rerun fetchNote()
-
-  // New resize handlers
-  const handleMouseDown = () => {
-    setIsDragging(true);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging) {
-      const newWidth = window.innerWidth - e.clientX;
-      setChatWidth(newWidth);
-    }
-  };
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    }
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDragging]);
+  }, [noteId, getNoteById]);
 
   if (isLoading) {
     return <LoadingPage />;
