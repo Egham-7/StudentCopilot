@@ -725,6 +725,7 @@ export const updateFlashCard = mutation({
     front: v.string(),
     back: v.string(),
     tags: v.optional(v.array(v.string())),
+    image: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -751,6 +752,7 @@ export const updateFlashCard = mutation({
       front: args.front,
       back: args.back,
       tags: args.tags,
+      image: args.image,
     });
 
     await ctx.scheduler.runAfter(0, internal.notifications.store, {

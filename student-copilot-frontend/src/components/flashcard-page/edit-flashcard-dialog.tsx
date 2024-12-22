@@ -27,17 +27,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Doc } from "convex/_generated/dataModel";
 import { toast } from "@/components/ui/use-toast";
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, RefreshCw } from "lucide-react";
 
 const formSchema = z.object({
   front: z.string().min(1, "Front content is required"),
   back: z.string().min(1, "Back content is required"),
   tags: z.string().optional(),
+  imageUrl: z.string().url("Must be a valid URL").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -50,12 +51,18 @@ function EditFlashcardForm({
   onSuccess: () => void;
 }) {
   const updateFlashCard = useMutation(api.flashcards.updateFlashCard);
+  const regenerateImage = useAction(
+    api.flashCardActions.generateFlashcardImage,
+  );
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       front: card.front,
       back: card.back,
       tags: card.tags?.join(", "),
+      imageUrl: card.image || "",
     },
   });
 
@@ -68,12 +75,14 @@ function EditFlashcardForm({
         tags: values.tags
           ? values.tags.split(",").map((tag) => tag.trim())
           : undefined,
+        image: values.imageUrl || undefined,
       });
 
       toast({
         title: "Success",
         description: "Flashcard updated successfully",
       });
+
       onSuccess();
     } catch (error) {
       toast({
@@ -82,6 +91,34 @@ function EditFlashcardForm({
         description:
           error instanceof Error ? error.message : "An unknown error occurred",
       });
+    }
+  }
+
+  async function handleRegenerateImage() {
+    try {
+      setIsRegenerating(true);
+      const newImageUrl = await regenerateImage({
+        cardId: card._id,
+        front: form.getValues("front"),
+      });
+
+      form.setValue("imageUrl", newImageUrl);
+
+      toast({
+        title: "Image Regenerated",
+        description: "A new AI-generated image has been created",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to regenerate image. Please try again later.",
+      });
+    } finally {
+      setIsRegenerating(false);
     }
   }
 
@@ -134,6 +171,51 @@ function EditFlashcardForm({
                 <Input placeholder="tag1, tag2, tag3" {...field} />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="imageUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-2">
+                Image URL
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={handleRegenerateImage}
+                  disabled={isRegenerating}
+                >
+                  {isRegenerating ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </Button>
+              </FormLabel>
+              <FormControl>
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Paste image URL or regenerate"
+                    {...field}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+
+              {field.value && (
+                <div className="mt-2 flex justify-center">
+                  <img
+                    src={field.value}
+                    alt="Flashcard Image"
+                    className="rounded-lg object-cover"
+                  />
+                </div>
+              )}
             </FormItem>
           )}
         />

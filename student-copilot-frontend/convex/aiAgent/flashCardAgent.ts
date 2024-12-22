@@ -10,9 +10,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { FlashCardArray, flashcardArraySchema } from "./types/flashCardAgent";
 import { flashCardGeneratorPrompt } from "./prompts/flashCardAgent";
 import { Doc } from "convex/_generated/dataModel";
-import { tool } from "@langchain/core/tools";
-import { z } from "zod";
-import axios from "axios";
+import { imageSearchTool } from "./utils";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 
 type InputAnnotationState = typeof inputAnnotation.State;
@@ -34,36 +32,7 @@ const outputAnnotation = Annotation.Root({
 
 type OutputAnnotationState = typeof outputAnnotation.State;
 
-// Define image fetching tool
-const imageFetchTool = tool(
-  async ({ query }) => {
-    const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-    const CX = process.env.CX;
-    const searchUrl = `https://www.googleapis.com/customsearch/v1?q=${query}&cx=${CX}&key=${GOOGLE_API_KEY}&searchType=image&num=1`;
-
-    try {
-      const response = await axios.get(searchUrl);
-      const imageLink = response?.data?.items?.[0]?.link;
-      if (imageLink) {
-        return imageLink;
-      }
-      throw new Error("No image found");
-    } catch (error) {
-      throw new Error(
-        error instanceof Error ? error.message : "Failed to fetch image link.",
-      );
-    }
-  },
-  {
-    name: "fetch_image",
-    description: "Fetches an image URL based on a search query",
-    schema: z.object({
-      query: z.string().describe("The search query to find an image"),
-    }),
-  },
-);
-
-const tools = [imageFetchTool];
+const tools = [imageSearchTool];
 const toolNode = new ToolNode(tools);
 
 export async function generateFlashCard(
@@ -114,32 +83,55 @@ export async function generateFlashCard(
 
 export async function decideImageNode(state: InputAnnotationState) {
   const { flashCardsObject } = state;
+
   const model = new ChatOpenAI({
     model: "gpt-4o-mini",
   }).bindTools(tools);
 
   const enhancedCards = await Promise.all(
     flashCardsObject.flashCards.map(async (card) => {
-      const imageDecision = await model.invoke(`
-        Analyze this flashcard and decide if it needs an image:
-        Front: ${card.front}
-        Back: ${card.back}
-        
-        If visual aid would help, use the fetch_image tool with a specific search query.
-        If no image is needed, respond with 'No image needed'.
-      `);
+      try {
+        const imageDecision = await model.invoke(`
+          Analyze this flashcard and decide if it needs an image:
 
-      if (imageDecision.tool_calls?.length) {
-        console.log("Need image.");
-        const imageUrl = await imageFetchTool.invoke({
-          query: imageDecision.tool_calls[0].args.query,
-        });
-        return {
-          ...card,
-          image: imageUrl,
-        };
+          Front: ${card.front}
+          Back: ${card.back}
+          
+          If visual aid would help, use the fetch_image tool with a specific search query.
+          If no image is needed, respond with 'No image needed'.
+        `);
+
+        if (imageDecision.tool_calls?.length) {
+          try {
+            const imageUrl = await imageSearchTool.invoke({
+              query: imageDecision.tool_calls[0].args.query,
+            });
+
+            return {
+              ...card,
+              image: imageUrl,
+            };
+          } catch (imageSearchError) {
+            console.error(
+              "Image search failed for card:",
+              card.front,
+              imageSearchError,
+            );
+            // If image search fails, return the original card without an image
+            return card;
+          }
+        }
+
+        return card;
+      } catch (modelInvocationError) {
+        console.error(
+          "Model invocation failed for card:",
+          card.front,
+          modelInvocationError,
+        );
+        // If model invocation fails for a specific card, return the original card
+        return card;
       }
-      return card;
     }),
   );
 
