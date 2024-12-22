@@ -9,7 +9,7 @@ import {
 import { ChatOpenAI } from "@langchain/openai";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { imageSearchTool } from "./utils";
-import { paragraphPrompt, planPrompt } from "./prompts/noteAgent";
+import { notePrompt, planPrompt } from "./prompts/noteAgent";
 import { AIMessage } from "@langchain/core/messages";
 
 const inputAnnotation = Annotation.Root({
@@ -42,13 +42,13 @@ export async function generateNote(
     model: "gpt-4o-mini-2024-07-18",
   });
 
-  const chain = paragraphPrompt.pipe(model);
+  const chain = notePrompt.pipe(model);
 
   const result = await chain.invoke({
     chunk,
     plan,
   });
-  console.log(result);
+  
   return {
     note: result.content.toString(),
   };
@@ -60,7 +60,6 @@ export async function planChunk(
   // Initialize the ChatOpenAI model with specific parameters
   const llm = new ChatOpenAI({
     model: "gpt-4o-mini-2024-07-18",
-    temperature: 0.3,
   });
 
   // Create a pipeline for the prompt and LLM

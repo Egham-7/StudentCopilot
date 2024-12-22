@@ -79,8 +79,6 @@ export const fetchAndProcessContent = internalAction({
   },
 });
 
-const checkpointer = new MemorySaver();
-const compiledGraph = noteGraph.compile({ checkpointer });
 
 export const processChunkWithGraph = internalAction({
   args: {

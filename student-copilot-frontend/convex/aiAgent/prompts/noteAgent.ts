@@ -41,7 +41,7 @@ Generate clean, structured notes that can be parsed by BlockNote.parseMarkdown()
 `),
   HumanMessagePromptTemplate.fromTemplate(`
 Content: {chunk}
-
+Plan: {plan}
 Generate BlockNote-compatible markdown notes.
 `),
 ]);
@@ -88,7 +88,6 @@ You are an expert note-taker specializing in creating concise, structured, and v
 ### Input:
 - **Content Chunk**: {chunk}
 - **Plan**: {plan}
-- **Previous Note**: {prev_note}
 
 ### Task:
 - Generate cohesive and structured notes in Markdown (.md) format based on the content chunk and plan.
