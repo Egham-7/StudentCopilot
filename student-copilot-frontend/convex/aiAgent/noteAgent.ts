@@ -20,7 +20,6 @@ const inputAnnotation = Annotation.Root({
   >,
   levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
   course: Annotation<string>,
-  prev_note: Annotation<string>,
   note: Annotation<string>,
 });
 
@@ -34,14 +33,7 @@ const toolNode = new ToolNode(tools);
 export async function generateNote(
   state: typeof inputAnnotation.State,
 ): Promise<typeof outputAnnotation.State> {
-  const {
-    chunk,
-    noteTakingStyle,
-    learningStyle,
-    levelOfStudy,
-    course,
-    prev_note,
-  } = state;
+  const { chunk, noteTakingStyle, learningStyle, levelOfStudy, course } = state;
 
   const model = new ChatOpenAI({
     model: "gpt-4o-mini",
@@ -55,7 +47,6 @@ export async function generateNote(
     learningStyle,
     levelOfStudy,
     course,
-    prev_note,
   });
 
   return {
@@ -65,46 +56,31 @@ export async function generateNote(
 
 export async function enhanceWithImages(state: typeof inputAnnotation.State) {
   const { note } = state;
-
   const model = new ChatOpenAI({
     model: "gpt-4o-mini",
   }).bindTools(tools);
 
   const sections = note.split("\n#");
-
   let enhancedNote = sections[0];
 
   for (const section of sections.slice(1)) {
-    try {
-      const imageDecision = await model.invoke(`
-        Analyze this markdown section and decide if it needs an image:
+    const imageDecision = await model.invoke(`
+      Analyze this markdown section and decide if it needs an image:
+      ${section}
+      
+      If visual aid would help, use the image_search tool with a specific search query.
+      If no image is needed, respond with 'No image needed'.
+    `);
 
-        ${section}
-        
-        If visual aid would help, use the image_search tool with a specific search query.
-
-        If no image is needed, respond with 'No image needed'.
-      `);
-
-      if (imageDecision.tool_calls?.length) {
-        try {
-          const imageUrl = await imageSearchTool.invoke({
-            query: imageDecision.tool_calls[0].args.query,
-          });
-
-          enhancedNote += `\n#${section}\n![](${imageUrl})`;
-        } catch (imageSearchError) {
-          console.error("Image search failed:", imageSearchError);
-          // If image search fails, just add the section without an image
-          enhancedNote += "\n#" + section;
-        }
-      } else {
-        enhancedNote += "\n#" + section;
+    if (imageDecision.tool_calls?.length) {
+      const imageUrl = await imageSearchTool.invoke({
+        query: imageDecision.tool_calls[0].args.query,
+      });
+      if (imageUrl) {
+        enhancedNote += `\n#${section}\n![](${imageUrl})`;
       }
-    } catch (modelInvocationError) {
-      console.error("Model invocation failed:", modelInvocationError);
-      // If model invocation fails, return the original note
-      return { note };
+    } else {
+      enhancedNote += "\n#" + section;
     }
   }
 
