@@ -1,55 +1,71 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
-import pdf2img from "pdf-img-convert";
+import * as pdfjsLib from 'pdfjs-dist';
 
 export const extractPdfImages = action({
   args: {
     lectureId: v.id("lectures"),
   },
   handler: async (ctx, args) => {
-    // Get lecture details
     const lecture = await ctx.runQuery(internal.lectures.getLecture, {
-      lectureId: args.lectureId, //lectureId
+      lectureId: args.lectureId,
     });
 
-    // Verify it's a PDF
+    //check if its pdf
     if (lecture.fileType !== "pdf") {   
       return { images: [], message: "File is not a PDF" };
     }
 
-    // Get PDF URL
+    //get pdfURL
     const pdfUrl = await ctx.storage.getUrl(lecture.contentUrl);
-
     if (!pdfUrl) {
-        return { images: [], message: "Could not get PDF URL" };
+      return { images: [], message: "Could not get PDF URL" };
+    }
+
+    const response = await fetch(pdfUrl);
+    const pdfData = await response.arrayBuffer();
+    
+    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    const imageIds = [];
+
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1.5 });
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const context = canvas.getContext('2d');
+      
+      if (!context) {
+        continue;
+      }
+
+      await page.render({
+        canvasContext: context,
+        viewport: viewport
+      }).promise;
+      
+      const blob = await new Promise<Blob>(resolve => {
+        canvas.toBlob(blob => {
+          resolve(blob as Blob);
+        }, 'image/png');
+      });
+      
+      const imageId = await ctx.storage.store(blob);
+      imageIds.push(imageId);
     }
     
-    // Now pdfUrl is guaranteed to be a string
-    const response = await fetch(pdfUrl);
-
-    const pdfBuffer = await response.arrayBuffer();
-    
-    // Convert PDF pages to images
-    const outputImages = await pdf2img.convert(pdfBuffer, {
-      width: 1024,
-      height: 1024,
-      base64: true
+    //to store images IDs
+    await ctx.runMutation(internal.pdfImages.storePdfImages, {
+      lectureId: args.lectureId,
+      imageIds: imageIds,
     });
-    
-    // Store images in Convex storage
-    const imageIds = await Promise.all(
-    outputImages.map(async (imageBase64) => {
-        const imageBlob = new Blob([imageBase64], { type: 'image/png' });
-        return await ctx.storage.store(imageBlob);
-    })
-    );
-
 
     return {
       images: imageIds,
       message: `Successfully extracted ${imageIds.length} images`
-
     };
   },
 });

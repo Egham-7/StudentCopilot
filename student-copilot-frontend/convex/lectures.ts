@@ -491,3 +491,20 @@ export const getLectureContent = internalAction({
     return chunks;
   },
 });
+
+
+//store PdfImg
+export const storePdfImages = internalMutation({
+  args: {
+    lectureId: v.id("lectures"),
+    imageIds: v.array(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("pdfImages", {
+      lectureId: args.lectureId,
+      imageIds: args.imageIds,
+      pageCount: args.imageIds.length,
+      createdAt: Date.now(),
+    });
+  },
+});

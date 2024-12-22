@@ -129,6 +129,7 @@ export const generateNotes = internalAction({
       course,
       levelOfStudy,
       lectureIds,
+
       flashCardSetIds,
     } = args;
 
@@ -163,7 +164,7 @@ export const generateNotes = internalAction({
         return { storageId, chunkEmbedding };
       });
     });
-
+  
     const processedChunks = await Promise.all(chunkProcessingPromises);
 
     const noteChunkIds: Id<"_storage">[] = [];
@@ -267,3 +268,15 @@ export const getNoteContents = internalAction({
     return contents;
   },
 });
+
+/*
+export const getPdfImages = query({
+  args: { lectureId: v.id("lectures") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("pdfImages")
+      .withIndex("by_lecture", q => q.eq("lectureId", args.lectureId))
+      .first();
+  },
+});
+*/

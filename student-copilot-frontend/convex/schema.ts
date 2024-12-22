@@ -206,4 +206,15 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_date", ["date"])
     .index("by_userId_and_date", ["userId", "date"]),
+
+  //Store PDF-IMG
+  pdfImages: defineTable({
+      lectureId: v.id("lectures"),
+      imageIds: v.array(v.id("_storage")),
+      pageCount: v.number(),
+      createdAt: v.number(),
+    })
+    .index("by_lecture", ["lectureId"])
 });
+
+ 
