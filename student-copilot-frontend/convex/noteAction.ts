@@ -74,6 +74,9 @@ export const fetchAndProcessContent = internalAction({
   },
 });
 
+const checkpointer = new MemorySaver();
+const compiledGraph = noteGraph.compile({ checkpointer });
+
 export const processChunkWithGraph = internalAction({
   args: {
     chunk: v.string(),
@@ -95,8 +98,7 @@ export const processChunkWithGraph = internalAction({
   },
   handler: async (_ctx, args) => {
     try {
-      const checkpointer = new MemorySaver();
-      const compiledGraph = noteGraph.compile({ checkpointer });
+      
 
       // Add more detailed logging
       console.log("Processing chunk with args:", JSON.stringify(args, null, 2));
@@ -170,7 +172,9 @@ export const generateNotes = internalAction({
           },
         );
 
-        prevNote = processingResult.note;
+        prevNote = prevNote + processingResult.note.toString();
+
+        console.log("Curr note:", prevNote);
 
         const storageId = await ctx.storage.store(
           new Blob([processingResult.note.toString()], { type: "text/plain" }),
