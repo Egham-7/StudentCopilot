@@ -90,7 +90,7 @@ export const imageSearchTool = tool(
       return imageUrl;
     } catch (error) {
       console.log("Error: ", error);
-      return "No image found";
+      return null;
     }
   },
   {
