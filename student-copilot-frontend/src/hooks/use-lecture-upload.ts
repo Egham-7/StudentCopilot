@@ -3,8 +3,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAction, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "convex/_generated/dataModel";
-import pdfToText from "react-pdftotext";
-import * as z from "zod";
+import { z } from "zod";
 import { useWebsiteUploaders } from "./use-website-uploaders";
 import { UploadProgressSetter } from "@/lib/lecture-upload-utils";
 import { createFormSchema } from "@/lib/ui_utils";
@@ -12,6 +11,7 @@ import { TEXT_SPLITTER_CONFIG } from "@/lib/lecture-upload-utils";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import useSegmentAudio from "./use-segment-audio";
 import useExtractAudio from "./use-extract-audio";
+import { pdfjs } from "@/lib/pdf-config";
 
 export const useLectureUpload = () => {
   const { toast } = useToast();
@@ -46,8 +46,53 @@ export const useLectureUpload = () => {
   };
 
   const parsePdf = async (file: File) => {
-    const text = await pdfToText(file);
-    return text;
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjs.getDocument({
+      data: arrayBuffer,
+      cMapUrl: "../node_modules/pdfjs-dist/cmaps/",
+      cMapPacked: true,
+      disableFontFace: true,
+    }).promise;
+
+    const images: { data: Uint8Array; pageNum: number }[] = [];
+    let fullText = "";
+
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+
+      // Extract text
+      const textContent = await page.getTextContent();
+      fullText +=
+        textContent.items
+          .map((item) => ("str" in item ? item.str : ""))
+          .join(" ") + "\n";
+
+      // Extract images using the more reliable render method
+      const viewport = page.getViewport({ scale: 1.0 });
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      await page.render({
+        canvasContext: context!,
+        viewport: viewport,
+      }).promise;
+
+      // Convert rendered page to image data
+      const imageData = context!.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+      images.push({
+        data: new Uint8Array(imageData.data.buffer),
+        pageNum,
+      });
+    }
+
+    return { text: fullText, images };
   };
 
   const processText = async (
@@ -93,6 +138,34 @@ export const useLectureUpload = () => {
     return { storageIds, normalizedEmbedding };
   };
 
+  const processImages = async (
+    images: { data: Uint8Array; pageNum: number }[],
+    setProgress: UploadProgressSetter,
+  ) => {
+    const results = await Promise.all(
+      images.map(async ({ data, pageNum }, index) => {
+        const imageBlob = new Blob([data], { type: "image/png" });
+        const imageFile = new File(
+          [imageBlob],
+          `image-${pageNum}-${index}.png`,
+          { type: "image/png" },
+        );
+        const storageId = await uploadFile(imageFile, "image/png");
+
+        setProgress(
+          Math.min(100, Math.floor(((index + 1) / images.length) * 100)),
+        );
+
+        return {
+          storageId,
+          pageNumber: pageNum,
+        };
+      }),
+    );
+
+    return results;
+  };
+
   const handlePdfUpload = async (
     file: File,
     values: z.infer<ReturnType<typeof createFormSchema>>,
@@ -100,23 +173,28 @@ export const useLectureUpload = () => {
     setUploadProgress: UploadProgressSetter,
   ): Promise<void> => {
     const storageId = await uploadFile(file, file.type);
-    const rawText = await parsePdf(file);
+    const { text, images } = await parsePdf(file);
 
     const { storageIds, normalizedEmbedding } = await processText(
-      rawText,
+      text,
       setUploadProgress,
     );
+
+    const processedImages = await processImages(images, setUploadProgress);
 
     await storeLecture({
       title: values.title,
       description: values.description,
       completed: false,
-      lectureTranscriptionEmbedding: normalizedEmbedding,
-      lectureTranscription: storageIds,
       contentStorageId: storageId,
       moduleId,
       fileType: "pdf",
       image: undefined,
+      lectureData: {
+        transcriptionChunks: storageIds,
+        embedding: normalizedEmbedding,
+        images: processedImages,
+      },
     });
   };
 
@@ -178,8 +256,10 @@ export const useLectureUpload = () => {
         title: values.title,
         description: values.description,
         completed: false,
-        lectureTranscriptionEmbedding: normalizedEmbedding,
-        lectureTranscription: storageIds,
+        lectureData: {
+          transcriptionChunks: storageIds,
+          embedding: normalizedEmbedding,
+        },
         contentStorageId: storageId,
         moduleId: moduleId,
         fileType: "audio",
@@ -249,8 +329,10 @@ export const useLectureUpload = () => {
         title: values.title,
         description: values.description,
         completed: false,
-        lectureTranscriptionEmbedding: normalizedEmbedding,
-        lectureTranscription: storageIds,
+        lectureData: {
+          embedding: normalizedEmbedding,
+          transcriptionChunks: storageIds,
+        },
         contentStorageId: videoId,
         moduleId: moduleId,
         fileType: "video",

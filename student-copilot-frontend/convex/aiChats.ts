@@ -118,13 +118,13 @@ export const answer = internalAction({
     const documents = await Promise.all(
       moduleLectures.map(async (lecture) => {
         if (
-          lecture.lectureTranscription &&
-          lecture.lectureTranscription.length > 0
+          lecture.lectureData.transcriptionChunks &&
+          lecture.lectureData.transcriptionChunks.length > 0
         ) {
           const transcription = await ctx.runAction(
             internal.lectures.fetchTranscription,
             {
-              transcriptionIds: lecture.lectureTranscription,
+              transcriptionIds: lecture.lectureData.transcriptionChunks,
             },
           );
 

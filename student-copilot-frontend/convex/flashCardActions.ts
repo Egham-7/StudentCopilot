@@ -247,7 +247,7 @@ export const getContent = internalAction({
               throw new Error("Lecture not found");
             }
             return await ctx.runAction(internal.lectures.fetchTranscription, {
-              transcriptionIds: lecture.lectureTranscription,
+              transcriptionIds: lecture.lectureData.transcriptionChunks,
             });
           }),
         )

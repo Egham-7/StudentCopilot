@@ -160,7 +160,7 @@ export const deleteModuleAndRelatedData = internalMutation({
       }
 
       // Delete lecture transcriptions from storage
-      for (const transcriptionId of lecture.lectureTranscription) {
+      for (const transcriptionId of lecture.lectureData.transcriptionChunks) {
         await ctx.storage.delete(transcriptionId);
       }
 
