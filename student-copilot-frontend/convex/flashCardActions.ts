@@ -125,7 +125,7 @@ export const generateFlashCards = internalAction({
           flashCardSetId: setId,
           front: card.front,
           back: card.back,
-          image: card.image,
+          image: card.image ?? null,
           difficulty: card.difficulty,
           status: card.status,
           reviewCount: 0,

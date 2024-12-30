@@ -172,7 +172,7 @@ export const addFlashCardInternal = internalMutation({
   args: {
     flashCardSetId: v.id("flashCardSets"),
     userId: v.string(),
-    image: v.optional(v.union(v.string(), v.id("_storage"))),
+    image: v.union(v.null(), v.string(), v.id("_storage")),
     front: v.string(),
     status: v.union(
       v.literal("new"),
@@ -287,6 +287,7 @@ export const addFlashCard = mutation({
       incorrectCount: 0,
       tags: args.tags,
       sourceContentId: args.sourceContentId,
+      image: null,
     });
 
     // Update total cards count
