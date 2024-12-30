@@ -178,7 +178,7 @@ export default defineSchema({
       v.literal("review"),
       v.literal("mastered"),
     ),
-    image: v.optional(v.union(v.id("_storage"), v.string())),
+    image: v.union(v.id("_storage"), v.string(), v.null()),
     nextReviewDate: v.optional(v.string()),
     lastReviewDate: v.optional(v.string()),
     reviewCount: v.number(),
