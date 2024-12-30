@@ -1,7 +1,7 @@
 import { CardContent, Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import { Id } from "convex/_generated/dataModel";
 import { z } from "zod";
+import { Doc } from "convex/_generated/dataModel";
 
 const ACCEPTED_FILE_TYPES = [
   "audio/mpeg",
@@ -27,29 +27,9 @@ export const renderTriggerCard = (title: string, description: string) => (
   </Card>
 );
 
-export type SearchResults = {
-  lectures: Id<"lectures">[];
-  notes: Id<"notes">[];
-};
-
-export type LecturesData = {
+export type LecturesData = Omit<Doc<"lectures">, "contentUrl" | "image"> & {
   contentUrl: string | null;
-  _id: Id<"lectures">;
-  _creationTime: number;
-  description?: string;
-  title: string;
-  userId: string;
-  moduleId: Id<"modules">;
-  completed: boolean;
-  lectureTranscription: Id<"_storage">[];
-  lectureTranscriptionEmbedding: number[];
-  fileType: "audio" | "video" | "pdf" | "website";
-  image: string | undefined | null;
-};
-
-export const isYoutubeUrl = (url: string) => {
-  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
-  return youtubeRegex.test(url);
+  image: string | null | undefined;
 };
 
 // Base schema for all lecture types

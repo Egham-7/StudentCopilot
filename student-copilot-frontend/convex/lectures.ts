@@ -76,7 +76,7 @@ export const getLecturesByModuleIdInternal = internalQuery({
       lectures.map(async (lecture) => {
         const contentUrl = await ctx.storage.getUrl(lecture.contentUrl);
 
-        const transcriptionIds = lecture.lectureTranscription;
+        const transcriptionIds = lecture.lectureData.transcriptionChunks;
 
         const lectureTranscription = await Promise.all(
           transcriptionIds.map((id) => ctx.storage.getUrl(id)),
@@ -279,8 +279,6 @@ export const searchLecturesByTranscription = action({
 export const store = mutation({
   args: {
     contentStorageId: v.id("_storage"),
-    lectureTranscription: v.array(v.id("_storage")),
-    lectureTranscriptionEmbedding: v.array(v.float64()),
     title: v.string(),
     description: v.optional(v.string()),
     moduleId: v.id("modules"),
@@ -292,6 +290,18 @@ export const store = mutation({
       v.literal("website"),
     ),
     image: v.optional(v.id("_storage")),
+    lectureData: v.object({
+      transcriptionChunks: v.array(v.id("_storage")),
+      embedding: v.array(v.float64()),
+      images: v.optional(
+        v.array(
+          v.object({
+            storageId: v.id("_storage"),
+            pageNumber: v.number(),
+          }),
+        ),
+      ),
+    }),
   },
 
   handler: async (ctx, args) => {
@@ -318,13 +328,12 @@ export const store = mutation({
       title: args.title,
       description: args.description,
       contentUrl: args.contentStorageId,
-      lectureTranscription: args.lectureTranscription,
-      lectureTranscriptionEmbedding: args.lectureTranscriptionEmbedding,
       moduleId: args.moduleId,
       completed: args.completed,
       userId: identity.subject,
       fileType: args.fileType,
       image: args.image,
+      lectureData: args.lectureData,
     });
 
     // Schedule notification
@@ -479,7 +488,7 @@ export const getLectureContent = internalAction({
     }
 
     const chunks: string[] = [];
-    for (const chunkId of lecture.lectureTranscription) {
+    for (const chunkId of lecture.lectureData.transcriptionChunks) {
       const url = await ctx.storage.getUrl(chunkId as Id<"_storage">);
       if (!url) continue;
 

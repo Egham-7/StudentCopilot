@@ -25,7 +25,9 @@ export const useWebsiteUploaders = () => {
   const getWebsiteText = useAction(api.websites.html.getWebsiteTranscription);
   const getEmbedding = useAction(api.ai.generateTextEmbeddingClient);
   const generateUploadUrl = useMutation(api.uploads.generateUploadUrl);
-  const getYoutubeVideoTranscription = useAction(api.websites.youtube.getYoutubeTranscript);
+  const getYoutubeVideoTranscription = useAction(
+    api.websites.youtube.getYoutubeTranscript,
+  );
 
   const uploaders = useMemo(() => {
     const uploadFile = async (file: File): Promise<Id<"_storage">> => {
@@ -63,7 +65,9 @@ export const useWebsiteUploaders = () => {
       const { storageId } = await uploadChunkResult.json();
       const chunkEmbedding = await getEmbedding({ text: chunkText });
 
-      setUploadProgress(Math.min(100, Math.floor(((index + 1) / totalChunks) * 100)));
+      setUploadProgress(
+        Math.min(100, Math.floor(((index + 1) / totalChunks) * 100)),
+      );
 
       return { storageId, embedding: chunkEmbedding };
     };
@@ -72,26 +76,38 @@ export const useWebsiteUploaders = () => {
       transcription: string,
       setUploadProgress: UploadProgressSetter,
     ) => {
-      const textSplitter = new RecursiveCharacterTextSplitter(TEXT_SPLITTER_CONFIG);
+      const textSplitter = new RecursiveCharacterTextSplitter(
+        TEXT_SPLITTER_CONFIG,
+      );
       const chunks = await textSplitter.splitText(transcription);
 
       const results = await Promise.all(
         chunks.map((chunk, index) =>
-          processTextChunk(chunk, index, chunks.length, setUploadProgress)
-        )
+          processTextChunk(chunk, index, chunks.length, setUploadProgress),
+        ),
       );
 
-      const textChunkStorageIds = results.map(result => result.storageId);
-      const embeddings = results.map(result => result.embedding);
+      const textChunkStorageIds = results.map((result) => result.storageId);
+      const embeddings = results.map((result) => result.embedding);
 
       // Calculate average embedding
-      const averageEmbedding = new Array(1536).fill(0).map((_, i) =>
-        embeddings.reduce((sum, embedding) => sum + (embedding[i] || 0), 0) / embeddings.length
-      );
+      const averageEmbedding = new Array(1536)
+        .fill(0)
+        .map(
+          (_, i) =>
+            embeddings.reduce(
+              (sum, embedding) => sum + (embedding[i] || 0),
+              0,
+            ) / embeddings.length,
+        );
 
       // Normalize the average embedding
-      const magnitude = Math.sqrt(averageEmbedding.reduce((sum, val) => sum + val * val, 0));
-      const normalizedEmbedding = averageEmbedding.map(val => val / magnitude);
+      const magnitude = Math.sqrt(
+        averageEmbedding.reduce((sum, val) => sum + val * val, 0),
+      );
+      const normalizedEmbedding = averageEmbedding.map(
+        (val) => val / magnitude,
+      );
 
       return { textChunkStorageIds, normalizedEmbedding };
     };
@@ -108,14 +124,12 @@ export const useWebsiteUploaders = () => {
         }
 
         const linkStorageId = await uploadFile(
-          new File([values.link], "link.txt", { type: "text/plain" })
+          new File([values.link], "link.txt", { type: "text/plain" }),
         );
 
         const transcription = await getTranscription(values.link);
-        const { textChunkStorageIds, normalizedEmbedding } = await processTranscription(
-          transcription,
-          setUploadProgress
-        );
+        const { textChunkStorageIds, normalizedEmbedding } =
+          await processTranscription(transcription, setUploadProgress);
 
         const image = getImage ? await getImage(values.link) : undefined;
         const imageStorageId = image ? await uploadFile(image) : undefined;
@@ -124,8 +138,10 @@ export const useWebsiteUploaders = () => {
           title: values.title,
           description: values.description,
           completed: false,
-          lectureTranscriptionEmbedding: normalizedEmbedding,
-          lectureTranscription: textChunkStorageIds,
+          lectureData: {
+            transcriptionChunks: textChunkStorageIds,
+            embedding: normalizedEmbedding,
+          },
           contentStorageId: linkStorageId,
           moduleId,
           fileType: "website",
@@ -140,20 +156,25 @@ export const useWebsiteUploaders = () => {
       /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/.test(url);
 
     return [
-      createUploader(
-        isYoutubeUrl,
-        (link: string) => getYoutubeVideoTranscription({ videoUrl: link })
+      createUploader(isYoutubeUrl, (link: string) =>
+        getYoutubeVideoTranscription({ videoUrl: link }),
       ),
       createUploader(
         () => true,
         (link) => getWebsiteText({ link }),
       ),
     ];
-  }, [getWebsiteText, storeLecture, generateUploadUrl, getEmbedding, getYoutubeVideoTranscription]);
+  }, [
+    getWebsiteText,
+    storeLecture,
+    generateUploadUrl,
+    getEmbedding,
+    getYoutubeVideoTranscription,
+  ]);
 
   const getUploader = (url: string): WebsiteUploader =>
-    uploaders.find((uploader) => uploader.canHandle(url)) ?? uploaders[uploaders.length - 1];
+    uploaders.find((uploader) => uploader.canHandle(url)) ??
+    uploaders[uploaders.length - 1];
 
   return { getUploader };
 };
-

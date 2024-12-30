@@ -48,8 +48,6 @@ export default defineSchema({
     contentUrl: v.id("_storage"),
     moduleId: v.id("modules"),
     completed: v.boolean(),
-    lectureTranscription: v.array(v.id("_storage")),
-    lectureTranscriptionEmbedding: v.array(v.float64()),
     fileType: v.union(
       v.literal("pdf"),
       v.literal("audio"),
@@ -57,10 +55,22 @@ export default defineSchema({
       v.literal("website"),
     ),
     image: v.optional(v.id("_storage")),
+    lectureData: v.object({
+      transcriptionChunks: v.array(v.id("_storage")),
+      embedding: v.array(v.float64()),
+      images: v.optional(
+        v.array(
+          v.object({
+            storageId: v.id("_storage"),
+            pageNumber: v.number(),
+          }),
+        ),
+      ),
+    }),
   })
     .index("by_moduleId", ["moduleId"])
     .vectorIndex("by_lectureTranscriptionEmbedding", {
-      vectorField: "lectureTranscriptionEmbedding",
+      vectorField: "lectureData.embedding",
       dimensions: 1536,
       filterFields: ["moduleId"],
     }),
