@@ -2,15 +2,16 @@
 
 import { internal } from "./_generated/api";
 
+
 import { v } from "convex/values";
 import { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
-import { generateEmbedding } from "./ai";
+import { generateEmbedding, generateEmbeddingsArray, findMostSimilarLectureChunk } from "./ai";
 import { noteGraph } from "./aiAgent/noteAgent";
+import {autocompleteGraph} from "./aiAgent/autoComplete";
 import { MemorySaver } from "@langchain/langgraph";
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
-
 const checkpointer = new MemorySaver();
 const compiledGraph = noteGraph.compile({ checkpointer });
 const executionConfig = { configurable: { thread_id: uuidv4() } };
@@ -121,6 +122,7 @@ export const processChunkWithGraph = internalAction({
 
       console.log("Processing Result Curr Note: ", processingResult.note);
 
+
       return processingResult;
     } catch (error) {
       console.error("Error in processChunkWithGraph:", error);
@@ -203,6 +205,72 @@ export const generateNotes = internalAction({
         concatenatedEmbedding[i] += embedding[i] || 0;
       }
     }
+    //Similarity:   //************** */
+    // Function to generate embeddings for all lecture chunks
+      
+    
+
+    const ChunksEmbedding = await generateEmbeddingsArray(contentChunks);
+
+    const searchSimilarNotes = async (searchQuery: string) => {
+      const queryEmbedding = await generateEmbedding(searchQuery);
+      const result = findMostSimilarLectureChunk(queryEmbedding, ChunksEmbedding);
+      
+      // Fetch the actual content from storage
+      const chunkContent = contentChunks[result.index];
+      
+      if (!chunkContent) {
+        throw new Error(`Lecture chunk not found for index: ${result.index}`);
+      }
+      
+      return {
+        content: chunkContent,
+        similarity: result.similarity,
+      };
+    };
+    
+    /**************AutoCompleteTESt**********/
+    const Query: string = "Digestive System is"
+    const result = await searchSimilarNotes(Query);
+    const similaireChunk = result.content as string;
+    const PrevNote : string =  
+    `
+    # Anatomy and Physiology Lecture Notes
+
+**Anatomy**:
+
+- *Definition*: Study of shape, structure, and location of organs.
+
+- **Divisions**:
+
+  - **Gross Anatomy**: Visible to the naked eye.
+
+  - **Histology** (Microscopic Anatomy): Study using a microscope.
+
+**Physiology**:
+
+- *Definition*: Study of functions of cells, tissues, and organs.
+
+- *Key Question*: What do the organs do?
+
+- **Goal**: Understanding how body parts work together.
+    `;
+
+    const app = autocompleteGraph.compile()
+
+    const auto_complete_paragraph = await app.invoke({
+      SimilaireChunk: similaireChunk,
+      prevNote: PrevNote,
+      query: Query
+    })
+    
+    
+    if (auto_complete_paragraph ) {
+      console.log("Complete:", auto_complete_paragraph.note.toString());
+    } else {
+      console.error("Auto-complete paragraph  is undefined.");
+    }
+  ///******************* */
 
     for (let i = 0; i < 1536; i++) {
       concatenatedEmbedding[i] /= embeddingCount;
