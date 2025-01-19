@@ -206,4 +206,100 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_date", ["date"])
     .index("by_userId_and_date", ["userId", "date"]),
+
+  quizzes: defineTable({
+    moduleId: v.id("modules"),
+    userId: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    sourceContentIds: v.array(
+      v.union(v.id("lectures"), v.id("notes"), v.id("flashCardSets")),
+    ),
+    questions: v.array(
+      v.object({
+        questionText: v.string(),
+        questionType: v.union(
+          v.literal("multiple_choice"),
+          v.literal("short_answer"),
+          v.literal("essay"),
+          v.literal("true_false"),
+        ),
+        content: v.union(
+          // Multiple Choice
+          v.object({
+            options: v.array(v.string()),
+            correctOptionIndex: v.number(),
+          }),
+          // Short Answer
+          v.object({
+            correctAnswer: v.boolean(), //  The idea is an LLM can grade whether it is correct or not,
+          }),
+          // Essay
+          v.object({
+            modelAnswer: v.string(),
+            keyPoints: v.array(v.string()),
+            gradingRubric: v.array(
+              v.object({
+                criterion: v.string(),
+                maxPoints: v.number(),
+              }),
+            ),
+          }),
+          // True False
+          v.object({
+            correctAnswer: v.boolean(), // This can be graded ahead of time,
+          }),
+        ),
+        explanation: v.string(),
+        points: v.number(),
+        sourceReference: v.object({
+          contentId: v.union(v.id("lectures"), v.id("notes")),
+          context: v.string(),
+        }),
+      }),
+    ),
+    difficultyLevel: v.union(
+      v.literal("beginner"),
+      v.literal("intermediate"),
+      v.literal("advanced"),
+    ),
+    timeLimit: v.optional(v.number()), // in minutes
+    createdAt: v.string(),
+    lastUpdated: v.string(),
+  })
+    .index("by_moduleId", ["moduleId"])
+    .index("by_userId", ["userId"]),
+
+  quizAttempts: defineTable({
+    quizId: v.id("quizzes"),
+    userId: v.string(),
+    answers: v.array(
+      v.object({
+        questionIndex: v.number(),
+        userAnswer: v.union(
+          v.number(), // multiple choice index
+          v.string(), // short answer/essay
+          v.boolean(), // true/false
+        ),
+        score: v.number(),
+        aiFeedback: v.object({
+          generalFeedback: v.string(),
+          strengthPoints: v.array(v.string()),
+          improvementAreas: v.array(v.string()),
+        }),
+      }),
+    ),
+    startedAt: v.string(),
+    completedAt: v.optional(v.string()),
+    totalScore: v.optional(v.number()),
+    status: v.union(
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("reviewed"),
+    ),
+    timeSpent: v.optional(v.number()), // in seconds
+  })
+    .index("by_quizId", ["quizId"])
+    .index("by_userId", ["userId"])
+    .index("by_status", ["status"]),
 });
