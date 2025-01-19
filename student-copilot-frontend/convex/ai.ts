@@ -20,7 +20,6 @@ export const generateEmbedding = async (text:string ) => {
 
 export const generateEmbeddingsArray = async (contentChunks: string[]): Promise<number[][]> => {
   try {
-    // Use Promise.all to handle all asynchronous generateEmbedding calls
     const ChunksEmbeddings = await Promise.all(
       contentChunks.map(async (chunk: string) => {
         return await generateEmbedding(chunk);

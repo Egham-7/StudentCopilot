@@ -1,5 +1,7 @@
+"use node";
 
-"use node"
+// Import required modules and components from LangChain and custom files.
+// These include tools for defining annotations, state-based workflows (StateGraph), and interacting with OpenAI models.
 import {
   Annotation,
   END,
@@ -8,75 +10,66 @@ import {
 } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
 import { AIMessage } from "@langchain/core/messages";
-import { autoCompletePrompt,analyserPrompt } from "./prompts/autoComplete";
+import { autoCompletePrompt, analyserPrompt } from "./prompts/autoComplete";
 
+// Define the structure for input and output annotations.
+// These annotations specify the expected format and type of data to be used in the workflow.
 const inputAnnotation = Annotation.Root({
-  ...MessagesAnnotation.spec,
-  SimilaireChunk: Annotation<string>,
+  ...MessagesAnnotation.spec, // Standard message structure
+  SimilaireChunk: Annotation<string>, // Custom data annotations for specific inputs
   prevNote: Annotation<string>,
   query: Annotation<string>,
-}); 
+});
 const outputAnnotation = Annotation.Root({
-  note: Annotation<string>,
-}); 
+  note: Annotation<string>, // Custom annotation for the resulting output
+});
 
-
+// Define the "analyser" function.
+// This function processes input data using a ChatOpenAI model and a predefined prompt pipeline.
 export async function analyser(
-    _state: typeof inputAnnotation.State,
-  ): Promise<{ messages: AIMessage }> {
-    // Initialize the ChatOpenAI model with specific parameters
-    const llm = new ChatOpenAI({
-      model: "gpt-4o-mini-2024-07-18",
-    });
-  
-    // Create a pipeline for the prompt and LLM
-    const chain = analyserPrompt.pipe(llm);
-  
-    // Invoke the pipeline with input data
-    const result = await chain.invoke({
-        prev_note:_state.prevNote
-    });
-  
-    // Return the result as a structured response
-    return { messages: result };
-  }
+  _state: typeof inputAnnotation.State,
+): Promise<{ messages: AIMessage }> {
+  const llm = new ChatOpenAI({
+    model: "gpt-4o-mini-2024-07-18", // Initialize the LLM with specific parameters
+  });
 
-  export async function autoCompleter(
-    _state: typeof inputAnnotation.State,
-  ): Promise<typeof outputAnnotation.State> {
-    // Initialize the ChatOpenAI model with specific parameters
-    const llm = new ChatOpenAI({
-      model: "gpt-4o-mini-2024-07-18",
-    });
-  
-    // Create a pipeline for the prompt and LLM
-    const chain = autoCompletePrompt.pipe(llm);
-    
-    // Invoke the pipeline with input data
-    const result = await chain.invoke({
-        mentioned_style: _state.messages[_state.messages.length - 1] || "",
-        query :_state.query,
-        similaire_chunk: _state.SimilaireChunk
-    });
-  
-    // Return the result as a structured response
-    return {
-        note: result.content.toString(),
-      };
-  }
+  const chain = analyserPrompt.pipe(llm); // Create a processing pipeline
+  const result = await chain.invoke({
+    prev_note: _state.prevNote, // Pass input data to the pipeline
+  });
 
+  return { messages: result }; // Return the processed messages
+}
 
+// Define the "autoCompleter" function.
+// This function completes the input data based on the LLM's predictions and a predefined prompt pipeline.
+export async function autoCompleter(
+  _state: typeof inputAnnotation.State,
+): Promise<typeof outputAnnotation.State> {
+  const llm = new ChatOpenAI({
+    model: "gpt-4o-mini-2024-07-18", // Initialize the LLM
+  });
+
+  const chain = autoCompletePrompt.pipe(llm); // Create a processing pipeline
+  const result = await chain.invoke({
+    mentioned_style: _state.messages[_state.messages.length - 1] || "", // Use the last message as context
+    query: _state.query,
+    similaire_chunk: _state.SimilaireChunk,
+  });
+
+  return {
+    note: result.content.toString(), // Return the completed data as output
+  };
+}
+
+// Create a StateGraph to define the workflow for processing inputs and generating outputs.
+// The graph specifies nodes (functions) and edges (transitions) to model the flow.
 export const autocompleteGraph = new StateGraph({
-  input: inputAnnotation,
-  output: outputAnnotation,
+  input: inputAnnotation, // Define input structure
+  output: outputAnnotation, // Define output structure
 })
-  .addNode("analyser", analyser)
-  .addNode("auto_complete",autoCompleter)
-  .addEdge("__start__", "analyser")
-  .addEdge("analyser","auto_complete")
-  .addEdge("auto_complete", END)
-
-
-  
-
- 
+  .addNode("analyser", analyser) // Add nodes for each processing step
+  .addNode("auto_complete", autoCompleter)
+  .addEdge("__start__", "analyser") // Define transitions between nodes
+  .addEdge("analyser", "auto_complete")
+  .addEdge("auto_complete", END); // Define the endpoint of the workflow
