@@ -36,8 +36,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Navigate, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 const formSchema = z.object({
-  course: z.string().min(4, {
-    message: "Course must be at least 10 characters long.",
+  course: z.string().min(3, {
+    message: "Course must be at least 3 characters long.",
   }),
   levelOfStudy: z.enum(["Associate", "Bachelors", "Masters", "PhD"]),
   noteTakingStyle: z.enum(["bullet", "mindmap", "cornell", "sketch"]),
