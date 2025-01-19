@@ -37,6 +37,7 @@ import type * as uploads from "../uploads.js";
 import type * as usageLimits from "../usageLimits.js";
 import type * as users from "../users.js";
 import type * as utils from "../utils.js";
+import type * as validationSchemas from "../validationSchemas.js";
 import type * as websites_html from "../websites/html.js";
 import type * as websites_youtube from "../websites/youtube.js";
 
@@ -73,6 +74,7 @@ declare const fullApi: ApiFromModules<{
   usageLimits: typeof usageLimits;
   users: typeof users;
   utils: typeof utils;
+  validationSchemas: typeof validationSchemas;
   "websites/html": typeof websites_html;
   "websites/youtube": typeof websites_youtube;
 }>;
