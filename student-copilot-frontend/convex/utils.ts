@@ -21,10 +21,6 @@ export async function exponentialBackoff<T>(
 
 export const getPriceId = (productId: string, period: "monthly" | "annual") => {
   const priceMap: Record<string, { monthly: string; annual: string }> = {
-    [process.env.STRIPE_BASIC_PRODUCT_ID!]: {
-      monthly: process.env.STRIPE_BASIC_MONTHLY_PRICE_ID!,
-      annual: process.env.STRIPE_BASIC_ANNUAL_PRICE_ID!,
-    },
     [process.env.STRIPE_PREMIUM_PRODUCT_ID!]: {
       monthly: process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID!,
       annual: process.env.STRIPE_PREMIUM_ANNUAL_PRICE_ID!,

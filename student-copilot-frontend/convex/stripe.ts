@@ -130,7 +130,6 @@ export const handleSubscriptionWebhook = internalAction({
           status: subscription.status,
           currentPeriodEnd: subscription.current_period_end,
           plan: subscription.items.data[0].price.nickname?.toLowerCase() as
-            | "basic"
             | "premium"
             | "enterprise",
           planPeriod:

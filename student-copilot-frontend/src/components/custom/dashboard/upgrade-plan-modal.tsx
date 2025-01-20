@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Card,
@@ -13,33 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useToast } from "@/components/ui/use-toast";
-import { useAction } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import MobileDrawer from "../mobile-drawer";
 import DesktopDialog from "../desktop-dialog";
 import { Doc } from "convex/_generated/dataModel";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-interface PlanPrice {
-  monthly: {
-    priceId: string;
-    amount: number;
-  } | null;
-  annual: {
-    priceId: string;
-    amount: number;
-  } | null;
-}
-
-interface Plan {
-  id: string;
-  title: string;
-  description: string | null;
-  features: string[];
-  prices: PlanPrice;
-  buttonText: string;
-}
 
 const PricingCard = ({
   plan,
@@ -49,7 +29,7 @@ const PricingCard = ({
   onPlanSelect,
   onHover,
 }: {
-  plan: Plan;
+  plan: Doc<"plans">;
   isAnnual: boolean;
   subscription: Doc<"subscriptions"> | undefined | null;
   hoveredPlan: string | null;
@@ -60,7 +40,7 @@ const PricingCard = ({
   const isCurrentPlan =
     subscription?.status === "active" &&
     subscription?.plan === plan.title.toLowerCase();
-  const isHovered = hoveredPlan === plan.id;
+  const isHovered = hoveredPlan === plan.stripeId;
   const isBasic = plan.title.toLowerCase() === "basic";
 
   return (
@@ -91,7 +71,7 @@ const PricingCard = ({
       <CardContent className="flex-grow">
         <PriceDisplay plan={plan} isAnnual={isAnnual} />
         <FeaturesList
-          features={plan.features}
+          features={plan.features ?? []}
           isPro={plan.title.toLowerCase() === "pro"}
         />
       </CardContent>
@@ -112,26 +92,11 @@ const UpgradePlanModal = () => {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [isAnnual, setIsAnnual] = useState(false);
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
-  const [plans, setPlans] = useState<Plan[] | null>(null);
 
   const { subscription, startSubscription, cancelSubscription } =
     useSubscription();
-  const plansQuery = useAction(api.stripe.getPlans);
+  const plans = useQuery(api.stripePlans.getAvailablePlans, {});
   const { toast } = useToast();
-
-  // Memoize fetch plans function
-  const fetchPlans = useCallback(async () => {
-    try {
-      const fetchedPlans = await plansQuery({});
-      setPlans(fetchedPlans as Plan[]);
-    } catch (error) {
-      console.error("Error fetching plans:", error);
-    }
-  }, [plansQuery]);
-
-  useEffect(() => {
-    fetchPlans();
-  }, [fetchPlans]);
 
   const handleUpgrade = useCallback(
     (planId: string) => {
@@ -157,7 +122,7 @@ const UpgradePlanModal = () => {
       if (
         subscription?.status === "active" &&
         subscription?.plan ===
-        plans?.find((p) => p.id === planId)?.title.toLowerCase()
+          plans?.find((p) => p.stripeId === planId)?.title.toLowerCase()
       ) {
         handleCancelSubscription();
       } else {
@@ -175,7 +140,7 @@ const UpgradePlanModal = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {plans?.map((plan) => (
             <PricingCard
-              key={plan.id}
+              key={plan.stripeId}
               plan={plan}
               isAnnual={isAnnual}
               subscription={subscription}
@@ -233,7 +198,7 @@ const BillingToggle = ({ isAnnual, onToggle }: BillingToggleProps) => {
 };
 
 interface PriceDisplayProps {
-  plan: Plan;
+  plan: Doc<"plans">;
   isAnnual: boolean;
 }
 
@@ -285,7 +250,7 @@ const FeaturesList = ({ features, isPro }: FeaturesListProps) => {
 };
 
 interface PlanButtonProps {
-  plan: Plan;
+  plan: Doc<"plans">;
   isCurrentPlan: boolean;
   isHovered: boolean;
   onPlanSelect: (planId: string) => void;
@@ -312,9 +277,9 @@ const PlanButton = ({
         isPremium || (isBasic && "bg-primary hover:bg-primary/90"),
         isFree && "bg-secondary",
       )}
-      onMouseEnter={() => onHover(plan.id)}
+      onMouseEnter={() => onHover(plan.stripeId)}
       onMouseLeave={() => onHover(null)}
-      onClick={() => onPlanSelect(plan.id)}
+      onClick={() => onPlanSelect(plan.stripeId)}
     >
       {isCurrentPlan
         ? isHovered && plan.title.toLowerCase() !== "free"
