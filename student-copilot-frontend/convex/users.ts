@@ -16,7 +16,6 @@ const userArgsSchema = {
   levelOfStudy: levelOfStudySchema,
 };
 
-// Helper function to get user by clerkId
 export const getUserByClerkId = async (ctx: QueryCtx, clerkId: string) => {
   return await ctx.db
     .query("users")
