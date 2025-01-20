@@ -15,8 +15,10 @@ import type {
 } from "convex/server";
 import type * as activities from "../activities.js";
 import type * as ai from "../ai.js";
+import type * as aiAgent_autoComplete from "../aiAgent/autoComplete.js";
 import type * as aiAgent_flashCardAgent from "../aiAgent/flashCardAgent.js";
 import type * as aiAgent_noteAgent from "../aiAgent/noteAgent.js";
+import type * as aiAgent_prompts_autoComplete from "../aiAgent/prompts/autoComplete.js";
 import type * as aiAgent_prompts_flashCardAgent from "../aiAgent/prompts/flashCardAgent.js";
 import type * as aiAgent_prompts_noteAgent from "../aiAgent/prompts/noteAgent.js";
 import type * as aiAgent_types_flashCardAgent from "../aiAgent/types/flashCardAgent.js";
@@ -52,8 +54,10 @@ import type * as websites_youtube from "../websites/youtube.js";
 declare const fullApi: ApiFromModules<{
   activities: typeof activities;
   ai: typeof ai;
+  "aiAgent/autoComplete": typeof aiAgent_autoComplete;
   "aiAgent/flashCardAgent": typeof aiAgent_flashCardAgent;
   "aiAgent/noteAgent": typeof aiAgent_noteAgent;
+  "aiAgent/prompts/autoComplete": typeof aiAgent_prompts_autoComplete;
   "aiAgent/prompts/flashCardAgent": typeof aiAgent_prompts_flashCardAgent;
   "aiAgent/prompts/noteAgent": typeof aiAgent_prompts_noteAgent;
   "aiAgent/types/flashCardAgent": typeof aiAgent_types_flashCardAgent;

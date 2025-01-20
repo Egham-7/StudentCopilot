@@ -17,6 +17,49 @@ export const generateEmbedding = async (text:string ) => {
   return response.data[0].embedding;
 }
 
+
+export const generateEmbeddingsArray = async (contentChunks: string[]): Promise<number[][]> => {
+  try {
+    const ChunksEmbeddings = await Promise.all(
+      contentChunks.map(async (chunk: string) => {
+        return await generateEmbedding(chunk);
+      })
+    ); 
+    return ChunksEmbeddings;
+  } catch (error) {
+    console.error("Error generating embeddings:", error);
+    throw error;
+  }
+};
+
+// Helper function to calculate cosine similarity between two embeddings
+export const cosineSimilarity = (embedding1: number[], embedding2: number[]) => {
+  const dotProduct = embedding1.reduce((sum, value, i) => sum + value * embedding2[i], 0);
+  const magnitude1 = Math.sqrt(embedding1.reduce((sum, value) => sum + value * value, 0));
+  const magnitude2 = Math.sqrt(embedding2.reduce((sum, value) => sum + value * value, 0));
+  return dotProduct / (magnitude1 * magnitude2);
+};
+// Function to find the most similar lecture note using cosine similarity
+export const findMostSimilarLectureChunk = (queryEmbedding: number[], allEmbeddings: number[][]) => {
+  let maxSimilarity = -1;
+  let mostSimilarIndex = 0;
+
+  allEmbeddings.forEach((embedding, index) => {
+    const similarity = cosineSimilarity(queryEmbedding, embedding);
+    if (similarity > maxSimilarity) {
+      maxSimilarity = similarity;
+      mostSimilarIndex = index;
+    }
+  });
+
+  return {
+    index: mostSimilarIndex,
+    similarity: maxSimilarity
+  };
+};
+
+
+
 export async function transcribeAudioChunk(audioChunk: ArrayBuffer) {
   try {
 
