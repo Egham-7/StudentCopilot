@@ -9,7 +9,6 @@ import { v } from "convex/values";
 import { QueryCtx } from "./_generated/server";
 import { learningStyleSchema, levelOfStudySchema } from "./validationSchemas";
 
-// Shared validation schemas
 const userArgsSchema = {
   noteTakingStyle: v.string(),
   learningStyle: learningStyleSchema,
@@ -17,8 +16,7 @@ const userArgsSchema = {
   levelOfStudy: levelOfStudySchema,
 };
 
-// Helper function to get user by clerkId
-const getUserByClerkId = async (ctx: QueryCtx, clerkId: string) => {
+export const getUserByClerkId = async (ctx: QueryCtx, clerkId: string) => {
   return await ctx.db
     .query("users")
     .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))

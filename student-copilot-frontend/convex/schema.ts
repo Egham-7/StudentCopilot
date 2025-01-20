@@ -107,7 +107,6 @@ export default defineSchema({
     plan: v.union(
       v.literal("enterprise"),
       v.literal("premium"),
-      v.literal("basic"),
       v.literal("free"),
     ),
     planPeriod: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
@@ -125,7 +124,8 @@ export default defineSchema({
     }),
   })
     .index("by_userId", ["userId"])
-    .index("by_stripeCustomerId", ["stripeCustomerId"]),
+    .index("by_stripeCustomerId", ["stripeCustomerId"])
+    .index("by_stripeSubscriptionId", ["stripeSubscriptionId"]),
 
   plans: defineTable({
     stripeId: v.string(),
