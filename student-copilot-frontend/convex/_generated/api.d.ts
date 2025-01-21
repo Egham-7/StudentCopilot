@@ -8,11 +8,6 @@
  * @module
  */
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
 import type * as activities from "../activities.js";
 import type * as ai from "../ai.js";
 import type * as aiAgent_flashCardAgent from "../aiAgent/flashCardAgent.js";
@@ -25,6 +20,7 @@ import type * as aiChats from "../aiChats.js";
 import type * as flashCardActions from "../flashCardActions.js";
 import type * as flashcards from "../flashcards.js";
 import type * as http from "../http.js";
+import type * as index from "../index.js";
 import type * as lectures from "../lectures.js";
 import type * as modules from "../modules.js";
 import type * as noteAction from "../noteAction.js";
@@ -41,6 +37,11 @@ import type * as validationSchemas from "../validationSchemas.js";
 import type * as websites_html from "../websites/html.js";
 import type * as websites_youtube from "../websites/youtube.js";
 
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 /**
  * A utility for referencing Convex functions in your app's API.
  *
@@ -62,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   flashCardActions: typeof flashCardActions;
   flashcards: typeof flashcards;
   http: typeof http;
+  index: typeof index;
   lectures: typeof lectures;
   modules: typeof modules;
   noteAction: typeof noteAction;
@@ -78,11 +80,123 @@ declare const fullApi: ApiFromModules<{
   "websites/html": typeof websites_html;
   "websites/youtube": typeof websites_youtube;
 }>;
+declare const fullApiWithMounts: typeof fullApi;
+
 export declare const api: FilterApi<
-  typeof fullApi,
+  typeof fullApiWithMounts,
   FunctionReference<any, "public">
 >;
 export declare const internal: FilterApi<
-  typeof fullApi,
+  typeof fullApiWithMounts,
   FunctionReference<any, "internal">
 >;
+
+export declare const components: {
+  actionRetrier: {
+    public: {
+      cancel: FunctionReference<
+        "mutation",
+        "internal",
+        { runId: string },
+        boolean
+      >;
+      cleanup: FunctionReference<
+        "mutation",
+        "internal",
+        { runId: string },
+        any
+      >;
+      start: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          functionArgs: any;
+          functionHandle: string;
+          options: {
+            base: number;
+            initialBackoffMs: number;
+            logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR";
+            maxFailures: number;
+            onComplete?: string;
+          };
+        },
+        string
+      >;
+      status: FunctionReference<
+        "query",
+        "internal",
+        { runId: string },
+        | { type: "inProgress" }
+        | {
+            result:
+              | { returnValue: any; type: "success" }
+              | { error: string; type: "failed" }
+              | { type: "canceled" };
+            type: "completed";
+          }
+      >;
+    };
+  };
+  actionCache: {
+    crons: {
+      purge: FunctionReference<
+        "mutation",
+        "internal",
+        { expiresAt?: number },
+        null
+      >;
+    };
+    lib: {
+      get: FunctionReference<
+        "query",
+        "internal",
+        { args: any; name: string; ttl: number | null },
+        { kind: "hit"; value: any } | { expiredEntry?: string; kind: "miss" }
+      >;
+      put: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          args: any;
+          expiredEntry?: string;
+          name: string;
+          ttl: number | null;
+          value: any;
+        },
+        null
+      >;
+      remove: FunctionReference<
+        "mutation",
+        "internal",
+        { args: any; name: string },
+        null
+      >;
+      removeAll: FunctionReference<
+        "mutation",
+        "internal",
+        { before?: number; name?: string },
+        null
+      >;
+    };
+    public: {
+      fetch: FunctionReference<
+        "action",
+        "internal",
+        { args: any; expiration: number | null; fn: string; name: string },
+        any
+      >;
+      remove: FunctionReference<
+        "mutation",
+        "internal",
+        { args: any; name: string },
+        null
+      >;
+      removeAll: FunctionReference<
+        "mutation",
+        "internal",
+        { before?: number; name?: string },
+        null
+      >;
+    };
+  };
+};

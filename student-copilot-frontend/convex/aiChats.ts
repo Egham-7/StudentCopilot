@@ -91,7 +91,10 @@ export const answer = internalAction({
       sessionId,
     });
     const lastUserMessage = messages.at(-1)!.body;
-    const lastUserMessageEmbedding = await generateEmbedding(lastUserMessage);
+    const lastUserMessageEmbedding = await generateEmbedding(
+      ctx,
+      lastUserMessage,
+    );
     const lecturesSearchResult = await ctx.vectorSearch(
       "lectures",
       "by_lectureTranscriptionEmbedding",
