@@ -259,7 +259,7 @@ export const searchLecturesByTranscription = action({
     }
 
     // Generate embedding for the query
-    const embedding = await generateEmbedding(args.query);
+    const embedding = await generateEmbedding(ctx, args.query);
 
     // Perform vector search
     const results = await ctx.vectorSearch(
@@ -409,10 +409,10 @@ export const transcribeAudio = action({
   handler: async (ctx, args) => {
     try {
       // Transcribe the audio chunk
-      const transcription = await transcribeAudioChunk(args.audioChunk);
+      const transcription = await transcribeAudioChunk(args.audioChunk, ctx);
 
       // Generate embedding for the transcription
-      const embedding = await generateEmbedding(transcription);
+      const embedding = await generateEmbedding(ctx, transcription);
 
       // Store the transcription as a Blob
       const transcriptionBlob = new Blob([transcription], {

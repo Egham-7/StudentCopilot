@@ -10,6 +10,7 @@ import { useEffect } from "react";
 export default function DashboardLayout() {
   const userNotifications = useQuery(api.notifications.getUserNotifications, {
     limit: 1,
+    readStatus: false,
   });
 
   const markAsRead = useMutation(api.notifications.markAsRead);
