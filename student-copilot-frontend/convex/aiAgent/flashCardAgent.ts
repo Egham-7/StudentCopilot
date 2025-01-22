@@ -69,7 +69,7 @@ export async function generateFlashCard(
 
   const uncheckedFlashCardStruct =
     await flashcardArraySchema.safeParseAsync(result);
-
+  
   if (!uncheckedFlashCardStruct.success) {
     throw new Error(
       `Failed to generate proper flashcard: ${uncheckedFlashCardStruct.error}`,

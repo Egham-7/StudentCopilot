@@ -229,28 +229,26 @@ export default defineSchema({
           v.object({
             options: v.array(v.string()),
             correctOptionIndex: v.number(),
+            feedback : v.string()
           }),
           // Short Answer
           v.object({
             correctAnswer: v.boolean(), //  The idea is an LLM can grade whether it is correct or not,
+            feedback : v.string()
           }),
           // Essay
           v.object({
-            modelAnswer: v.string(),
-            keyPoints: v.array(v.string()),
-            gradingRubric: v.array(
-              v.object({
-                criterion: v.string(),
-                maxPoints: v.number(),
-              }),
-            ),
+            correctAnswer: v.boolean(), //  The idea is an LLM can grade whether it is correct or not,
+            feedback : v.string()
+
           }),
           // True False
           v.object({
             correctAnswer: v.boolean(), // This can be graded ahead of time,
+            feedback : v.string()
+
           }),
         ),
-        explanation: v.string(),
         points: v.number(),
         sourceReference: v.object({
           contentId: v.union(v.id("lectures"), v.id("notes")),
@@ -258,11 +256,7 @@ export default defineSchema({
         }),
       }),
     ),
-    difficultyLevel: v.union(
-      v.literal("beginner"),
-      v.literal("intermediate"),
-      v.literal("advanced"),
-    ),
+   
     timeLimit: v.optional(v.number()), // in minutes
     createdAt: v.string(),
     lastUpdated: v.string(),
