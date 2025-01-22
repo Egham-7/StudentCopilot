@@ -6,30 +6,27 @@ import {
   //["Multiple Choice" | "Short Answer" | "True or False" | "Short Essay"]
 export const planQuizPrompt = ChatPromptTemplate.fromMessages([
     SystemMessagePromptTemplate.fromTemplate(`
-  You are an expert quiz designer. Based on the provided content and parameters, recommend the most effective quiz type and create a focused plan.
+You are an expert quiz designer. Based on the provided input, determine the most appropriate quiz type and deliver a clear plan for generating the quiz.
   
-  Input Parameters:
-  - Learning Style: {learningStyle}
-  - Study Level: {levelOfStudy} 
-  - Course: {course}
-  - Previous Quizzes: {prevQuiz}
+### **Input Parameters**  
+- **Learning Style:** {learningStyle}  
+- **Study Level:** {levelOfStudy}  
+- **Course:** {course}
+- **Content Chunk:** {Chunkcontent} 
+- **Previous Quizzes:** {prevQuiz} 
   
-  Provide output in this format:
-  {
-    "types": Short Answer,
-    "plan": "Brief 2-3 sentence explanation of why this quiz type best suits the content and learning objectives"
-  }
   
-  Focus on:
-  1. Selecting the most appropriate question type for the content
-  2. Progressive difficulty to enhance learning
-  3. Avoiding overlap with previous quizzes
-  4. Aligning with the student's learning style and level
+  Evaluation Points:
+  1. Binary concept testing potential
+  2. Clear fact verification needs
+  3. Student level appropriateness
+  4. Learning style compatibility 
+  5. Provide clear and actionable instructions for quiz creation.
+
+  NOTE: NO mark down .md format
   `)
   ])
   
-
-
 
 
 export const genarateShortAnswerPrompt = ChatPromptTemplate.fromMessages([
@@ -62,6 +59,78 @@ You are an expert in educational content generation and adaptive quiz design. Yo
 
 ### INPUT TEMPLATE:
 - **Quiz Plan**: {plan}  
-- **Content Chunk**: {Chunkcontent}  
+- **Content Chunk**: {chunkContent}  
 
     `)])
+
+
+export const generateMultipleChoicePrompt = ChatPromptTemplate.fromMessages([
+    SystemMessagePromptTemplate.fromTemplate(`
+    You are an expert quiz designer specializing in multiple choice questions. Create engaging multiple choice questions based on the provided content and plan.
+    
+    Your task is to generate questions that:
+    - Have 4 well-crafted answer options
+    - Include exactly one correct answer
+    - Gradually increase in difficulty
+    - Test comprehension rather than just recall
+    - Avoid obvious wrong answers
+    
+    For each question provide:
+    - Clear question text
+    - 4 answer options (A, B, C, D)
+    - Difficulty level (easy/medium/hard)
+    - One correct answer marked as isCorrect: true
+    
+    Format your response exactly like this:
+    
+    question: "Question text here"
+    difficulty: "easy" | "medium" | "hard"
+    options:
+    - text: "Option A text"
+        isCorrect: boolean
+    - text: "Option B text"
+        isCorrect: boolean
+    - text: "Option C text"
+        isCorrect: boolean
+    - text: "Option D text"
+        isCorrect: boolean
+    
+    Input Parameters:
+    - Content Chunk: {chunkContent}
+    - Quiz Plan: {plan}
+    `)
+    ])
+    
+
+    export const generateTrueFalsePrompt = ChatPromptTemplate.fromMessages([
+        SystemMessagePromptTemplate.fromTemplate(`
+      You are an expert quiz designer specializing in True/False questions. Create precise and thought-provoking True/False statements based on the provided content and plan.
+      
+      Your task is to generate statements that:
+      - Test critical understanding of concepts
+      - Challenge common misconceptions
+      - Gradually increase in difficulty
+      - Focus on key learning points
+      - Require careful analysis
+      
+      For each question provide:
+      - Clear context
+      - Precise statement to evaluate
+      - Difficulty level (easy/medium/hard)
+      - Correct answer (true/false)
+      - Brief explanation for the answer
+      
+      Format your response exactly like this:
+      
+      question: "Context or setup for the statement"
+      difficulty: "easy" | "medium" | "hard"
+      statement: "The specific statement to evaluate as true or false"
+      correctAnswer: true | false
+      explanation: "Brief explanation of why the answer is correct"
+      
+      Input Parameters:
+      - Content Chunk: {chunkContent}
+      - Quiz Plan: {plan}
+      `)
+      ])
+      

@@ -7,6 +7,7 @@ import { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 import { generateEmbedding } from "./ai";
 import { noteGraph } from "./aiAgent/noteAgent";
+import {quizGraph} from "./aiAgent/quizAgent";
 import { MemorySaver } from "@langchain/langgraph";
 import { exponentialBackoff } from "./utils";
 import { v4 as uuidv4 } from "uuid";
@@ -15,6 +16,42 @@ const checkpointer = new MemorySaver();
 const compiledGraph = noteGraph.compile({ checkpointer });
 const executionConfig = { configurable: { thread_id: uuidv4() } };
 
+/****************/
+const compiledQuizGraph = quizGraph.compile();
+const c = `
+Time Complexity:
+
+Represents how the execution time of an algorithm increases relative to the size of the input.
+For example, an algorithm with a complexity of 
+𝑂
+(
+𝑛
+)
+O(n) will take twice as long if the input size doubles.
+Space Complexity:
+
+Refers to the amount of memory an algorithm uses as the input size grows.
+Input Size (
+𝑛
+n):
+
+The size of the data the algorithm processes. It can represent the number of elements in an array, the length of a string, or any measurable input characteristic.
+`;
+
+
+const processingResult = await compiledQuizGraph.invoke(
+  {
+    Chunkcontent: c,
+    learningStyle: "analytical",
+    levelOfStudy: "Bachelors",
+    course: "Computer Science",
+  },
+);
+
+console.log(processingResult);
+
+
+/****************/
 export const fetchAndProcessContent = internalAction({
   args: {
     userId: v.string(),
@@ -207,6 +244,7 @@ export const generateNotes = internalAction({
     for (let i = 0; i < 1536; i++) {
       concatenatedEmbedding[i] /= embeddingCount;
     }
+    
 
     await ctx.runMutation(internal.notes.storeNotes, {
       noteChunkIds: noteChunkIds,
