@@ -3,7 +3,7 @@ import {
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
   } from "@langchain/core/prompts";
-
+  //["Multiple Choice" | "Short Answer" | "True or False" | "Short Essay"]
 export const planQuizPrompt = ChatPromptTemplate.fromMessages([
     SystemMessagePromptTemplate.fromTemplate(`
   You are an expert quiz designer. Based on the provided content and parameters, recommend the most effective quiz type and create a focused plan.
@@ -16,7 +16,7 @@ export const planQuizPrompt = ChatPromptTemplate.fromMessages([
   
   Provide output in this format:
   {
-    "types": ["Multiple Choice" | "Short Answer" | "True or False" | "Short Essay"],
+    "types": Short Answer,
     "plan": "Brief 2-3 sentence explanation of why this quiz type best suits the content and learning objectives"
   }
   

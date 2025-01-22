@@ -107,7 +107,7 @@ export async function planQuiz(
 export async function determineQuizType(state: InputAnnotationState): Promise<string> {
     const { plan } = state;
     // Logic to decide the next node based on the plan
-    if (plan.plan=="ShortAnswer") {
+    if (plan.plan=="Short Answer") {
       return "generate_quizes";
     }
     // Add more conditions as needed
