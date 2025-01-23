@@ -7,8 +7,8 @@ import {
   StateGraph,
 } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
-import { Quiz, shortAnswerSchema, quizeTypeSchema, QuizType, ShortAnswerQuiz, MultiChoiceQuiz, multipleChoiceQSchema,trueFalseSchema, TrueFalseQuize } from "./types/quizAgent";
-import { planQuizPrompt, genarateShortAnswerPrompt, generateMultipleChoicePrompt, generateTrueFalsePrompt } from "./prompts/quizAgent";
+import { Quiz, shortAnswerSchema, quizeTypeSchema, QuizType, ShortAnswerQuiz, MultiChoiceQuiz, multipleChoiceQSchema,trueFalseSchema, TrueFalseQuize, shortEssayQuiz, shortEssaySchema } from "./types/quizAgent";
+import { planQuizPrompt, genarateShortAnswerPrompt, generateMultipleChoicePrompt, generateTrueFalsePrompt, generateShortEssayPrompt } from "./prompts/quizAgent";
 
 type InputAnnotationState = typeof inputAnnotation.State;
 
@@ -21,8 +21,7 @@ const inputAnnotation = Annotation.Root({
     levelOfStudy: Annotation<"Bachelors" | "Associate" | "Masters" | "PhD">,
     course: Annotation<string>,
 
-    //previous generated list of quizes
-    prevQuiz :Annotation<Quiz>,
+ 
 
     //Quize Type
     plan:Annotation<QuizType>
@@ -37,7 +36,7 @@ const outputAnnotation = Annotation.Root({
 export async function planQuiz(
     state: InputAnnotationState,
   ): Promise<Command> {
-    const { learningStyle, levelOfStudy, course, prevQuiz, Chunkcontent } = state;
+    const { learningStyle, levelOfStudy, course, Chunkcontent } = state;
   
     const llm = new ChatOpenAI({
       model: "gpt-4-0613",
@@ -50,7 +49,6 @@ export async function planQuiz(
       learningStyle,
       levelOfStudy,
       course,
-      prevQuiz,
       Chunkcontent
     });
   
@@ -178,7 +176,37 @@ export async function genTrueFalseQuiz(
     };
 }
 
+export async function genShortEssayQuiz(
+    state: InputAnnotationState,
+): Promise<shortEssayQuiz> {
+    const chunkContent = state.Chunkcontent;
+    const plan = state.plan;
 
+    const llm = new ChatOpenAI({
+        model: "gpt-4-0613",
+    });
+
+    const structuredModel = llm.withStructuredOutput(shortEssaySchema);
+    const chain = generateShortEssayPrompt.pipe(structuredModel);
+
+    const result = await chain.invoke({
+        chunkContent,
+        plan
+    });
+
+    const parsedQuiz = await shortEssaySchema.safeParseAsync(result);
+
+    if (!parsedQuiz.success) {
+        throw new Error(
+            `Failed to generate quiz: ${parsedQuiz.error}`
+        );
+    }
+    console.log(parsedQuiz.data);
+    return {
+        question: parsedQuiz.data.question,
+        difficulty: parsedQuiz.data.difficulty,
+    };
+}
 
 
 export async function determineQuizType(state: InputAnnotationState): Promise<string> {
@@ -191,21 +219,25 @@ export async function determineQuizType(state: InputAnnotationState): Promise<st
     }
 
     // Logic to decide the next node based on the plan
-    /*
+    
     if (plan.types === "Short Answer") {
         return "gen_short_ans";
     }
     if (plan.types === "Multiple Choice") {
         return "gen_multi_choice";
     }
-        */
+        
     if (plan.types === "True or False") {
         return "gen_true_false";
     }
 
+    if( plan.types === "Short Essay"){
+        return "gen_short_essay";
+    }
+    
     // Log unknown type and return a fallback
     console.warn("Unknown `plan.types`: ", plan.types);
-    return "default_node"; // Replace with a valid fallback if needed
+    return "gen_short_essay"; // Replace with a valid fallback if needed
 }
 
 
@@ -218,11 +250,13 @@ output: outputAnnotation,
 .addNode("gen_short_ans", genShortAnswerQuiz)
 .addNode("gen_multi_choice", genMultipleChoiceQuiz)
 .addNode("gen_true_false", genTrueFalseQuiz)
+.addNode("gen_short_essay", genShortEssayQuiz)
 .addEdge("__start__", "planQuiz") 
 .addConditionalEdges("planQuiz", determineQuizType)
 .addEdge("gen_short_ans", END)
 .addEdge("gen_multi_choice", END)
-.addEdge("gen_true_false",END);
+.addEdge("gen_true_false",END)
+.addEdge("gen_short_essay",END);
 
 
   

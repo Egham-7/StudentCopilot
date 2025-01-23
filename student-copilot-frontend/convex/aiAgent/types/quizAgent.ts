@@ -40,6 +40,11 @@ export const trueFalseSchema = z.object({
   explanation: z.string()
 });
 
+// Short Essay
+export const shortEssaySchema = z.object({
+  question: z.string(),
+  difficulty: z.enum(["easy", "medium", "hard"]),
+  });
 
 export const quizeTypeSchema = z.object({
   types : z.enum(["Multiple Choice", "Short Answer", "True or False", "Short Essay"]),
@@ -48,7 +53,7 @@ export const quizeTypeSchema = z.object({
 
 
 // Combine both schemas using z.union
-export const combinedQuestionSchema = z.union([shortAnswerSchema, multipleChoiceQSchema]);
+export const combinedQuestionSchema = z.union([shortAnswerSchema, multipleChoiceQSchema, trueFalseSchema, shortEssaySchema]);
 
 
 
@@ -59,6 +64,7 @@ export const quizeArraySchema = z.object({
 export type ShortAnswerQuiz = z.infer<typeof shortAnswerSchema>;
 export type MultiChoiceQuiz = z.infer<typeof multipleChoiceQSchema>;
 export type TrueFalseQuize = z.infer<typeof trueFalseSchema>;
+export type shortEssayQuiz = z.infer<typeof shortEssaySchema>;
 
 export type Quiz = z.infer<typeof combinedQuestionSchema>;
 export type QuizType = z.infer<typeof quizeTypeSchema>

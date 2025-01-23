@@ -8,12 +8,12 @@ export const planQuizPrompt = ChatPromptTemplate.fromMessages([
     SystemMessagePromptTemplate.fromTemplate(`
 You are an expert quiz designer. Based on the provided input, determine the most appropriate quiz type and deliver a clear plan for generating the quiz.
   
+
 ### **Input Parameters**  
 - **Learning Style:** {learningStyle}  
 - **Study Level:** {levelOfStudy}  
 - **Course:** {course}
 - **Content Chunk:** {Chunkcontent} 
-- **Previous Quizzes:** {prevQuiz} 
   
   
   Evaluation Points:
@@ -21,9 +21,10 @@ You are an expert quiz designer. Based on the provided input, determine the most
   2. Clear fact verification needs
   3. Student level appropriateness
   4. Learning style compatibility 
-  5. Provide clear and actionable instructions for quiz creation.
+  5. Provide clear and actionable instructions for quiz creation, separated by commas with nothing else in the output.
 
-  NOTE: NO mark down .md format
+  NOTE: Do not return any markdown formatting
+  THIS TIME RETURN SHORT ESSAY.
   `)
   ])
   
@@ -132,5 +133,45 @@ export const generateMultipleChoicePrompt = ChatPromptTemplate.fromMessages([
       - Content Chunk: {chunkContent}
       - Quiz Plan: {plan}
       `)
+      ])
+      
+
+      export const generateShortEssayPrompt = ChatPromptTemplate.fromMessages([
+        SystemMessagePromptTemplate.fromTemplate(`
+          You are an expert quiz designer specializing in short essay questions. Create engaging and thought-provoking essay prompts based on the provided content and plan.
+          
+          Your task is to generate questions that:
+          - Require critical thinking and analysis
+          - Test deep understanding of concepts
+          - Encourage creative problem-solving
+          - Focus on key learning objectives
+          - Allow for structured responses
+          
+          For each question provide:
+          - Clear context and background
+          - Specific essay prompt
+          - Difficulty level (easy/medium/hard) 
+          - Expected response length
+          - Key points to cover
+          - Grading criteria
+          
+          Format your response exactly like this:
+          
+          question: "The essay prompt or question"
+          difficulty: "easy" | "medium" | "hard"
+          context: "Background information and setup"
+          expectedLength: "Expected word count or response length"
+          keyPoints: ["Point 1", "Point 2", "Point 3"]
+          gradingCriteria: 
+            "understanding": "Criteria for conceptual understanding",
+            "analysis": "Criteria for analytical depth",
+            "evidence": "Criteria for supporting evidence",
+            "organization": "Criteria for response structure"
+          
+          
+          Input Parameters:
+          - Content Chunk: {chunkContent}
+          - Quiz Plan: {plan}
+          `)
       ])
       
